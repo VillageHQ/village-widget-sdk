@@ -1,7 +1,7 @@
 import {
     VillageEvents,
     VillageEventMap,
-  } from "./src/events/village-events.js";
+  } from "./config/village-events.js";
   
   type VillageEventName = keyof VillageEventMap;
   

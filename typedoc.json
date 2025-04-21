@@ -1,0 +1,11 @@
+{
+  "entryPoints": ["config"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "includeVersion": true,
+  "name": "Village Widget SDK"
+}
