@@ -51,4 +51,10 @@ async function deploy() {
   }
 }
 
-deploy();
+ // Export both functions for testing
+ module.exports = { incrementVersion, deploy };
+
+ // Only run deploy() when this file is executed directly
+ if (require.main === module) {
+   deploy();
+ }

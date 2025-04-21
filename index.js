@@ -1,6 +1,6 @@
 import { App } from "./app.js";
 import "./styles.css";
-import { VillageEvents } from "village-sdk-events";
+import { VillageEvents } from "./src/events/village-events.js";;
 import { on, emit } from "./sdk-wrapper";
 
 (function (window) {
