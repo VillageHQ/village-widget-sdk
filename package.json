@@ -1,0 +1,26 @@
+{
+  "name": "@villagehq/paas",
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "0.0.47",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch --mode development",
+    "prepublishOnly": "npm run build",
+    "deploy": "node scripts/deploy.js"
+  },
+  "dependencies": {
+    "js-cookie": "^3.0.5",
+    "village-sdk-events": "github:VillageHQ/village-sdk-events"
+  },
+  "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
+    "jsdom": "^26.1.0",
+    "vitest": "^3.1.2"
+  }
+}
