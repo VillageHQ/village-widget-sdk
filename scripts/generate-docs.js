@@ -52,15 +52,14 @@ function writeMintJson(sidebar) {
 function createIndexMarkdown(sidebar) {
   let content = `# 📚 Village Widget SDK – Documentation Index\n\n`;
 
-  function addLinks(items, indent = 0) {
+  function addLinks(items, level = 2) {
     for (const item of items) {
-      const prefix = '  '.repeat(indent) + '- ';
       if (item.link) {
         const label = item.label.replace(/-/g, ' ');
-        content += `${prefix}[${label}](${item.link})\n`;
+        content += `- [${label}](${item.link})\n`;
       } else if (item.children) {
-        content += `\n${'  '.repeat(indent)}## ${item.label}\n`;
-        addLinks(item.children, indent + 1);
+        content += `\n${'#'.repeat(level)} ${item.label}\n\n`;
+        addLinks(item.children, level + 1);
       }
     }
   }
@@ -71,6 +70,7 @@ function createIndexMarkdown(sidebar) {
   fs.writeFileSync(indexPath, content);
   console.log(`✅ index.md generated at ./${indexPath}`);
 }
+
 
 // Run everything
 runTypeDoc();

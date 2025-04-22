@@ -6,7 +6,7 @@
 
 # Interface: VillageEventMap
 
-Defined in: [config/village-events.ts:82](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L82)
+Defined in: [config/village-events.ts:82](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L82)
 
 Defines the payloads for each Village event.
 Used to ensure `Village.broadcast()` and `Village.on()` are strongly typed.
@@ -17,7 +17,7 @@ Used to ensure `Village.broadcast()` and `Village.on()` are strongly typed.
 
 > **error**: `object`
 
-Defined in: [config/village-events.ts:154](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L154)
+Defined in: [config/village-events.ts:154](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L154)
 
 village.oauth.error
 Fired when the OAuth flow fails or is canceled.
@@ -32,7 +32,7 @@ Fired when the OAuth flow fails or is canceled.
 
 > **started**: `void`
 
-Defined in: [config/village-events.ts:140](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L140)
+Defined in: [config/village-events.ts:140](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L140)
 
 village.oauth.started
 Fired when the OAuth popup window is opened.
@@ -43,7 +43,7 @@ Fired when the OAuth popup window is opened.
 
 > **success**: `object`
 
-Defined in: [config/village-events.ts:146](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L146)
+Defined in: [config/village-events.ts:146](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L146)
 
 village.oauth.success
 Fired when the OAuth flow completes successfully.
@@ -58,7 +58,7 @@ Fired when the OAuth flow completes successfully.
 
 > **clicked**: `object`
 
-Defined in: [config/village-events.ts:94](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L94)
+Defined in: [config/village-events.ts:94](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L94)
 
 village.path.cta.clicked
 Fired when a CTA (e.g., "Send Intro", "Save to CRM") is clicked.
@@ -153,7 +153,7 @@ Village.on(VillageEvents.pathCtaClicked, ({ cta }) => {
 
 > **updated**: [`PathCTA`](../../global/interfaces/PathCTA.md)[]
 
-Defined in: [config/village-events.ts:178](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L178)
+Defined in: [config/village-events.ts:178](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L178)
 
 village.paths_cta.updated
 Fired when the list of available CTAs changes.
@@ -164,7 +164,7 @@ Fired when the list of available CTAs changes.
 
 > **failed**: `object`
 
-Defined in: [config/village-events.ts:132](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L132)
+Defined in: [config/village-events.ts:132](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L132)
 
 village.user.sync.failed
 Fired when user sync fails (e.g., expired token, server error).
@@ -179,7 +179,7 @@ Fired when user sync fails (e.g., expired token, server error).
 
 > **synced**: `object`
 
-Defined in: [config/village-events.ts:123](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L123)
+Defined in: [config/village-events.ts:123](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L123)
 
 village.user.synced
 Fired when a user's network has been successfully flattened.
@@ -198,7 +198,7 @@ Fired when a user's network has been successfully flattened.
 
 > **error**: `object`
 
-Defined in: [config/village-events.ts:162](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L162)
+Defined in: [config/village-events.ts:162](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L162)
 
 village.widget.error
 Fired when an internal error occurs in the widget.
@@ -221,7 +221,7 @@ Fired when an internal error occurs in the widget.
 
 > **ready**: `void`
 
-Defined in: [config/village-events.ts:172](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L172)
+Defined in: [config/village-events.ts:172](https://github.com/VillageHQ/village-widget-sdk/blob/878b7483cb7e9cc537ac6cb964092444b8732ec3/config/village-events.ts#L172)
 
 village.widget.ready
 Fired when the widget finishes initializing.
