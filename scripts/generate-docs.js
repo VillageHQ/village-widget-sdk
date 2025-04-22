@@ -1,14 +1,19 @@
-// scripts/generate-docs.js
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
-const docsDir = 'docs';
+const markdownOut = 'docs';
+const htmlOut = 'docs-html';
 
-// Run TypeDoc
-function runTypeDoc() {
-  console.log('🔄 Running TypeDoc...');
-  execSync('npx typedoc', { stdio: 'inherit' });
+// Run TypeDoc with custom options
+function runTypeDocMarkdown() {
+  console.log('📝 Generating Markdown docs...');
+  execSync(`npx typedoc --out ${markdownOut} --plugin typedoc-plugin-markdown`, { stdio: 'inherit' });
+}
+
+function runTypeDocHTML() {
+  console.log('🌐 Generating HTML docs...');
+  execSync(`npx typedoc --out ${htmlOut}`, { stdio: 'inherit' });
 }
 
 // Recursively generate the sidebar based on .md files
@@ -42,39 +47,15 @@ function generateSidebar(dir, basePath = '') {
 
 // Create mint.json inside the docs folder
 function writeMintJson(sidebar) {
-  const mintJsonPath = path.join(docsDir, 'mint.json');
+  const mintJsonPath = path.join(markdownOut, 'mint.json');
   const json = { sidebar };
   fs.writeFileSync(mintJsonPath, JSON.stringify(json, null, 2));
   console.log(`✅ mint.json generated at ./${mintJsonPath}`);
 }
 
-// (continua a partir do seu código anterior)
-function createIndexMarkdown(sidebar) {
-  let content = `# 📚 Village Widget SDK – Documentation Index\n\n`;
-
-  function addLinks(items, level = 2) {
-    for (const item of items) {
-      if (item.link) {
-        const label = item.label.replace(/-/g, ' ');
-        content += `- [${label}](${item.link})\n`;
-      } else if (item.children) {
-        content += `\n${'#'.repeat(level)} ${item.label}\n\n`;
-        addLinks(item.children, level + 1);
-      }
-    }
-  }
-
-  addLinks(sidebar);
-
-  const indexPath = path.join(docsDir, 'index.md');
-  fs.writeFileSync(indexPath, content);
-  console.log(`✅ index.md generated at ./${indexPath}`);
-}
-
-
-// Run everything
-runTypeDoc();
-const sidebar = generateSidebar(docsDir);
+// Run all
+runTypeDocMarkdown();
+runTypeDocHTML();
+const sidebar = generateSidebar(markdownOut);
 writeMintJson(sidebar);
-createIndexMarkdown(sidebar);
-console.log('✅ Docs ready for Mintlify in ./docs');
+console.log('✅ Markdown and HTML docs are ready');
