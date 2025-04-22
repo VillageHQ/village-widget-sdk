@@ -16,7 +16,7 @@ function runTypeDocMarkdown() {
 // Run TypeDoc with default HTML theme
 function runTypeDocHTML() {
   console.log('🌐 Generating HTML docs...');
-  execSync(`npx typedoc --out ${htmlOut} `, { stdio: 'inherit' });
+  execSync(`npx typedoc --out ${htmlOut} --readme README.md`, { stdio: 'inherit' });
 }
 
 // Recursively generate the sidebar based on .md files

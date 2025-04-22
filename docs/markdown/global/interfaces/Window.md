@@ -26,7 +26,7 @@ A window containing a DOM document; the document property points to the DOM docu
 
 > `optional` **Village**: `object`
 
-Defined in: [config/global.d.ts:39](https://github.com/VillageHQ/village-widget-sdk/blob/78c5c62f1e747897e4c96cd85e80875c22bbd40b/config/global.d.ts#L39)
+Defined in: [config/global.d.ts:39](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/global.d.ts#L39)
 
 #### authorize()?
 

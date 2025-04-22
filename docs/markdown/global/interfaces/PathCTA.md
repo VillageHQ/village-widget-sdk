@@ -6,7 +6,7 @@
 
 # Interface: PathCTA
 
-Defined in: [config/global.d.ts:13](https://github.com/VillageHQ/village-widget-sdk/blob/78c5c62f1e747897e4c96cd85e80875c22bbd40b/config/global.d.ts#L13)
+Defined in: [config/global.d.ts:13](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/global.d.ts#L13)
 
 Represents a Call-To-Action (CTA) button rendered in the widget UI.
 
@@ -16,7 +16,7 @@ Represents a Call-To-Action (CTA) button rendered in the widget UI.
 
 > **callback**: () => `void`
 
-Defined in: [config/global.d.ts:18](https://github.com/VillageHQ/village-widget-sdk/blob/78c5c62f1e747897e4c96cd85e80875c22bbd40b/config/global.d.ts#L18)
+Defined in: [config/global.d.ts:18](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/global.d.ts#L18)
 
 Function to execute when the button is clicked
 
@@ -30,7 +30,7 @@ Function to execute when the button is clicked
 
 > **label**: `string`
 
-Defined in: [config/global.d.ts:15](https://github.com/VillageHQ/village-widget-sdk/blob/78c5c62f1e747897e4c96cd85e80875c22bbd40b/config/global.d.ts#L15)
+Defined in: [config/global.d.ts:15](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/global.d.ts#L15)
 
 Visible label for the button (e.g. "Save to CRM")
 
@@ -40,7 +40,7 @@ Visible label for the button (e.g. "Save to CRM")
 
 > `optional` **style**: `CSSProperties`
 
-Defined in: [config/global.d.ts:24](https://github.com/VillageHQ/village-widget-sdk/blob/78c5c62f1e747897e4c96cd85e80875c22bbd40b/config/global.d.ts#L24)
+Defined in: [config/global.d.ts:24](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/global.d.ts#L24)
 
 Optional inline style to apply to the CTA.
 Compatible with React-style CSSProperties.
