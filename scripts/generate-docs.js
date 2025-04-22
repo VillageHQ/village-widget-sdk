@@ -32,7 +32,7 @@ function generateSidebar(dir, basePath = '') {
     } else if (file.name.endsWith('.md')) {
       entries.push({
         label: file.name.replace(/\.md$/, ''),
-        link: `/${relativePath.replace(/\\/g, '/')}`
+        link: `${relativePath.replace(/\\/g, '/')}`
       });
     }
   }

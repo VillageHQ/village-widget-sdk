@@ -8,28 +8,28 @@
           "children": [
             {
               "label": "PathCTA",
-              "link": "/global/interfaces/PathCTA.md"
+              "link": "global/interfaces/PathCTA.md"
             },
             {
               "label": "VillageInitOptions",
-              "link": "/global/interfaces/VillageInitOptions.md"
+              "link": "global/interfaces/VillageInitOptions.md"
             },
             {
               "label": "Window",
-              "link": "/global/interfaces/Window.md"
+              "link": "global/interfaces/Window.md"
             }
           ]
         },
         {
           "label": "README",
-          "link": "/global/README.md"
+          "link": "global/README.md"
         },
         {
           "label": "variables",
           "children": [
             {
               "label": "Window",
-              "link": "/global/variables/Window.md"
+              "link": "global/variables/Window.md"
             }
           ]
         }
@@ -40,24 +40,24 @@
       "children": [
         {
           "label": "README",
-          "link": "/index/README.md"
+          "link": "index/README.md"
         }
       ]
     },
     {
       "label": "modules",
-      "link": "/modules.md"
+      "link": "modules.md"
     },
     {
       "label": "README",
-      "link": "/README.md"
+      "link": "README.md"
     },
     {
       "label": "typings",
       "children": [
         {
           "label": "README",
-          "link": "/typings/README.md"
+          "link": "typings/README.md"
         }
       ]
     },
@@ -69,24 +69,24 @@
           "children": [
             {
               "label": "VillageEventMap",
-              "link": "/village-events/interfaces/VillageEventMap.md"
+              "link": "village-events/interfaces/VillageEventMap.md"
             },
             {
               "label": "VillagePerson",
-              "link": "/village-events/interfaces/VillagePerson.md"
+              "link": "village-events/interfaces/VillagePerson.md"
             }
           ]
         },
         {
           "label": "README",
-          "link": "/village-events/README.md"
+          "link": "village-events/README.md"
         },
         {
           "label": "type-aliases",
           "children": [
             {
               "label": "VillageEventName",
-              "link": "/village-events/type-aliases/VillageEventName.md"
+              "link": "village-events/type-aliases/VillageEventName.md"
             }
           ]
         },
@@ -95,7 +95,7 @@
           "children": [
             {
               "label": "VillageEvents",
-              "link": "/village-events/variables/VillageEvents.md"
+              "link": "village-events/variables/VillageEvents.md"
             }
           ]
         }
