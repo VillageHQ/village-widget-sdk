@@ -4,6 +4,11 @@
     "./config/"
   ],
   "compilerOptions": {    
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "outDir": "./dist",
     "allowJs": true,
     "checkJs": true,
     "target": "es2016", 
