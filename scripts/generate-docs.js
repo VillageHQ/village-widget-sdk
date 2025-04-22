@@ -1,19 +1,22 @@
+// scripts/generate-docs.js
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
-const markdownOut = 'docs';
-const htmlOut = 'docs-html';
+const baseOut = 'docs';
+const markdownOut = path.join(baseOut, 'markdown');
+const htmlOut = path.join(baseOut, 'html');
 
-// Run TypeDoc with custom options
+// Run TypeDoc with Markdown plugin
 function runTypeDocMarkdown() {
   console.log('📝 Generating Markdown docs...');
   execSync(`npx typedoc --out ${markdownOut} --plugin typedoc-plugin-markdown`, { stdio: 'inherit' });
 }
 
+// Run TypeDoc with default HTML theme
 function runTypeDocHTML() {
   console.log('🌐 Generating HTML docs...');
-  execSync(`npx typedoc --out ${htmlOut}`, { stdio: 'inherit' });
+  execSync(`npx typedoc --out ${htmlOut} `, { stdio: 'inherit' });
 }
 
 // Recursively generate the sidebar based on .md files
@@ -45,7 +48,7 @@ function generateSidebar(dir, basePath = '') {
   return entries;
 }
 
-// Create mint.json inside the docs folder
+// Create mint.json inside markdown directory
 function writeMintJson(sidebar) {
   const mintJsonPath = path.join(markdownOut, 'mint.json');
   const json = { sidebar };
@@ -58,4 +61,4 @@ runTypeDocMarkdown();
 runTypeDocHTML();
 const sidebar = generateSidebar(markdownOut);
 writeMintJson(sidebar);
-console.log('✅ Markdown and HTML docs are ready');
+console.log('✅ Markdown and HTML docs generated in ./docs/');

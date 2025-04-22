@@ -8,5 +8,4 @@
   "excludeInternal": true,
   "includeVersion": true,
   "name": "Village Widget SDK",
-  "plugin": ["typedoc-plugin-markdown"]
 }
