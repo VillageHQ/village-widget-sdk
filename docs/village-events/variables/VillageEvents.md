@@ -8,7 +8,7 @@
 
 > `const` **VillageEvents**: `object`
 
-Defined in: [config/village-events.ts:19](https://github.com/VillageHQ/village-widget-sdk/blob/3216cd563b90dd616d242b1c1467581d440f1dc3/config/village-events.ts#L19)
+Defined in: [config/village-events.ts:19](https://github.com/VillageHQ/village-widget-sdk/blob/61ee6bc8cf3fcfb769bc5a538019322663dc225c/config/village-events.ts#L19)
 
 A registry of all supported Village SDK event constants.
 

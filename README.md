@@ -13,9 +13,7 @@ A type‑safe, embeddable JavaScript widget for Village integrations, including 
    - [Listening to Events](#listening-to-events)  
 3. [Development](#development)  
 4. [Deployment](#deployment)  
-5. [Output Paths](#output-paths)  
-6. [Available Events](#available-events)  
-7. [Maintainer](#maintainer)
+5. [Available Events](#available-events)
 
 ---
 
@@ -121,4 +119,5 @@ npm run deploy  # Bump version, build & publish
 | `village.oauth.error`       | OAuth flow failed                              | `{ error }`                  |
 | `village.widget.error`      | Internal widget error                          | `{ message, source, details }` |
 
----
+
+

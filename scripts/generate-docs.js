@@ -48,8 +48,33 @@ function writeMintJson(sidebar) {
   console.log(`✅ mint.json generated at ./${mintJsonPath}`);
 }
 
+// (continua a partir do seu código anterior)
+function createIndexMarkdown(sidebar) {
+  let content = `# 📚 Village Widget SDK – Documentation Index\n\n`;
+
+  function addLinks(items, indent = 0) {
+    for (const item of items) {
+      const prefix = '  '.repeat(indent) + '- ';
+      if (item.link) {
+        const label = item.label.replace(/-/g, ' ');
+        content += `${prefix}[${label}](${item.link})\n`;
+      } else if (item.children) {
+        content += `\n${'  '.repeat(indent)}## ${item.label}\n`;
+        addLinks(item.children, indent + 1);
+      }
+    }
+  }
+
+  addLinks(sidebar);
+
+  const indexPath = path.join(docsDir, 'index.md');
+  fs.writeFileSync(indexPath, content);
+  console.log(`✅ index.md generated at ./${indexPath}`);
+}
+
 // Run everything
 runTypeDoc();
 const sidebar = generateSidebar(docsDir);
 writeMintJson(sidebar);
+createIndexMarkdown(sidebar);
 console.log('✅ Docs ready for Mintlify in ./docs');
