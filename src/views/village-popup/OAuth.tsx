@@ -1,16 +1,20 @@
-import { GoogleButton } from "@/components/LoginButton";
-import { useAuth } from "@/context/AuthContext";
-import { useQuery } from "@/hooks/useQuery";
-import { useCheckAuthorization } from "@/services/api/partner/usePartner";
-import { GOOGLE_CLIENT_ID } from "@/utils/consts";
+import {
+  GoogleButton,
+  useAuth,
+  useQuery,
+  useCheckAuthorization,
+  GOOGLE_CLIENT_ID,
+  api
+} from "village-monorepo";
+
 import { Box, Spinner } from "@chakra-ui/react";
 import Cookies from "js-cookie";
 import { useEffect } from "react";
-import { messageFromPopupToPage } from "../../utils/cross-origin-communication";
+//import { messageFromPopupToPage } from "../../utils/cross-origin-communication";
 import { PartnerAuthorizeView } from "./PartnerAuthorize";
 import { PopupWrapper } from "./PopupWrapper";
-import api from "@/services/api";
 import { useMutation } from "@tanstack/react-query";
+import React from "react";
 
 const tryCloseWindow = () => {
   // Try to close the popup after a short delay (ensures postMessage is sent first)
@@ -141,7 +145,7 @@ export function OAuthView() {
 
   return (
     <Box
-      sx={{
+      style={{
         width: "100dvw",
         height: "100dvh",
         display: "flex",
@@ -150,7 +154,7 @@ export function OAuthView() {
       }}
     >
       <Box
-        sx={{
+        style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

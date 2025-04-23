@@ -1,12 +1,12 @@
 {
   
   "include": [
-    "./config/"
+    "src/config"
   ],
   "compilerOptions": {    
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["*"]
     },
     "outDir": "./dist",
     "allowJs": true,

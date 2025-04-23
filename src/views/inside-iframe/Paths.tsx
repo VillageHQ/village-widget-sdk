@@ -1,14 +1,30 @@
-import { PathsModalHeader, PathsResults } from "@/components/PathsModal";
+import {
+  GoogleButton,
+  useAuth,
+  useCheckAuthorization,
+  GOOGLE_CLIENT_ID,
+  api,
+  CompaniesSearch,
+  PeopleSearch,
+  SelectableBadge,
+  PeopleModalsProvider,
+  SearchInput,
+  Button,
+  usePartner,
+  PathsModalHeader, 
+  PathsResults,
+  CompanyModal,
+  BasicModal,
+  MessagesLoader,
+} from "village-monorepo";
+
+
 import { Box, Button as ChakraButton, Text, chakra } from "@chakra-ui/react";
+import React from "react";
 import { FaArrowLeft, FaSearch } from "react-icons/fa";
 import { useWidgetView, ViewTypes } from "./context";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/services/api";
-import CompanyModal from "@/components/CompanyModal";
-import { BasicModal } from "@/components/BasicModal";
-import { MessagesLoader } from "@/components/MessagesLoader";
-import { Button } from "@/components/ui/button";
 import { modalSizeAtom } from "./atoms";
 import { useSetAtom } from "jotai";
 import { SearchIcon } from "lucide-react";
@@ -41,7 +57,7 @@ export function PathsView({ url: propsUrl, onBack }) {
 
   useEffect(() => {
     if (relationship) {
-      if (!isPerson && !relationship?.people?.length > 0) {
+      if (!isPerson && !(relationship?.people?.length)) {
         setView(ViewTypes.ONBOARDING, {
           message: "NO_PATHS",
         });
@@ -120,9 +136,11 @@ export function PathsView({ url: propsUrl, onBack }) {
         >
           <ChakraButton
             background="transparent"
-            leftIcon={<FaArrowLeft />}
             onClick={() => setCurrentUrl(url)}
           >
+            <Box as="span" mr={2}>
+              <FaArrowLeft />
+            </Box>
             Back
           </ChakraButton>
         </BasicModal.Footer>

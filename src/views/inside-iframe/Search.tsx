@@ -1,18 +1,26 @@
-import { CompaniesSearch } from "@/components/Search/CompaniesSearch";
-import { PeopleSearch } from "@/components/Search/PeopleSearch";
-import { SelectableBadge } from "@/components/SelectableBadge";
+import {
+  GoogleButton,
+  useAuth,
+  useQuery,
+  useCheckAuthorization,
+  GOOGLE_CLIENT_ID,
+  api,
+  CompaniesSearch,
+  PeopleSearch,
+  SelectableBadge,
+  PeopleModalsProvider,
+  SearchInput,
+  Button,
+  usePartner
+} from "village-monorepo";
+
 import { useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { modalSizeAtom } from "./atoms";
-import { PeopleModalsProvider } from "@/views/Network/context/PeopleModals";
-import { SearchInput } from "@/components/Search/components/SearchInput";
-import { useQuery } from "@/hooks/useQuery";
 import Cookies from "js-cookie";
-import { useAuth } from "@/context/AuthContext";
 import { messageFromIframeToPage } from "../../utils/cross-origin-communication";
-import { Button } from "@/components/ui/button";
 import { Box, Text } from "@chakra-ui/react";
-import { usePartner } from "@/services/api/partner/usePartner";
+import React from "react";
 
 export function SearchView() {
   const setModalSize = useSetAtom(modalSizeAtom);

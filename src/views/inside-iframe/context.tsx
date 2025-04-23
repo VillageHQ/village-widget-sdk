@@ -1,8 +1,25 @@
-import { useAuth } from "@/context/AuthContext";
-import { useQuery } from "@/hooks/useQuery";
+import {
+  GoogleButton,
+  useAuth,
+  useCheckAuthorization,
+  GOOGLE_CLIENT_ID,
+  api,
+  CompaniesSearch,
+  PeopleSearch,
+  SelectableBadge,
+  PeopleModalsProvider,
+  SearchInput,
+  useQuery,
+  usePartner,
+  PathsModalHeader, 
+  PathsResults,
+  CompanyModal,
+  BasicModal,
+  MessagesLoader,
+} from "village-monorepo";
+
 import Cookies from "js-cookie";
 import React, { createContext, useContext, useState } from "react";
-import { usePartner } from "../../../../services/api/partner/usePartner";
 import { messageFromIframeToPage } from "../../utils/cross-origin-communication";
 
 export const ViewTypes = {
@@ -60,7 +77,7 @@ export function WidgetViewProvider({ children }: WidgetViewProviderProps) {
     const targetEntity = search.get("targetEntity");
     const targetValue = search.get("targetValue");
 
-    let url = null;
+    let url: string | null = null;
 
     if (urlFromParams) {
       url = decodeURIComponent(urlFromParams);

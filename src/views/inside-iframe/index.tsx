@@ -1,3 +1,25 @@
+import {
+  GoogleButton,
+  useAuth,
+  useCheckAuthorization,
+  GOOGLE_CLIENT_ID,
+  api,
+  CompaniesSearch,
+  PeopleSearch,
+  SelectableBadge,
+  PeopleModalsProvider,
+  SearchInput,
+  Button,
+  usePartner,
+  PathsModalHeader, 
+  PathsResults,
+  CompanyModal,
+  BasicModal,
+  useQuery,
+} from "village-monorepo";
+
+
+import React from "react";
 import { Box, Spinner } from "@chakra-ui/react";
 import { OnboardingView } from "./Onboarding";
 import { PartnerEducationalView } from "./PartnerEducational";
@@ -5,11 +27,9 @@ import { PathsView } from "./Paths";
 import { ViewTypes, WidgetViewProvider, useWidgetView } from "./context";
 import { useEffect } from "react";
 import { messageFromIframeToPage } from "../../utils/cross-origin-communication";
-import { BasicModal } from "@/components/BasicModal";
 import { useAtomValue } from "jotai";
 import { modalSizeAtom } from "./atoms";
 import { SearchModule } from "./Search";
-import { useQuery } from "@/hooks/useQuery";
 
 function WidgetModal() {
   const { isWidgetOpen, closeWidget, currentView, setView, viewData } =
@@ -23,7 +43,7 @@ function WidgetModal() {
         return (
           <BasicModal.Body>
             <Box
-              sx={{
+              style={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
@@ -43,7 +63,7 @@ function WidgetModal() {
       case ViewTypes.ONBOARDING:
         return <OnboardingView />;
       case ViewTypes.PATHS:
-        return <PathsView onBack={() => setView("onboarding")} />;
+        return <PathsView onBack={() => setView("onboarding")} url={undefined} />;
       default:
         return null;
     }

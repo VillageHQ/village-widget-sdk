@@ -1,18 +1,23 @@
 import {
-  Avatar,
+  Avatar as ChakraAvatar,
   AvatarGroup,
   Box,
   Button,
   Image,
-  Stack,
+  StackProps,
   Text,
   chakra,
 } from "@chakra-ui/react";
+
+import { Stack } from "@chakra-ui/react";
+
+
 import { useWidgetView } from "./context";
 import { useEffect } from "react";
 import { modalSizeAtom } from "./atoms";
 import { useSetAtom } from "jotai";
 import { messageFromIframeToPage } from "../../utils/cross-origin-communication";
+import React from "react";
 
 export function PartnerEducationalView() {
   const { partner } = useWidgetView();
@@ -29,11 +34,11 @@ export function PartnerEducationalView() {
     });
 
   return (
-    <Stack spacing={12} textAlign="center" p={6}>
-      <Stack spacing={2}>
-        <AvatarGroup size="md" max={2} spacing="-0.5rem" m="0 auto">
-          <Avatar src={partner?.logo} name={partner?.title} />
-          <Avatar src="/logo-square.png" name="Village" />
+    <Stack textAlign="center" p={6} spaceX={12} spaceY={12}>
+      <Stack spaceX={2} spaceY={2}>
+        <AvatarGroup size="md" maxW={2} margin="0 auto">
+          <ChakraAvatar src={partner?.logo} name={partner?.title} />
+          <ChakraAvatar src="/logo-square.png" name="Village" />
         </AvatarGroup>
         <Text fontSize="xl">
           {partner?.title} uses <strong>Village</strong> to securely analyze
@@ -42,13 +47,11 @@ export function PartnerEducationalView() {
       </Stack>
 
       <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexGrow: 1,
-          minHeight: 0,
-        }}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        flexGrow={1}
+        minHeight={0}
       >
         <Image
           src="/network-image.webp"
@@ -58,7 +61,7 @@ export function PartnerEducationalView() {
         />
       </Box>
 
-      <Stack spacing={4}>
+      <Stack spaceX={4} spaceY={4}>
         <Text fontSize="sm">
           By continuing, you agree to Village's{" "}
           <chakra.a

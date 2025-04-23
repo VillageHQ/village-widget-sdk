@@ -56,12 +56,12 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        "@": path.resolve(__dirname), // Shortcut for project root
+        "@": path.resolve(__dirname, "src"),  // Shortcut for project root
       },
     },
     build: {
       rollupOptions: {
-        input: path.resolve(__dirname, "index.js"),
+        input: path.resolve(__dirname, "src/index.js"),
         output: {
           format: "iife", // Immediately Invoked Function Expression for browser compatibility
           name: "Village", // Global variable name for the widget
