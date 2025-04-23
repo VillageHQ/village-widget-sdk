@@ -1,5 +1,5 @@
 {
-  "name": "@villagehq/widget-sdk",
+  "name": "village-widget-sdk",
   "type": "module",
   "publishConfig": {
     "access": "public"
