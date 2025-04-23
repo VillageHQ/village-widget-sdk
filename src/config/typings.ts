@@ -1,3 +1,3 @@
 // src/typings.ts
 
-/// <reference path="./global.d.ts" />
+/// <reference path="./global-types.ts" />
