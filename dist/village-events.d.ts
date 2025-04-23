@@ -1,3 +1,4 @@
+import { PathCTA } from "./global-types";
 /**
  * A registry of all supported Village SDK event constants.
  *
