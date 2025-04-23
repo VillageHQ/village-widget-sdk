@@ -7,8 +7,11 @@ export interface PathCTA {
   /** Visible label for the button (e.g. "Save to CRM") */
   label: string;
 
-  /** Function to execute when the button is clicked */
-  callback: () => void;
+  /**
+   * Function to execute when the button is clicked.
+   * Can receive any arguments passed from the widget runtime.
+   */
+  callback: (...args: any[]) => void;
 
   /**
    * Optional inline style to apply to the CTA.
@@ -16,6 +19,7 @@ export interface PathCTA {
    */
   style?: React.CSSProperties;
 }
+
 
 /**
  * Configuration options accepted by the Village widget when calling `Village.init(...)`.
