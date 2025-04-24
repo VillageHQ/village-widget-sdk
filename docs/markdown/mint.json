@@ -1,37 +1,28 @@
 {
   "sidebar": [
     {
-      "label": "global",
+      "label": "global-types",
       "children": [
         {
           "label": "interfaces",
           "children": [
             {
               "label": "PathCTA",
-              "link": "global/interfaces/PathCTA.md"
+              "link": "global-types/interfaces/PathCTA.md"
             },
             {
               "label": "VillageInitOptions",
-              "link": "global/interfaces/VillageInitOptions.md"
+              "link": "global-types/interfaces/VillageInitOptions.md"
             },
             {
               "label": "Window",
-              "link": "global/interfaces/Window.md"
+              "link": "global-types/interfaces/Window.md"
             }
           ]
         },
         {
           "label": "README",
-          "link": "global/README.md"
-        },
-        {
-          "label": "variables",
-          "children": [
-            {
-              "label": "Window",
-              "link": "global/variables/Window.md"
-            }
-          ]
+          "link": "global-types/README.md"
         }
       ]
     },

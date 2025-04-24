@@ -1,4 +1,4 @@
-[**Village Widget SDK v0.0.47**](../../README.md)
+[**Village Widget SDK v1.0.47**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: VillagePerson
 
-Defined in: [config/village-events.ts:65](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L65)
+Defined in: [village-events.ts:67](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L67)
 
 Basic person object used in paths and network data.
 
@@ -16,7 +16,7 @@ Basic person object used in paths and network data.
 
 > `optional` **avatar**: `string`
 
-Defined in: [config/village-events.ts:71](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L71)
+Defined in: [village-events.ts:73](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L73)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [config/village-events.ts:71](https://github.com/VillageHQ/village-w
 
 > **first\_name**: `string`
 
-Defined in: [config/village-events.ts:68](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L68)
+Defined in: [village-events.ts:70](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L70)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [config/village-events.ts:68](https://github.com/VillageHQ/village-w
 
 > **full\_name**: `string`
 
-Defined in: [config/village-events.ts:70](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L70)
+Defined in: [village-events.ts:72](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L72)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [config/village-events.ts:70](https://github.com/VillageHQ/village-w
 
 > **id**: `string`
 
-Defined in: [config/village-events.ts:66](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L66)
+Defined in: [village-events.ts:68](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L68)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [config/village-events.ts:66](https://github.com/VillageHQ/village-w
 
 > **identity\_id**: `string`
 
-Defined in: [config/village-events.ts:67](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L67)
+Defined in: [village-events.ts:69](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L69)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [config/village-events.ts:67](https://github.com/VillageHQ/village-w
 
 > **last\_name**: `string`
 
-Defined in: [config/village-events.ts:69](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L69)
+Defined in: [village-events.ts:71](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L71)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [config/village-events.ts:69](https://github.com/VillageHQ/village-w
 
 > `optional` **linkedin\_identifier**: `string`
 
-Defined in: [config/village-events.ts:72](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L72)
+Defined in: [village-events.ts:74](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L74)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [config/village-events.ts:72](https://github.com/VillageHQ/village-w
 
 > `optional` **linkedin\_url**: `string`
 
-Defined in: [config/village-events.ts:73](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L73)
+Defined in: [village-events.ts:75](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L75)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [config/village-events.ts:73](https://github.com/VillageHQ/village-w
 
 > `optional` **summary**: `string`
 
-Defined in: [config/village-events.ts:74](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L74)
+Defined in: [village-events.ts:76](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L76)
 
 ***
 
@@ -88,4 +88,4 @@ Defined in: [config/village-events.ts:74](https://github.com/VillageHQ/village-w
 
 > `optional` **village\_person\_url**: `string`
 
-Defined in: [config/village-events.ts:75](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L75)
+Defined in: [village-events.ts:77](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L77)

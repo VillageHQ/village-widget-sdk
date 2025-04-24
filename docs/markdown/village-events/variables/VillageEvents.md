@@ -1,4 +1,4 @@
-[**Village Widget SDK v0.0.47**](../../README.md)
+[**Village Widget SDK v1.0.47**](../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > `const` **VillageEvents**: `object`
 
-Defined in: [config/village-events.ts:19](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/village-events.ts#L19)
+Defined in: [village-events.ts:21](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L21)
 
 A registry of all supported Village SDK event constants.
 

@@ -2,6 +2,9 @@
   "include": [
     "src/config"
   ],
+  "typedocOptions": {
+    "entryPoints": ["src/config"],
+  },
   "compilerOptions": {
     "baseUrl": "./src",
     "paths": {

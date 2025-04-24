@@ -1,3 +1,8 @@
+/**
+ * @deprecated This file appears to be unused.
+ * Please validate before deleting. Marked by Daniel Neto.
+ */
+
 export const messageFromPopupToPage = (message) => {
   if (!window.opener) {
     alert("Sorry, something went wrong. Please restart and try again.");

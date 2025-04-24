@@ -68,6 +68,7 @@ export default defineConfig(({ mode }) => {
           dir: outputDir, // Output directory
           entryFileNames: isWatch ? path.basename(devFileFullPath) : "index.js", // Use custom filename in watch mode
           extend: true, // Extend global variable instead of overwriting
+          exports: 'named',
         },
       },
       watch: isWatch ? {} : null,

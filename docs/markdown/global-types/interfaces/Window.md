@@ -1,24 +1,14 @@
-[**Village Widget SDK v0.0.47**](../../README.md)
+[**Village Widget SDK v1.0.47**](../../README.md)
 
 ***
 
-[Village Widget SDK](../../modules.md) / [global](../README.md) / Window
+[Village Widget SDK](../../modules.md) / [global-types](../README.md) / Window
 
 # Interface: Window
 
-Defined in: node\_modules/typescript/lib/lib.dom.d.ts:26913
+Defined in: [global-types.ts:35](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L35)
 
-A window containing a DOM document; the document property points to the DOM document loaded in that window.
-
-[MDN Reference](https://developer.mozilla.org/docs/Web/API/Window)
-
-## Extends
-
-- `EventTarget`.`AnimationFrameProvider`.`GlobalEventHandlers`.`WindowEventHandlers`.`WindowLocalStorage`.`WindowOrWorkerGlobalScope`.`WindowSessionStorage`
-
-## Indexable
-
-\[`index`: `number`\]: `Window`
+Extension of the browser `window` object to include the `Village` SDK.
 
 ## Properties
 
@@ -26,7 +16,7 @@ A window containing a DOM document; the document property points to the DOM docu
 
 > `optional` **Village**: `object`
 
-Defined in: [config/global.d.ts:39](https://github.com/VillageHQ/village-widget-sdk/blob/86cfd96e28460c83fceb46b43e5203c7ff1d1e74/config/global.d.ts#L39)
+Defined in: [global-types.ts:36](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L36)
 
 #### authorize()?
 

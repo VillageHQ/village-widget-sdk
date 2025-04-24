@@ -1,4 +1,4 @@
-**Village Widget SDK v0.0.47**
+**Village Widget SDK v1.0.47**
 
 ***
 
