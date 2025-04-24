@@ -30,12 +30,3 @@ jobs:
 
       - name: Generate documentation
         run: npm run docs
-
-      - name: Commit and push updated docs
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b update-docs || git checkout update-docs
-          git add docs
-          git commit -m "chore(docs): auto-generate [skip ci]" || echo "No changes to commit"
-          git push origin update-docs
