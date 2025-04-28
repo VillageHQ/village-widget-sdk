@@ -81,7 +81,6 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: "jsdom", // Simulate browser-like DOM environment
       globals: true, // Enable global functions like `describe`, `it`, `expect` without imports
-      setupFiles: "./__tests__/setup.ts", // Path to global setup file
       coverage: {
         reporter: ["text", "html"], // Output test coverage to terminal and HTML file
       },
