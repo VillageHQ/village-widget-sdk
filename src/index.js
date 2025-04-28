@@ -194,3 +194,5 @@ import { on, emit } from "./sdk-wrapper";
     window.__village_message_listener_attached__ = true;
   }
 })(window);
+
+export default window.Village;
