@@ -2,11 +2,10 @@ import path from "path";
 import fs from "fs";
 import { defineConfig } from "vitest/config";
 import { loadEnv } from "vite";
+
 const pkg = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, "./package.json"), "utf-8")
 );
-
-
 
 export default defineConfig(({ mode }) => {
   // Load environment variables from .env based on the current mode
@@ -56,24 +55,35 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "src"),  // Shortcut for project root
+        "@": path.resolve(__dirname, "src"), // Shortcut for project root
       },
     },
     build: {
+      lib: {
+        entry: path.resolve(__dirname, "src/index.js"),
+        name: "VillageWidgetSDK",
+        formats: isWatch ? ['iife'] : ['es', 'umd'], // 👈 Dev = iife | Prod = es + umd
+        fileName: (format) => {
+          if (isWatch) {
+            return path.basename(devFileFullPath);
+          }
+          return format === "es" ? "index.es.js" : "index.umd.js";
+        },
+      },
       rollupOptions: {
-        input: path.resolve(__dirname, "src/index.js"),
         output: {
-          format: "iife", // Immediately Invoked Function Expression for browser compatibility
-          name: "Village", // Global variable name for the widget
-          dir: outputDir, // Output directory
-          entryFileNames: isWatch ? path.basename(devFileFullPath) : "index.js", // Use custom filename in watch mode
-          extend: true, // Extend global variable instead of overwriting
+          extend: true,
           exports: 'named',
+          globals: {
+            // Declare external libraries here if needed
+          },
         },
       },
       watch: isWatch ? {} : null,
       minify: !isWatch,
       sourcemap: isWatch,
+      outDir: outputDir,
+      emptyOutDir: !isWatch,
     },
     plugins: isWatch ? [addBannerPlugin] : [],
 

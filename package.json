@@ -5,7 +5,12 @@
     "access": "public"
   },
   "version": "1.0.47",
-  "main": "dist/index.js",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "exports": {
+    "import": "./dist/index.es.js",
+    "require": "./dist/index.umd.js"
+  },
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -19,7 +24,7 @@
     "test:watch": "vitest",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "format": "prettier --write .",
-    "check:bundle": "npm run build && node --check dist/index.js",
+    "check:bundle": "npm run build && node --check dist/index.es.js",
     "docs": "node scripts/generate-docs.js"
   },
   "dependencies": {
