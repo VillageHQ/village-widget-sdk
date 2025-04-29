@@ -8,41 +8,46 @@ const pkg = JSON.parse(
 );
 
 export default defineConfig(({ mode }) => {
-  // Load environment variables from .env based on the current mode
-  const env = loadEnv(mode, process.cwd(), "");
-
-  // Detect if the --watch flag is present (used in dev mode)
   const isWatch = process.argv.includes("--watch");
 
-  /**
-   * Full path where the development bundle is written when using `--watch`.
-   * Can be overridden using VITE_WIDGET_DEV_PATH in .env file.
-   */
+  // 👉 Manually load the correct .env file (force development or production)
+  const envFile = isWatch
+    ? path.resolve(process.cwd(), ".env.development")
+    : path.resolve(process.cwd(), ".env.production");
+
+  const parsedEnv = fs.existsSync(envFile)
+    ? Object.fromEntries(
+        fs
+          .readFileSync(envFile, "utf-8")
+          .split("\n")
+          .filter(line => line.trim() && !line.startsWith("#"))
+          .map(line => {
+            const [key, ...value] = line.split("=");
+            return [key.trim(), value.join("=").trim()];
+          })
+      )
+    : {};
+
+  // Full path for the dev bundle
   const devFileFullPath =
-    env.VITE_WIDGET_DEV_PATH ??
+    parsedEnv.VITE_WIDGET_DEV_PATH ??
     path.resolve(__dirname, "./dist/dev/index-dev.js");
 
-  // Set output directory: use target file's directory for watch mode, else use local dist/
+  // Output directory depending on mode
   const outputDir = isWatch
     ? path.resolve(__dirname, "dist/dev")
     : path.resolve(__dirname, "dist/prod");
 
-
-  /**
-   * Custom plugin to prepend deployment banner (date + version) at the top of the dev bundle.
-   * Runs only when using --watch mode.
-   */
+  // Custom plugin to add a deployment banner to the generated files
   const addBannerPlugin = {
     name: "add-banner-comment",
-    writeBundle(options) {
+    writeBundle() {
       const deployDate = new Date().toISOString();
       const banner = `// Deployed: ${deployDate}\n// Version: ${pkg.version}\n`;
 
       const addBanner = (filePath) => {
         if (fs.existsSync(filePath)) {
           const content = fs.readFileSync(filePath, "utf8");
-
-          // ✅ Check if banner already exists
           if (!content.startsWith("// Deployed:")) {
             fs.writeFileSync(filePath, banner + content);
             console.log(`✅ Banner added to ${filePath}`);
@@ -53,10 +58,8 @@ export default defineConfig(({ mode }) => {
       };
 
       if (isWatch) {
-        // Development mode: target dev file
         addBanner(devFileFullPath);
       } else {
-        // Production mode: target built files
         const prodFiles = [
           path.resolve(outputDir, "index.es.js"),
           path.resolve(outputDir, "index.umd.js"),
@@ -68,25 +71,28 @@ export default defineConfig(({ mode }) => {
     },
   };
 
-
-
   return {
-    // ---------- Vite build settings ----------
     define: {
       global: "window",
-      // Expose the dev file path as a global constant for runtime usage
       __DEV_WIDGET_PATH__: JSON.stringify(devFileFullPath),
+      // ✅ Inject all env variables as import.meta.env.*
+      ...Object.fromEntries(
+        Object.entries(parsedEnv).map(([key, value]) => [
+          `import.meta.env.${key}`,
+          JSON.stringify(value),
+        ])
+      ),
     },
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "src"), // Shortcut for project root
+        "@": path.resolve(__dirname, "src"),
       },
     },
     build: {
       lib: {
         entry: path.resolve(__dirname, "src/index.js"),
         name: "VillageWidgetSDK",
-        formats: isWatch ? ['iife'] : ['es', 'umd'], // 👈 Dev = iife | Prod = es + umd
+        formats: isWatch ? ['iife'] : ['es', 'umd'],
         fileName: (format) => {
           if (isWatch) {
             return path.basename(devFileFullPath);
@@ -98,9 +104,6 @@ export default defineConfig(({ mode }) => {
         output: {
           extend: true,
           exports: 'named',
-          globals: {
-            // Declare external libraries here if needed
-          },
         },
       },
       watch: isWatch ? {} : null,
@@ -110,16 +113,14 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: false,
     },
     plugins: [addBannerPlugin],
-
-    // ---------- Vitest test settings ----------
     test: {
-      environment: "jsdom", // Simulate browser-like DOM environment
-      globals: true, // Enable global functions like `describe`, `it`, `expect` without imports
+      environment: "jsdom",
+      globals: true,
       coverage: {
-        reporter: ["text", "html"], // Output test coverage to terminal and HTML file
+        reporter: ["text", "html"],
       },
       alias: {
-        "@": path.resolve(__dirname, "../../"), // Alias for imports in tests
+        "@": path.resolve(__dirname, "../../"),
       },
     },
   };

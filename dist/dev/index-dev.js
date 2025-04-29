@@ -1,4 +1,4 @@
-// Deployed: 2025-04-29T15:30:39.751Z
+// Deployed: 2025-04-29T15:50:08.365Z
 // Version: 1.0.47
 (function(exports) {
   "use strict";
@@ -25,7 +25,7 @@
     const pathsCtaJson = JSON.stringify(config.paths_cta);
     const encodedPathsCta = encodeURIComponent(pathsCtaJson);
     params.append("paths_cta", encodedPathsCta);
-    return `${"http://localhost:3000"}/widget?${params.toString()}`;
+    return `${void 0}/widget?${params.toString()}`;
   }
   function renderSearchIframeInsideElement(targetElement, params) {
     targetElement.innerHTML = "";
@@ -191,7 +191,7 @@
     }
     handleOAuthRequest(data) {
       const { isAuthorizationFlow } = data;
-      const baseUrl = `${"http://localhost:3000"}/widget/${isAuthorizationFlow ? "resolve-auth" : "oauth"}`;
+      const baseUrl = `${void 0}/widget/${isAuthorizationFlow ? "resolve-auth" : "oauth"}`;
       const params = new URLSearchParams();
       if (this.app.partnerKey) params.append("partnerKey", this.app.partnerKey);
       if (this.app.userReference)
@@ -214,7 +214,7 @@
     handleOAuthSuccess(data) {
       api.set("village.token", data.token, { secure: true, expires: 60 });
       this.app.handleOAuthSuccess(data);
-      const villageOrigin = "http://localhost:3000";
+      const villageOrigin = void 0;
       if (this.app.oauthPopupRef && !this.app.oauthPopupRef.closed) {
         this.app.oauthPopupRef.postMessage(
           { type: "VILLAGE_OAUTH_ACKNOWLEDGED" },
@@ -2690,12 +2690,12 @@ text-align: center;
     mergeConfig
   } = axios;
   const posthogApi = axios.create({
-    baseURL: "https://app.posthog.com"
+    baseURL: void 0
   });
   posthogApi.interceptors.request.use((config) => {
     config.data = {
       ...config.data,
-      api_key: "phc_eM9Ie4T0FvMBXIi5Dg0A9z6L2cT5Y0jY0zsJTQkYB6v"
+      api_key: void 0
     };
     return config;
   });
@@ -2841,7 +2841,7 @@ text-align: center;
       this.inlineSearchIframes = /* @__PURE__ */ new Map();
       this.messageHandlers = new MessageHandlers(this);
       this.moduleHandlers = new ModuleHandlers(this);
-      this.apiUrl = "http://localhost:8000";
+      this.apiUrl = void 0;
       this.hasRenderedButton = false;
     }
     async init() {
@@ -2943,7 +2943,7 @@ text-align: center;
       }
     }
     handleOAuthRequest() {
-      const baseUrl = `${"http://localhost:3000"}/widget/oauth`;
+      const baseUrl = `${void 0}/widget/oauth`;
       const params = new URLSearchParams();
       if (this.partnerKey) params.append("partnerKey", this.partnerKey);
       if (this.userReference) params.append("userReference", this.userReference);

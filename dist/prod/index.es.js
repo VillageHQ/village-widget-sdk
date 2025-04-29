@@ -1,4 +1,4 @@
-// Deployed: 2025-04-29T15:30:43.298Z
+// Deployed: 2025-04-29T15:50:19.092Z
 // Version: 1.0.47
 const H = "village-data-url", j = "village-module", X = {
   SYNC: "sync",
@@ -15,7 +15,7 @@ function Se({
   const o = new URLSearchParams();
   t && o.append("token", t), r && o.append("url", encodeURIComponent(r)), e && o.append("partnerKey", e), n && o.append("userReference", n), s && o.append("module", s);
   const a = JSON.stringify(i.paths_cta), u = encodeURIComponent(a);
-  return o.append("paths_cta", u), `http://localhost:3000/widget?${o.toString()}`;
+  return o.append("paths_cta", u), `undefined/widget?${o.toString()}`;
 }
 function mt(t, e) {
   t.innerHTML = "";
@@ -135,7 +135,7 @@ class Et {
     }
   }
   handleOAuthRequest(e) {
-    const { isAuthorizationFlow: n } = e, r = `http://localhost:3000/widget/${n ? "resolve-auth" : "oauth"}`, s = new URLSearchParams();
+    const { isAuthorizationFlow: n } = e, r = `undefined/widget/${n ? "resolve-auth" : "oauth"}`, s = new URLSearchParams();
     this.app.partnerKey && s.append("partnerKey", this.app.partnerKey), this.app.userReference && s.append("userReference", this.app.userReference);
     const i = s.toString() ? `${r}?${s.toString()}` : r;
     this.app.oauthPopupRef = window.open(
@@ -150,7 +150,7 @@ class Et {
   handleOAuthSuccess(e) {
     I.set("village.token", e.token, { secure: !0, expires: 60 }), this.app.handleOAuthSuccess(e), this.app.oauthPopupRef && !this.app.oauthPopupRef.closed ? (this.app.oauthPopupRef.postMessage(
       { type: "VILLAGE_OAUTH_ACKNOWLEDGED" },
-      "http://localhost:3000"
+      void 0
     ), this.app.oauthPopupRef = null) : this.app.oauthPopupRef = null;
   }
   handleOAuthError(e) {
@@ -1920,11 +1920,11 @@ const {
   getAdapter: br,
   mergeConfig: wr
 } = E, Re = E.create({
-  baseURL: "https://app.posthog.com"
+  baseURL: void 0
 });
 Re.interceptors.request.use((t) => (t.data = {
   ...t.data,
-  api_key: "phc_eM9Ie4T0FvMBXIi5Dg0A9z6L2cT5Y0jY0zsJTQkYB6v"
+  api_key: void 0
 }, t));
 const he = {
   capture: (t, e) => Re.post("/capture", {
@@ -2029,7 +2029,7 @@ class tr {
 }
 class nr {
   constructor(e, n) {
-    this.partnerKey = e, this.userReference = null, this.token = I.get("village.token"), this.config = n, this.url = null, this.module = null, this.iframe = null, this.observer = null, this.inlineSearchIframes = /* @__PURE__ */ new Map(), this.messageHandlers = new Et(this), this.moduleHandlers = new tr(this), this.apiUrl = "http://localhost:8000", this.hasRenderedButton = !1;
+    this.partnerKey = e, this.userReference = null, this.token = I.get("village.token"), this.config = n, this.url = null, this.module = null, this.iframe = null, this.observer = null, this.inlineSearchIframes = /* @__PURE__ */ new Map(), this.messageHandlers = new Et(this), this.moduleHandlers = new tr(this), this.apiUrl = void 0, this.hasRenderedButton = !1;
   }
   async init() {
     this.setupMessageHandlers(), this.setupMutationObserver(), this.scanExistingElements(), this.getUser();
@@ -2104,7 +2104,7 @@ class nr {
       }
   }
   handleOAuthRequest() {
-    const e = "http://localhost:3000/widget/oauth", n = new URLSearchParams();
+    const e = "undefined/widget/oauth", n = new URLSearchParams();
     this.partnerKey && n.append("partnerKey", this.partnerKey), this.userReference && n.append("userReference", this.userReference);
     const r = n.toString() ? `${e}?${n.toString()}` : e;
     window.open(r, "paas-oauth", "popup=true,width=500,height=600");
