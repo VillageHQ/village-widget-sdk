@@ -1,3 +1,5 @@
+// Deployed: 2025-04-29T15:30:43.298Z
+// Version: 1.0.47
 const H = "village-data-url", j = "village-module", X = {
   SYNC: "sync",
   SEARCH: "search"
@@ -2431,3 +2433,7 @@ function Ve(t, e) {
     !i || i.source !== "VillageSDK" || i.type === D.pathCtaClicked && t.Village.executeCallback(i.payload);
   }), t.__village_message_listener_attached__ = !0);
 })(window);
+const Rr = window.Village;
+export {
+  Rr as default
+};

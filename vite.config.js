@@ -20,12 +20,13 @@ export default defineConfig(({ mode }) => {
    */
   const devFileFullPath =
     env.VITE_WIDGET_DEV_PATH ??
-    path.resolve(__dirname, "../../../public/village-widget-dev.js");
+    path.resolve(__dirname, "./dist/dev/index-dev.js");
 
   // Set output directory: use target file's directory for watch mode, else use local dist/
   const outputDir = isWatch
-    ? path.dirname(devFileFullPath)
-    : path.resolve(__dirname, "dist");
+    ? path.resolve(__dirname, "dist/dev")
+    : path.resolve(__dirname, "dist/prod");
+
 
   /**
    * Custom plugin to prepend deployment banner (date + version) at the top of the dev bundle.
@@ -33,18 +34,41 @@ export default defineConfig(({ mode }) => {
    */
   const addBannerPlugin = {
     name: "add-banner-comment",
-    writeBundle() {
+    writeBundle(options) {
       const deployDate = new Date().toISOString();
       const banner = `// Deployed: ${deployDate}\n// Version: ${pkg.version}\n`;
-      const targetFile = devFileFullPath;
 
-      if (fs.existsSync(targetFile)) {
-        const original = fs.readFileSync(targetFile, "utf8");
-        fs.writeFileSync(targetFile, banner + original);
-        console.log(`✅ Banner added to ${targetFile}`);
+      const addBanner = (filePath) => {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, "utf8");
+
+          // ✅ Check if banner already exists
+          if (!content.startsWith("// Deployed:")) {
+            fs.writeFileSync(filePath, banner + content);
+            console.log(`✅ Banner added to ${filePath}`);
+          } else {
+            console.log(`ℹ️ Banner already exists in ${filePath}, skipping.`);
+          }
+        }
+      };
+
+      if (isWatch) {
+        // Development mode: target dev file
+        addBanner(devFileFullPath);
+      } else {
+        // Production mode: target built files
+        const prodFiles = [
+          path.resolve(outputDir, "index.es.js"),
+          path.resolve(outputDir, "index.umd.js"),
+        ];
+        for (const file of prodFiles) {
+          addBanner(file);
+        }
       }
     },
   };
+
+
 
   return {
     // ---------- Vite build settings ----------
@@ -83,9 +107,9 @@ export default defineConfig(({ mode }) => {
       minify: !isWatch,
       sourcemap: isWatch,
       outDir: outputDir,
-      emptyOutDir: !isWatch,
+      emptyOutDir: false,
     },
-    plugins: isWatch ? [addBannerPlugin] : [],
+    plugins: [addBannerPlugin],
 
     // ---------- Vitest test settings ----------
     test: {
