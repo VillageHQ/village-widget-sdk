@@ -6,7 +6,7 @@
 
 # Interface: Window
 
-Defined in: [global-types.ts:35](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L35)
+Defined in: [global-types.ts:35](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/global-types.ts#L35)
 
 Extension of the browser `window` object to include the `Village` SDK.
 
@@ -16,7 +16,7 @@ Extension of the browser `window` object to include the `Village` SDK.
 
 > `optional` **Village**: `object`
 
-Defined in: [global-types.ts:36](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L36)
+Defined in: [global-types.ts:36](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/global-types.ts#L36)
 
 #### authorize()?
 

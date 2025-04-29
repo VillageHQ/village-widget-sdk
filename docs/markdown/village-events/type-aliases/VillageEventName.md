@@ -8,7 +8,7 @@
 
 > **VillageEventName** = *typeof* [`VillageEvents`](../variables/VillageEvents.md)\[keyof *typeof* [`VillageEvents`](../variables/VillageEvents.md)\]
 
-Defined in: [village-events.ts:62](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/village-events.ts#L62)
+Defined in: [village-events.ts:62](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/village-events.ts#L62)
 
 A union type of all valid Village event names.
 Derived directly from `VillageEvents`.

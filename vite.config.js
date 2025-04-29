@@ -1,16 +1,22 @@
 import path from "path";
-import fs from "fs";
-import { defineConfig } from "vitest/config";
-import { loadEnv } from "vite";
+import fs   from "fs";
+import { defineConfig }      from "vitest/config";
+import { loadEnv }           from "vite";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";   // npm i -D vite-plugin-css-injected-by-js
 
+// ──────────────────────────────
+// Project metadata (package.json)
+// ──────────────────────────────
 const pkg = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "./package.json"), "utf-8")
+  fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8")
 );
 
 export default defineConfig(({ mode }) => {
   const isWatch = process.argv.includes("--watch");
 
-  // 👉 Manually load the correct .env file (force development or production)
+  // ──────────────────────────────
+  // Load the correct .env file
+  // ──────────────────────────────
   const envFile = isWatch
     ? path.resolve(process.cwd(), ".env.development")
     : path.resolve(process.cwd(), ".env.production");
@@ -20,108 +26,102 @@ export default defineConfig(({ mode }) => {
         fs
           .readFileSync(envFile, "utf-8")
           .split("\n")
-          .filter(line => line.trim() && !line.startsWith("#"))
-          .map(line => {
-            const [key, ...value] = line.split("=");
-            return [key.trim(), value.join("=").trim()];
+          .filter(l => l.trim() && !l.startsWith("#"))
+          .map(l => {
+            const [k, ...v] = l.split("=");
+            return [k.trim(), v.join("=").trim()];
           })
       )
     : {};
 
-  // Full path for the dev bundle
-  const devFileFullPath =
-    parsedEnv.VITE_WIDGET_DEV_PATH ??
-    path.resolve(__dirname, "./dist/dev/index-dev.js");
+  // ──────────────────────────────
+  // Resolve output paths
+  // ──────────────────────────────
+  let devFileFullPath = "";
+  const outputDir = (() => {
+    if (parsedEnv.VITE_WIDGET_DEV_PATH) {
+      const full = path.resolve(process.cwd(), parsedEnv.VITE_WIDGET_DEV_PATH);
+      if (!full.endsWith(".js")) throw new Error("VITE_WIDGET_DEV_PATH must be a .js file");
+      devFileFullPath = full;
+      return path.dirname(full);
+    }
+    devFileFullPath = path.resolve(__dirname, "dist/dev/village-widget-dev.js");
+    return isWatch
+      ? path.resolve(__dirname, "dist/dev")
+      : path.resolve(__dirname, "dist/prod");
+  })();
 
-  // Output directory depending on mode
-  const outputDir = isWatch
-    ? path.resolve(__dirname, "dist/dev")
-    : path.resolve(__dirname, "dist/prod");
-
-  // Custom plugin to add a deployment banner to the generated files
+  // ──────────────────────────────
+  // Banner plugin (date + version)
+  // ──────────────────────────────
   const addBannerPlugin = {
-    name: "add-banner-comment",
+    name: "banner",
     writeBundle() {
-      const deployDate = new Date().toISOString();
-      const banner = `// Deployed: ${deployDate}\n// Version: ${pkg.version}\n`;
-
-      const addBanner = (filePath) => {
-        if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, "utf8");
-          if (!content.startsWith("// Deployed:")) {
-            fs.writeFileSync(filePath, banner + content);
-            console.log(`✅ Banner added to ${filePath}`);
-          } else {
-            console.log(`ℹ️ Banner already exists in ${filePath}, skipping.`);
-          }
-        }
-      };
-
-      if (isWatch) {
-        addBanner(devFileFullPath);
-      } else {
-        const prodFiles = [
-          path.resolve(outputDir, "index.es.js"),
-          path.resolve(outputDir, "index.umd.js"),
-        ];
-        for (const file of prodFiles) {
-          addBanner(file);
+      const banner = `// Deployed: ${new Date().toISOString()}\n// Version: ${pkg.version}\n`;
+      if (fs.existsSync(devFileFullPath)) {
+        const code = fs.readFileSync(devFileFullPath, "utf8");
+        if (!code.startsWith("// Deployed:")) {
+          fs.writeFileSync(devFileFullPath, banner + code);
+          console.log("✅ Banner prepended");
         }
       }
     },
   };
 
+  // ──────────────────────────────
+  // Vite configuration
+  // ──────────────────────────────
   return {
     define: {
       global: "window",
       __DEV_WIDGET_PATH__: JSON.stringify(devFileFullPath),
-      // ✅ Inject all env variables as import.meta.env.*
       ...Object.fromEntries(
-        Object.entries(parsedEnv).map(([key, value]) => [
-          `import.meta.env.${key}`,
-          JSON.stringify(value),
-        ])
+        Object.entries(parsedEnv).map(([k, v]) => [`import.meta.env.${k}`, JSON.stringify(v)])
       ),
     },
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "src"),
-      },
-    },
+
+    resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+
     build: {
+      // ensure CSS is not split and all assets are inlined
+      cssCodeSplit: false,
+      assetsInlineLimit: Infinity,
+
       lib: {
         entry: path.resolve(__dirname, "src/index.js"),
         name: "VillageWidgetSDK",
-        formats: isWatch ? ['iife'] : ['es', 'umd'],
-        fileName: (format) => {
-          if (isWatch) {
-            return path.basename(devFileFullPath);
-          }
-          return format === "es" ? "index.es.js" : "index.umd.js";
-        },
+        formats: ["iife"],
+        fileName: () => path.basename(devFileFullPath),
       },
+
       rollupOptions: {
+        input: path.resolve(__dirname, "src/index.js"),
         output: {
           extend: true,
-          exports: 'named',
+          exports: "named",
+          inlineDynamicImports: true,
+          dir: path.dirname(devFileFullPath),
+          entryFileNames: path.basename(devFileFullPath),
         },
       },
+
       watch: isWatch ? {} : null,
       minify: !isWatch,
       sourcemap: isWatch,
       outDir: outputDir,
       emptyOutDir: false,
     },
-    plugins: [addBannerPlugin],
+
+    plugins: [
+      cssInjectedByJsPlugin(), // ← injects CSS at runtime
+      addBannerPlugin,
+    ],
+
     test: {
       environment: "jsdom",
       globals: true,
-      coverage: {
-        reporter: ["text", "html"],
-      },
-      alias: {
-        "@": path.resolve(__dirname, "../../"),
-      },
+      coverage: { reporter: ["text", "html"] },
+      alias: { "@": path.resolve(__dirname, "../../") },
     },
   };
 });

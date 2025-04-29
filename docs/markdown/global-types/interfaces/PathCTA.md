@@ -6,7 +6,7 @@
 
 # Interface: PathCTA
 
-Defined in: [global-types.ts:6](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L6)
+Defined in: [global-types.ts:6](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/global-types.ts#L6)
 
 Represents a Call-To-Action (CTA) button rendered in the widget UI.
 
@@ -16,7 +16,7 @@ Represents a Call-To-Action (CTA) button rendered in the widget UI.
 
 > **callback**: (...`args`) => `void`
 
-Defined in: [global-types.ts:14](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L14)
+Defined in: [global-types.ts:14](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/global-types.ts#L14)
 
 Function to execute when the button is clicked.
 Can receive any arguments passed from the widget runtime.
@@ -37,7 +37,7 @@ Can receive any arguments passed from the widget runtime.
 
 > **label**: `string`
 
-Defined in: [global-types.ts:8](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L8)
+Defined in: [global-types.ts:8](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/global-types.ts#L8)
 
 Visible label for the button (e.g. "Save to CRM")
 
@@ -47,7 +47,7 @@ Visible label for the button (e.g. "Save to CRM")
 
 > `optional` **style**: `CSSProperties`
 
-Defined in: [global-types.ts:20](https://github.com/VillageHQ/village-widget-sdk/blob/82bba2870810a013cfbc732565daf6ef26befe91/src/config/global-types.ts#L20)
+Defined in: [global-types.ts:20](https://github.com/VillageHQ/village-widget-sdk/blob/fccf09a5551957cd04cf7b6132e6f7e80cf4a38f/src/config/global-types.ts#L20)
 
 Optional inline style to apply to the CTA.
 Compatible with React-style CSSProperties.
