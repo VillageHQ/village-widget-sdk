@@ -5,13 +5,12 @@
     "access": "public"
   },
   "version": "1.0.47",
-  "main": "dist/index.umd.js",
-  "module": "dist/index.es.js",
+  "main": "dist/village-widget-dev.js",
+  "module": "dist/village-widget-dev.js",
   "exports": {
-    "import": "./dist/index.es.js",
-    "require": "./dist/index.umd.js"
+    "import": "./dist/village-widget-dev.js",
+    "require": "./dist/village-widget-dev.js"
   },
-  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
