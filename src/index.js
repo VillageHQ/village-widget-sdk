@@ -41,7 +41,7 @@ import { on, emit } from "./sdk-wrapper";
         listeners[event] = listeners[event].filter((cb) => cb !== callback);
       },
 
-      on, 
+      on,
       emit,
 
       dispatch(event, data) {
@@ -83,6 +83,7 @@ import { on, emit } from "./sdk-wrapper";
         v._initialized = true;
         v._renderWidget();        // widgetReady will be broadcast here
 
+        console.log('init', config)
         // If the caller passed paths_cta, replace the list and broadcast the update
         if (Array.isArray(config?.paths_cta) && config.paths_cta.length) {
           v.updatePathsCTA(config.paths_cta);   // <— emits pathsCtaUpdated
@@ -137,10 +138,42 @@ import { on, emit } from "./sdk-wrapper";
 
       // ✅ Expor CTAs
       getPathsCTA() {
-        return v._config.paths_cta || [];
+        // 🔍 Debug: log the initial config
+        console.log('getPathsCTA - initial config:', v._config);
+
+        // Try to get from internal config
+        let pathsCTA = v._config.paths_cta;
+
+        // If not present or empty, try to load from the URL
+        if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
+          console.log('getPathsCTA - no valid paths_cta in config, checking URL...');
+
+          const urlParam = new URLSearchParams(window.location.search).get('paths_cta');
+
+          try {
+            // Try to decode and parse the URL parameter as JSON
+            const parsed = JSON.parse(decodeURIComponent(urlParam));
+            console.log('getPathsCTA - parsed from URL:', parsed);
+
+            if (Array.isArray(parsed)) {
+              pathsCTA = parsed;
+            } else {
+              console.warn('getPathsCTA - URL param is not a valid array');
+              pathsCTA = [];
+            }
+          } catch (err) {
+            console.warn('getPathsCTA - failed to parse paths_cta from URL:', err);
+            pathsCTA = [];
+          }
+        }
+
+        // 🔍 Final result
+        console.log('getPathsCTA - returning:', pathsCTA);
+
+        return pathsCTA || [];
       },
 
-      executeCallback(payload){
+      executeCallback(payload) {
         const ctas = v.getPathsCTA();
         //console.log("getPathsCTA", ctas, payload);
         for (let index = 0; index < ctas.length; index++) {
@@ -149,12 +182,12 @@ import { on, emit } from "./sdk-wrapper";
             //console.log("executeCallback", cta);
             cta.callback(payload);
             return true;
-          }else{
+          } else {
             console.log("getPathsCTA not execute", index, cta);
           }
         }
         console.log("📨 Relay received:", payload);
-    
+
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }
@@ -169,7 +202,7 @@ import { on, emit } from "./sdk-wrapper";
   const existingQueue = existingVillage?.q || [];
 
   window.Village = createVillage();
-  window.Village.on   = on;
+  window.Village.on = on;
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
   window.Village._processQueue();
@@ -184,13 +217,13 @@ import { on, emit } from "./sdk-wrapper";
     console.log("✅ __village_message_listener_attached__");
     window.addEventListener("message", (event) => {
       const msg = event.data;
-      if (!msg || msg.source !== "VillageSDK") return;
-  
+      if (!msg || !(msg.source == "VillageSDK" || msg.source == "dynamic-cta")) return;
+      console.log(msg);
       if (msg.type === VillageEvents.pathCtaClicked) {
-        window.Village.executeCallback(msg.payload);
+        window.Village.executeCallback(msg.payload || msg);
       }
     });
-  
+
     window.__village_message_listener_attached__ = true;
   }
 })(window);
