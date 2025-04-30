@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: Deploy to NPM
 
 on:
@@ -9,26 +8,27 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: ✅ Run tests
         run: npm test
 
-      - name: Build widget
+      - name: 🏗️ Build widget (includes dist copy and banner)
         run: npm run build
 
-      - name: Publish to NPM
+      - name: 🚀 Publish to NPM
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

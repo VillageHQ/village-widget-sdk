@@ -60,10 +60,17 @@ export default defineConfig(({ mode }) => {
       const banner = `// Deployed: ${new Date().toISOString()}\n// Version: ${pkg.version}\n`;
       if (fs.existsSync(devFileFullPath)) {
         const code = fs.readFileSync(devFileFullPath, "utf8");
-        if (!code.startsWith("// Deployed:")) {
-          fs.writeFileSync(devFileFullPath, banner + code);
-          console.log("✅ Banner prepended");
-        }
+        const finalCode = code.startsWith("// Deployed:") ? code : banner + code;
+  
+        // 1. Atualiza o original (devFileFullPath)
+        fs.writeFileSync(devFileFullPath, finalCode);
+        console.log("✅ Banner prepended to original build");
+  
+        // 2. Salva também em ./dist/
+        const outputBaseName = path.basename(devFileFullPath);
+        const copyTarget = path.resolve(__dirname, "dist", outputBaseName);
+        fs.writeFileSync(copyTarget, finalCode);
+        console.log(`✅ Copied build to ./dist/${outputBaseName}`);
       }
     },
   };
