@@ -143,8 +143,8 @@ export class App {
         this.showErrorState(element);
         return;
       }
+      console.log("addListenerToElement URL:", url);
     }
-    //console.warn("addListenerToElement URL:", url, hasUrlAttr, element);
     this.addListenerToElement(element);
   }
 
