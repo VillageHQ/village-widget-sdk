@@ -142,7 +142,10 @@ import { on, emit } from "./sdk-wrapper";
         console.log('getPathsCTA - initial config:', v._config);
 
         // Try to get from internal config
-        let pathsCTA = v._config.paths_cta;
+        const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
+          ? v._config.paths_cta
+          : [];
+
 
         // If not present or empty, try to load from the URL
         if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
