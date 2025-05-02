@@ -14,7 +14,10 @@ export function buildIframeSrc({
   if (userReference) params.append("userReference", userReference);
   if (villageModule) params.append("module", villageModule);
   console.log('config.paths_cta', config);
-  const pathsCtaJson = JSON.stringify(config.paths_cta); 
+  let pathsCtaJson = '[]';
+  if(typeof config !== 'undefined' && typeof config.paths_cta !== 'undefined' ){
+    pathsCtaJson = JSON.stringify(config.paths_cta); 
+  }
   const encodedPathsCta = encodeURIComponent(pathsCtaJson);
   params.append("paths_cta", encodedPathsCta);
 
