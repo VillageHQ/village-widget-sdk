@@ -75,10 +75,7 @@ import {
     try {
       window.postMessage(message, "*");
     } catch (err) {
-      console.warn(
-        `[Village] Failed to postMessage to window for event "${event}":`,
-        err,
-      );
+      //console.warn(`[Village] Failed to postMessage to window for event "${event}":`,err);
     }
   
     if (window.parent && window.parent !== window) {

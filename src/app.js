@@ -81,7 +81,7 @@ export class App {
       attributeName === VILLAGE_MODULE_ATTRIBUTE;
 
     if (isVillageAttribute) {
-      this.addListenerToElement(element);
+      this.checkAndAddListenerIfValid(element);
     }
   }
 
@@ -93,15 +93,15 @@ export class App {
 
       // Check if the node itself has village attributes
       if (this.hasVillageAttributes(node)) {
-        this.addListenerToElement(node);
+        this.checkAndAddListenerIfValid(node);
         return;
       }
 
       // Check child elements for village attributes
       const selector = `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`;
-      node
-        .querySelectorAll(selector)
-        .forEach(this.addListenerToElement.bind(this));
+      node.querySelectorAll(selector).forEach((el) => {
+        this.checkAndAddListenerIfValid(el);
+      });
     });
   }
 
@@ -112,6 +112,42 @@ export class App {
       element.hasAttribute(VILLAGE_MODULE_ATTRIBUTE)
     );
   }
+
+  isValidUrl(string) {
+    if (!string || typeof string !== 'string' || string.trim() === '') {
+      return false;
+    }
+  
+    const trimmed = string.trim();
+  
+    // Require the URL to start with http:// or https://
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return false;
+    }
+  
+    try {
+      new URL(trimmed);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+  
+  checkAndAddListenerIfValid(element) {
+    const hasUrlAttr = element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
+    let url = '';
+    if (hasUrlAttr) {
+      url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
+      if (!this.isValidUrl(url)) {
+        console.warn("Skipping element due to invalid URL:", element);
+        this.showErrorState(element);
+        return;
+      }
+    }
+    //console.warn("addListenerToElement URL:", url, hasUrlAttr, element);
+    this.addListenerToElement(element);
+  }
+
 
   async addListenerToElement(element) {
     const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
@@ -229,10 +265,8 @@ export class App {
 
   scanExistingElements() {
     document
-      .querySelectorAll(
-        `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`
-      )
-      .forEach(this.addListenerToElement.bind(this));
+      .querySelectorAll(`[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`)
+      .forEach((el) => this.checkAndAddListenerIfValid(el));
   }
 
   async checkPaths(url) {
@@ -260,27 +294,32 @@ export class App {
   }
 
   getButtonChildren(element) {
-    const foundElement = element.querySelector(
-      '[village-paths-availability="found"]'
-    );
-    const notFoundElement = element.querySelector(
-      '[village-paths-availability="not-found"]'
-    );
-    const loadingElement = element.querySelector(
-      '[village-paths-availability="loading"]'
-    );
+    const foundElement = element.querySelector('[village-paths-availability="found"]');
+    const notFoundElement = element.querySelector('[village-paths-availability="not-found"]');
+    const loadingElement = element.querySelector('[village-paths-availability="loading"]');
+    const errorElement = element.querySelector('[village-paths-availability="error"]');
+  
+    return { foundElement, notFoundElement, loadingElement, errorElement };
+  }
 
-    return { foundElement, notFoundElement, loadingElement };
+  showErrorState(element) {
+    const { foundElement, notFoundElement, loadingElement, errorElement } = this.getButtonChildren(element);
+  
+    if (foundElement) foundElement.style.display = "none";
+    if (notFoundElement) notFoundElement.style.display = "none";
+    if (loadingElement) loadingElement.style.display = "none";
+    if (errorElement) errorElement.style.display = "inline-flex";
   }
 
   initializeButtonState(element) {
-    const { foundElement, notFoundElement, loadingElement } =
+    const { foundElement, notFoundElement, loadingElement, errorElement } =
       this.getButtonChildren(element);
 
     if (!this.token) {
       if (foundElement) foundElement.style.display = "none";
       if (notFoundElement) notFoundElement.style.display = "inline-flex";
       if (loadingElement) loadingElement.style.display = "none";
+      if (errorElement) errorElement.style.display = "none";
       return;
     }
 
@@ -330,10 +369,11 @@ export class App {
   }
 
   updateButtonContent(element, relationship) {
-    const { foundElement, notFoundElement, loadingElement } =
+    const { foundElement, notFoundElement, loadingElement, errorElement } =
       this.getButtonChildren(element);
 
     if (loadingElement) loadingElement.style.display = "none";
+    if (errorElement) errorElement.style.display = "none";
 
     if (relationship) {
       if (foundElement) {
@@ -458,7 +498,7 @@ export class App {
           },
         });
       }
-    } catch (error) {}
+    } catch (error) { }
 
     // Clear local state regardless of API call success
     Cookies.remove("village.token");

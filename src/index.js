@@ -139,7 +139,7 @@ import { on, emit } from "./sdk-wrapper";
       // ✅ Expor CTAs
       getPathsCTA() {
         // 🔍 Debug: log the initial config
-        console.log('getPathsCTA - initial config:', v._config);
+        console.log('getPathsCTA - initial config:', v?._config);
 
         // Try to get from internal config
         const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
@@ -221,7 +221,7 @@ import { on, emit } from "./sdk-wrapper";
     window.addEventListener("message", (event) => {
       const msg = event.data;
       if (!msg || !(msg.source == "VillageSDK" || msg.source == "dynamic-cta")) return;
-      console.log(msg);
+      //console.log(msg);
       if (msg.type === VillageEvents.pathCtaClicked) {
         window.Village.executeCallback(msg.payload || msg);
       }
