@@ -29,8 +29,9 @@ export class ModuleHandlers {
     this.listenerMap.set(element, clickHandler);
     element.addEventListener("click", clickHandler);
     this.elementsWithListeners.add(element); // Track element
-
-    this.app.initializeButtonState(element);
+    if(url !== ''){
+      this.app.initializeButtonState(element);
+    }
     if (this.app.token) {
       this.app.checkPathsAndUpdateButton(element, url);
     }

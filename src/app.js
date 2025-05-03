@@ -139,11 +139,12 @@ export class App {
     if (hasUrlAttr) {
       url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
       if (!this.isValidUrl(url)) {
-        console.warn("addListenerToElement Skipping element due to invalid URL:", url, element);
+        console.warn("Skipping element due to invalid URL:", element);
         this.showErrorState(element);
-      }else{
-        console.log("addListenerToElement URL:", url);
+        //this.moduleHandlers.handleDataUrl(element, '');
+        return;
       }
+      console.log("addListenerToElement URL:", url);
     }
     this.addListenerToElement(element);
   }
