@@ -12,28 +12,29 @@ export class ModuleHandlers {
 
   // Restored original handleDataUrl
   handleDataUrl(element, url) {
+    const validURL = url === '' ? 'http://invalidURL.com' : url;
     this.removeListener(element); // Remove previous general listeners
-    this.syncUrlElements.set(element, url); // Track this element and its URL
+    this.syncUrlElements.set(element, validURL); // Track this element and its URL
 
     const clickHandler = () => {
       AnalyticsService.trackButtonClick({
         type: "paths",
-        url,
+        validURL,
         partnerKey: this.app.partnerKey,
       });
 
-      this.app.url = url;
+      this.app.url = validURL;
       this.app.module = null; // Explicitly null for data-url
       this.app.renderIframe();
     };
     this.listenerMap.set(element, clickHandler);
     element.addEventListener("click", clickHandler);
     this.elementsWithListeners.add(element); // Track element
-    if(url !== ''){
+    if (url !== '') {
       this.app.initializeButtonState(element);
     }
     if (this.app.token) {
-      this.app.checkPathsAndUpdateButton(element, url);
+      this.app.checkPathsAndUpdateButton(element, validURL);
     }
   }
 

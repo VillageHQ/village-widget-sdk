@@ -141,7 +141,7 @@ export class App {
       if (!this.isValidUrl(url)) {
         console.warn("Skipping element due to invalid URL:", element);
         this.showErrorState(element);
-        //this.moduleHandlers.handleDataUrl(element, '');
+        this.moduleHandlers.handleDataUrl(element, '');
         return;
       }
       console.log("addListenerToElement URL:", url);
