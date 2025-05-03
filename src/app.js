@@ -327,6 +327,7 @@ export class App {
     if (foundElement) foundElement.style.display = "none";
     if (notFoundElement) notFoundElement.style.display = "none";
     if (loadingElement) loadingElement.style.display = "inline-flex";
+    if (errorElement) errorElement.style.display = "none";
   }
 
   async checkPathsAndUpdateButton(element, url) {
