@@ -144,7 +144,9 @@ export class App {
         this.moduleHandlers.handleDataUrl(element, '');
         return;
       }
-      console.log("addListenerToElement URL:", url);
+      console.log("checkAndAddListenerIfValid addListenerToElement URL:", url);
+    }else{
+      console.log("checkAndAddListenerIfValid hasUrlAttr==false:", element);
     }
     this.addListenerToElement(element);
   }
