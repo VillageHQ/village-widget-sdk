@@ -36,9 +36,13 @@ export class App {
   }
 
   async init() {
+    console.log('setupMessageHandlers');
     this.setupMessageHandlers();
+    console.log('setupMutationObserver');
     this.setupMutationObserver();
+    console.log('scanExistingElements');
     this.scanExistingElements();
+    console.log('getUser');
     this.getUser();
   }
 
