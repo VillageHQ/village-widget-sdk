@@ -201,6 +201,35 @@ import { on, emit } from "./sdk-wrapper";
     return v;
   }
 
+
+
+  function autoInitFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const partnerKey = urlParams.get("PARTNER_PUBLIC_KEY");
+    const pathsCtaParam = urlParams.get("paths_cta");
+
+    if (partnerKey) {
+      let parsedPathsCTA = [];
+
+      if (pathsCtaParam) {
+        try {
+          parsedPathsCTA = JSON.parse(decodeURIComponent(pathsCtaParam));
+          if (!Array.isArray(parsedPathsCTA)) {
+            console.warn("paths_cta is not a valid array, ignoring.");
+            parsedPathsCTA = [];
+          }
+        } catch (e) {
+          console.warn("Failed to parse paths_cta from URL:", e);
+        }
+      }
+
+      console.log("🔁 Auto-initializing Village with partnerKey from URL");
+      window.Village.init(partnerKey, {
+        paths_cta: parsedPathsCTA,
+      });
+    }
+  }
+  
   const existingVillage = window.Village;
   const existingQueue = existingVillage?.q || [];
 
@@ -229,6 +258,7 @@ import { on, emit } from "./sdk-wrapper";
 
     window.__village_message_listener_attached__ = true;
   }
+  autoInitFromUrl();
 })(window);
 
 export default window.Village;

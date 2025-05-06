@@ -121,14 +121,14 @@ export class App {
     if (!string || typeof string !== 'string' || string.trim() === '') {
       return false;
     }
-  
+
     const trimmed = string.trim();
-  
+
     // Require the URL to start with http:// or https://
     if (!/^https?:\/\//i.test(trimmed)) {
       return false;
     }
-  
+
     try {
       new URL(trimmed);
       return true;
@@ -136,7 +136,7 @@ export class App {
       return false;
     }
   }
-  
+
   checkAndAddListenerIfValid(element) {
     const hasUrlAttr = element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
     let url = '';
@@ -149,7 +149,7 @@ export class App {
         return;
       }
       console.log("checkAndAddListenerIfValid addListenerToElement URL:", url);
-    }else{
+    } else {
       console.log("checkAndAddListenerIfValid hasUrlAttr==false:", element);
     }
     this.addListenerToElement(element);
@@ -274,23 +274,23 @@ export class App {
     const elements = document.querySelectorAll(
       `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`
     );
-  
+
     console.log(`[Village] Found ${elements.length} elements to scan`);
-  
+
     elements.forEach((el, index) => {
       const hasVillageUrl = el.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
       const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
-  
+
       console.log(
         `[Village] [${index + 1}/${elements.length}] Element:`,
         el,
         `| hasVillageUrl: ${hasVillageUrl}, hasVillageModule: ${hasVillageModule}`
       );
-  
+
       this.checkAndAddListenerIfValid(el);
     });
   }
-  
+
 
   async checkPaths(url) {
     if (!this.token) return null;
@@ -321,13 +321,13 @@ export class App {
     const notFoundElement = element.querySelector('[village-paths-availability="not-found"]');
     const loadingElement = element.querySelector('[village-paths-availability="loading"]');
     const errorElement = element.querySelector('[village-paths-availability="error"]');
-  
+
     return { foundElement, notFoundElement, loadingElement, errorElement };
   }
 
   showErrorState(element) {
     const { foundElement, notFoundElement, loadingElement, errorElement } = this.getButtonChildren(element);
-  
+
     if (foundElement) foundElement.style.display = "none";
     if (notFoundElement) notFoundElement.style.display = "none";
     if (loadingElement) loadingElement.style.display = "none";
