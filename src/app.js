@@ -271,10 +271,26 @@ export class App {
   }
 
   scanExistingElements() {
-    document
-      .querySelectorAll(`[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`)
-      .forEach((el) => this.checkAndAddListenerIfValid(el));
+    const elements = document.querySelectorAll(
+      `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`
+    );
+  
+    console.log(`[Village] Found ${elements.length} elements to scan`);
+  
+    elements.forEach((el, index) => {
+      const hasVillageUrl = el.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
+      const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
+  
+      console.log(
+        `[Village] [${index + 1}/${elements.length}] Element:`,
+        el,
+        `| hasVillageUrl: ${hasVillageUrl}, hasVillageModule: ${hasVillageModule}`
+      );
+  
+      this.checkAndAddListenerIfValid(el);
+    });
   }
+  
 
   async checkPaths(url) {
     if (!this.token) return null;
