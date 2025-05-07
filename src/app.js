@@ -148,9 +148,9 @@ export class App {
         this.moduleHandlers.handleDataUrl(element, '');
         return;
       }
-      console.log("checkAndAddListenerIfValid addListenerToElement URL:", url);
+      //console.log("checkAndAddListenerIfValid addListenerToElement URL:", url);
     }else{
-      console.log("checkAndAddListenerIfValid hasUrlAttr==false:", element);
+      //console.log("checkAndAddListenerIfValid hasUrlAttr==false:", element);
     }
     this.addListenerToElement(element);
   }
@@ -279,14 +279,7 @@ export class App {
   
     elements.forEach((el, index) => {
       const hasVillageUrl = el.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-      const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
-  
-      console.log(
-        `[Village] [${index + 1}/${elements.length}] Element:`,
-        el,
-        `| hasVillageUrl: ${hasVillageUrl}, hasVillageModule: ${hasVillageModule}`
-      );
-  
+      const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);  
       this.checkAndAddListenerIfValid(el);
     });
   }
