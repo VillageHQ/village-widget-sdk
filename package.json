@@ -5,11 +5,11 @@
     "access": "public"
   },
   "version": "1.0.47",
-  "main": "dist/village-widget-dev.js",
-  "module": "dist/village-widget-dev.js",
+  "main": "dist/village-widget.js",
+  "module": "dist/village-widget.js",
   "exports": {
-    "import": "./dist/village-widget-dev.js",
-    "require": "./dist/village-widget-dev.js"
+    "import": "./dist/village-widget.js",
+    "require": "./dist/village-widget.js"
   },
   "files": [
     "dist"

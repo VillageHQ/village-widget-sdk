@@ -4,4 +4,5 @@ export const VILLAGE_MODULE_ATTRIBUTE = "village-module";
 export const ModuleTypes = {
   SYNC: "sync",
   SEARCH: "search",
+  PATHS: "paths",
 };

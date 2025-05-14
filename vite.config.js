@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
       devFileFullPath = full;
       return path.dirname(full);
     }
-    devFileFullPath = path.resolve(__dirname, "dist/dev/village-widget-dev.js");
+    devFileFullPath = path.resolve(__dirname, "dist/dev/village-widget.js");
     return isWatch
       ? path.resolve(__dirname, "dist/dev")
       : path.resolve(__dirname, "dist/prod");

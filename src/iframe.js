@@ -13,7 +13,7 @@ export function buildIframeSrc({
   if (partnerKey) params.append("partnerKey", partnerKey);
   if (userReference) params.append("userReference", userReference);
   if (villageModule) params.append("module", villageModule);
-  console.log('config.paths_cta', config);
+  //console.log('config.paths_cta', config);
   let pathsCtaJson = '[]';
   if(typeof config !== 'undefined' && typeof config.paths_cta !== 'undefined' ){
     pathsCtaJson = JSON.stringify(config.paths_cta); 

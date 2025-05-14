@@ -156,7 +156,7 @@ import { on, emit } from "./sdk-wrapper";
           try {
             // Try to decode and parse the URL parameter as JSON
             const parsed = JSON.parse(decodeURIComponent(urlParam));
-            console.log('getPathsCTA - parsed from URL:', parsed);
+            //console.log('getPathsCTA - parsed from URL:', parsed);
 
             if (Array.isArray(parsed)) {
               pathsCTA = parsed;
@@ -171,7 +171,7 @@ import { on, emit } from "./sdk-wrapper";
         }
 
         // 🔍 Final result
-        console.log('getPathsCTA - returning:', pathsCTA);
+        //console.log('getPathsCTA - returning:', pathsCTA);
 
         return pathsCTA || [];
       },

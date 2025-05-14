@@ -106,7 +106,7 @@ npm run deploy  # Bump version, build & publish
 
 **Output:**
 
-- Dev bundle: `public/village-widget-dev.js`  
+- Dev bundle: `public/village-widget.js`  
 - Prod bundle: `dist/index.js`
 
 ---
