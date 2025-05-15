@@ -2,6 +2,22 @@ import { App } from "./app.js";
 import "./styles.css";
 import { VillageEvents } from "./config/village-events.js";;
 import { on, emit } from "./sdk-wrapper";
+import { Console } from "console";
+import Cookies from "js-cookie";
+
+// ---------------------------------------------------------------------------
+// Village – Session-recovery iframe
+// Always injects <https://village.do/auth/iframe> (hidden) to recover token
+// ---------------------------------------------------------------------------
+(function injectVillageAuthIframe() {
+  if (document.getElementById("villageAuth")) return;           // avoid duplicates
+  const iframe = document.createElement("iframe");
+  iframe.id = "villageAuth";
+  iframe.src = `${import.meta.env.VITE_APP_FRONTEND_URL}/iframe`;
+  iframe.style.display = "none";
+  iframe.sandbox = "allow-scripts allow-same-origin allow-storage-access-by-user-activation";
+  document.body.appendChild(iframe);
+})();
 
 (function (window) {
   function createVillage() {
@@ -216,6 +232,10 @@ import { on, emit } from "./sdk-wrapper";
   window.Village.on(VillageEvents.pathCtaClicked, (payload) => {
     window.Village.executeCallback(payload);
   });
+
+  window.Village.on(VillageEvents.oauthSuccess, (payload) => {
+    console.log("✅ Village OAuth success", payload);
+  });
   if (!window.__village_message_listener_attached__) {
     // console.log("✅ __village_message_listener_attached__");
     window.addEventListener("message", (event) => {
@@ -226,6 +246,7 @@ import { on, emit } from "./sdk-wrapper";
         window.Village.executeCallback(msg.payload || msg);
       }
     });
+
 
     window.__village_message_listener_attached__ = true;
   }
