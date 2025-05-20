@@ -5,6 +5,7 @@ import { on, emit } from "./sdk-wrapper";
 import { Console } from "console";
 import Cookies from "js-cookie";
 
+const villageToken = 'village.token';
 // ---------------------------------------------------------------------------
 // Village – Session-recovery iframe
 // Always injects <https://village.do/auth/iframe> (hidden) to recover token
@@ -12,11 +13,14 @@ import Cookies from "js-cookie";
 (function injectVillageAuthIframe() {
   if (document.getElementById("villageAuth")) return;           // avoid duplicates
   const iframe = document.createElement("iframe");
+  const token = Cookies.get(villageToken);
   iframe.id = "villageAuth";
-  iframe.src = `${import.meta.env.VITE_APP_FRONTEND_URL}/iframe`;
+  iframe.src = `${import.meta.env.VITE_APP_FRONTEND_URL}/iframe?token=${encodeURIComponent(token)}`;
   iframe.style.display = "none";
   iframe.sandbox = "allow-scripts allow-same-origin allow-storage-access-by-user-activation";
-  document.body.appendChild(iframe);
+  if(document?.body){
+    document.body.appendChild(iframe);
+  }
 })();
 
 (function (window) {
@@ -99,7 +103,7 @@ import Cookies from "js-cookie";
         v._initialized = true;
         v._renderWidget();        // widgetReady will be broadcast here
 
-        console.log('init', config)
+        // console.log('init', config)
         // If the caller passed paths_cta, replace the list and broadcast the update
         if (Array.isArray(config?.paths_cta) && config.paths_cta.length) {
           v.updatePathsCTA(config.paths_cta);   // <— emits pathsCtaUpdated
@@ -155,7 +159,7 @@ import Cookies from "js-cookie";
       // ✅ Expor CTAs
       getPathsCTA() {
         // 🔍 Debug: log the initial config
-        console.log('getPathsCTA - initial config:', v?._config);
+        // console.log('getPathsCTA - initial config:', v?._config);
 
         // Try to get from internal config
         const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
@@ -165,7 +169,7 @@ import Cookies from "js-cookie";
 
         // If not present or empty, try to load from the URL
         if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
-          console.log('getPathsCTA - no valid paths_cta in config, checking URL...');
+          // console.log('getPathsCTA - no valid paths_cta in config, checking URL...');
 
           const urlParam = new URLSearchParams(window.location.search).get('paths_cta');
 
@@ -202,10 +206,10 @@ import Cookies from "js-cookie";
             cta.callback(payload);
             return true;
           } else {
-            console.log("getPathsCTA not execute", index, cta);
+            // console.log("getPathsCTA not execute", index, cta);
           }
         }
-        console.log("📨 Relay received:", payload);
+        // console.log("📨 Relay received:", payload);
 
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
@@ -227,7 +231,7 @@ import Cookies from "js-cookie";
   window.Village._processQueue();
 
   window.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
-    console.log("✅ Village widget is ready");
+    //console.log("✅ Village widget is ready");
   });
   window.Village.on(VillageEvents.pathCtaClicked, (payload) => {
     window.Village.executeCallback(payload);
@@ -237,12 +241,11 @@ import Cookies from "js-cookie";
     console.log("✅ Village OAuth success", payload);
   });
   if (!window.__village_message_listener_attached__) {
-    console.log("✅ __village_message_listener_attached__");
+    //console.log("✅ __village_message_listener_attached__");
     window.addEventListener("message", async (event) => {
       const { origin, data } = event;
       const domainA = new URL(origin).hostname;
       const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
-      const villageToken = 'village.token';
 
       if (domainA === domainB && data?.type === "VillageSDK") {
         console.log("[SDK cookie] message from iframe:", data);
