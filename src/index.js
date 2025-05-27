@@ -50,7 +50,7 @@ const villageToken = 'village.token';
           v._config.paths_cta.push(cta);
           v.broadcast?.(VillageEvents.pathsCtaUpdated, v._config.paths_cta);
         } else {
-          console.warn("[Village] Invalid CTA object:", cta);
+          // console.warn("[Village] Invalid CTA object:", cta);
         }
         return v;
       },
@@ -94,7 +94,7 @@ const villageToken = 'village.token';
         try {
           window.dispatchEvent(new CustomEvent(event, { detail: data }));
         } catch (err) {
-          console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
+          // console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
         }
       },
 
@@ -129,6 +129,7 @@ const villageToken = 'village.token';
         v._initialized = true;
         v._renderWidget();        // widgetReady will be broadcast here
 
+        console.log('init', config)
         // If the caller passed paths_cta, replace the list and broadcast the update
         if (Array.isArray(config?.paths_cta) && config.paths_cta.length) {
           v.updatePathsCTA(config.paths_cta);   // <— emits pathsCtaUpdated
@@ -183,6 +184,9 @@ const villageToken = 'village.token';
 
       // ✅ Expor CTAs
       getPathsCTA() {
+        // 🔍 Debug: log the initial config
+        console.log('getPathsCTA - initial config:', v?._config);
+
         // Try to get from internal config
         const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
           ? v._config.paths_cta
@@ -190,6 +194,8 @@ const villageToken = 'village.token';
 
         // If not present or empty, try to load from the URL
         if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
+          console.log('getPathsCTA - no valid paths_cta in config, checking URL...');
+
           const urlParam = new URLSearchParams(window.location.search).get('paths_cta');
           try {
             // Try to decode and parse the URL parameter as JSON
@@ -197,9 +203,11 @@ const villageToken = 'village.token';
             if (Array.isArray(parsed)) {
               pathsCTA = parsed;
             } else {
+              console.warn('getPathsCTA - URL param is not a valid array');
               pathsCTA = [];
             }
           } catch (err) {
+            console.warn('getPathsCTA - failed to parse paths_cta from URL:', err);
             pathsCTA = [];
           }
         }
@@ -214,8 +222,12 @@ const villageToken = 'village.token';
           if (cta.callback && payload.index == index) {
             cta.callback(payload);
             return true;
-          } 
+          } else {
+            console.log("getPathsCTA not execute", index, cta);
+          }
         }
+        console.log("📨 Relay received:", payload);
+
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }
@@ -236,7 +248,7 @@ const villageToken = 'village.token';
   window.Village._processQueue();
 
   window.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
-    //console.log("✅ Village widget is ready");
+    console.log("✅ Village widget is ready");
   });
   window.Village.on(VillageEvents.pathCtaClicked, (payload) => {
     window.Village.executeCallback(payload);
@@ -246,51 +258,13 @@ const villageToken = 'village.token';
     console.log("✅ Village OAuth success", payload);
   });
   if (!window.__village_message_listener_attached__) {
-    //console.log("✅ __village_message_listener_attached__");
-    window.addEventListener("message", async (event) => {
-      const { origin, data } = event;
-      const domainA = new URL(origin).hostname;
-      const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
-
-      if (domainA === domainB && data?.type === "VillageSDK") {
-        console.log("[SDK cookie] message from iframe:", data);
-        const token = data.token ?? null;
-
-        if (!token && document.requestStorageAccess) {
-          try {
-            await document.requestStorageAccess();
-            const recoveredToken = Cookies.get(villageToken);
-            const recoveredTokenS = sessionStorage.getItem('village.token');
-            console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
-            if (recoveredToken) {
-              sessionStorage.setItem(villageToken, recoveredToken);
-              window.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
-            }
-          } catch (e) {
-            console.warn("[VillageSDK] Storage Access denied or failed", e);
-          }
-          return;
-        }
-
-        if (token) {
-          Cookies.set(villageToken, token, {
-            secure: true,
-            sameSite: "None",
-            expires: 60,
-          });
-          sessionStorage.setItem(villageToken, token);
-          window.Village.broadcast(VillageEvents.oauthSuccess, { token });
-        } else {
-          Cookies.remove(villageToken);
-          sessionStorage.removeItem(villageToken);
-          window.Village.broadcast(VillageEvents.userLoggedOut, {});
-        }
-        return;
-      }
-
-      if (!data || data.source !== "VillageSDK") return;
-      if (data.type === VillageEvents.pathCtaClicked) {
-        window.Village.executeCallback(data.payload || data);
+    console.log("✅ __village_message_listener_attached__");
+    window.addEventListener("message", (event) => {
+      const msg = event.data;
+      if (!msg || !(msg.source == "VillageSDK" || msg.source == "dynamic-cta")) return;
+      //console.log(msg);
+      if (msg.type === VillageEvents.pathCtaClicked) {
+        window.Village.executeCallback(msg.payload || msg);
       }
     });
 

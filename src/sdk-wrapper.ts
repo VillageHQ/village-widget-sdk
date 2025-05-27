@@ -66,7 +66,7 @@ import {
         }
       });
     } else {
-      console.warn(`[Village] No listeners registered for event: ${event}`, payload);
+      // console.warn(`[Village] No listeners registered for event: ${event}`, payload);
     }
   
     /* 2) Relay via postMessage (iframe / popup) ------------------------ */

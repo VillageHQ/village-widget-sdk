@@ -40,7 +40,7 @@ export class App {
     this.setupMessageHandlers();
     this.setupMutationObserver();
     this.scanExistingElements();
-    await this.getAuthToken();
+    console.log('getUser');
     this.getUser();
   }
 
