@@ -2,7 +2,6 @@ import { App } from "./app.js";
 import "./styles.css";
 import { VillageEvents } from "./config/village-events.js";;
 import { on, emit } from "./sdk-wrapper";
-import { Console } from "console";
 import Cookies from "js-cookie";
 
 (function (window) {
