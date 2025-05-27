@@ -51,6 +51,32 @@ import Cookies from "js-cookie";
         return v;
       },
 
+      sendStorageGetToken() {
+        window.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_GET_TOKEN"
+        }, "*");
+      },
+
+      sendStorageSetToken(token) {
+        if (typeof token !== "string") {
+          console.warn("Token must be a string.");
+          return;
+        }
+
+        window.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_SET_TOKEN",
+          token: token
+        }, "*");
+      },
+
+      sendStorageDeleteToken() {
+        window.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_DELETE_TOKEN"
+        }, "*");
+      },
 
       off(event, callback) {
         if (!listeners[event]) return;
@@ -99,7 +125,6 @@ import Cookies from "js-cookie";
         v._initialized = true;
         v._renderWidget();        // widgetReady will be broadcast here
 
-        // console.log('init', config)
         // If the caller passed paths_cta, replace the list and broadcast the update
         if (Array.isArray(config?.paths_cta) && config.paths_cta.length) {
           v.updatePathsCTA(config.paths_cta);   // <— emits pathsCtaUpdated
@@ -154,26 +179,17 @@ import Cookies from "js-cookie";
 
       // ✅ Expor CTAs
       getPathsCTA() {
-        // 🔍 Debug: log the initial config
-        // console.log('getPathsCTA - initial config:', v?._config);
-
         // Try to get from internal config
         const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
           ? v._config.paths_cta
           : [];
 
-
         // If not present or empty, try to load from the URL
         if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
-          // console.log('getPathsCTA - no valid paths_cta in config, checking URL...');
-
           const urlParam = new URLSearchParams(window.location.search).get('paths_cta');
-
           try {
             // Try to decode and parse the URL parameter as JSON
             const parsed = JSON.parse(decodeURIComponent(urlParam));
-            //console.log('getPathsCTA - parsed from URL:', parsed);
-
             if (Array.isArray(parsed)) {
               pathsCTA = parsed;
             } else {
@@ -186,27 +202,18 @@ import Cookies from "js-cookie";
           }
         }
 
-        // 🔍 Final result
-        //console.log('getPathsCTA - returning:', pathsCTA);
-
         return pathsCTA || [];
       },
 
       executeCallback(payload) {
         const ctas = v.getPathsCTA();
-        //console.log("getPathsCTA", ctas, payload);
         for (let index = 0; index < ctas.length; index++) {
           const cta = ctas[index];
           if (cta.callback && payload.index == index) {
-            //console.log("executeCallback", cta);
             cta.callback(payload);
             return true;
-          } else {
-            // console.log("getPathsCTA not execute", index, cta);
-          }
+          } 
         }
-        // console.log("📨 Relay received:", payload);
-
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }

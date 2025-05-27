@@ -62,6 +62,7 @@ export class MessageHandlers {
 
   handleOAuthSuccess(data) {
     Cookies.set("village.token", data.token, { secure: true, expires: 60 });
+    
     this.app.handleOAuthSuccess(data);
 
     const villageOrigin = import.meta.env.VITE_APP_FRONTEND_URL;
