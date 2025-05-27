@@ -46,7 +46,7 @@ import Cookies from "js-cookie";
           v._config.paths_cta.push(cta);
           v.broadcast?.(VillageEvents.pathsCtaUpdated, v._config.paths_cta);
         } else {
-          // console.warn("[Village] Invalid CTA object:", cta);
+          console.warn("[Village] Invalid CTA object:", cta);
         }
         return v;
       },
@@ -90,7 +90,7 @@ import Cookies from "js-cookie";
         try {
           window.dispatchEvent(new CustomEvent(event, { detail: data }));
         } catch (err) {
-          // console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
+          console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
         }
       },
 
