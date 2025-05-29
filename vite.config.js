@@ -1,7 +1,7 @@
 import path from "path";
-import fs   from "fs";
-import { defineConfig }      from "vitest/config";
-import { loadEnv }           from "vite";
+import fs from "fs";
+import { defineConfig } from "vitest/config";
+import { loadEnv } from "vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";   // npm i -D vite-plugin-css-injected-by-js
 
 // ──────────────────────────────
@@ -17,21 +17,19 @@ export default defineConfig(({ mode }) => {
   // ──────────────────────────────
   // Load the correct .env file
   // ──────────────────────────────
-  const envFile = isWatch
-    ? path.resolve(process.cwd(), ".env.development")
-    : path.resolve(process.cwd(), ".env.production");
+  const envFile = path.resolve(process.cwd(), `.env.${mode}`);
 
   const parsedEnv = fs.existsSync(envFile)
     ? Object.fromEntries(
-        fs
-          .readFileSync(envFile, "utf-8")
-          .split("\n")
-          .filter(l => l.trim() && !l.startsWith("#"))
-          .map(l => {
-            const [k, ...v] = l.split("=");
-            return [k.trim(), v.join("=").trim()];
-          })
-      )
+      fs
+        .readFileSync(envFile, "utf-8")
+        .split("\n")
+        .filter(l => l.trim() && !l.startsWith("#"))
+        .map(l => {
+          const [k, ...v] = l.split("=");
+          return [k.trim(), v.join("=").trim()];
+        })
+    )
     : {};
 
   // ──────────────────────────────
@@ -58,21 +56,33 @@ export default defineConfig(({ mode }) => {
     name: "banner",
     writeBundle() {
       const banner = `// Deployed: ${new Date().toISOString()}\n// Version: ${pkg.version}\n`;
-      if (fs.existsSync(devFileFullPath)) {
-        const code = fs.readFileSync(devFileFullPath, "utf8");
-        const finalCode = code.startsWith("// Deployed:") ? code : banner + code;
-  
-        // 1. Atualiza o original (devFileFullPath)
-        fs.writeFileSync(devFileFullPath, finalCode);
-        console.log("✅ Banner prepended to original build");
-  
-        // 2. Salva também em ./dist/
-        const outputBaseName = path.basename(devFileFullPath);
-        const copyTarget = path.resolve(__dirname, "dist", outputBaseName);
-        fs.writeFileSync(copyTarget, finalCode);
-        console.log(`✅ Copied build to ./dist/${outputBaseName}`);
+      if (!fs.existsSync(devFileFullPath)) return;
+
+      const code = fs.readFileSync(devFileFullPath, "utf8");
+      const finalCode = code.startsWith("// Deployed:") ? code : banner + code;
+
+      // 1. Atualiza o original
+      fs.writeFileSync(devFileFullPath, finalCode);
+      console.log("✅ Banner prepended to original build");
+
+      // 2. Copia para ./dist/ com o mesmo nome
+      const outputBaseName = path.basename(devFileFullPath);
+      const distCopyPath = path.resolve(__dirname, "dist", outputBaseName);
+      fs.writeFileSync(distCopyPath, finalCode);
+      console.log(`✅ Copied build to ./dist/${outputBaseName}`);
+
+      // 3. Copia adicional para dist/{mode}/village-widget.js
+      const namedDistFolder = path.resolve(__dirname, `dist/${mode}`);
+      const namedOutputPath = path.resolve(namedDistFolder, "village-widget.js");
+
+      if (!fs.existsSync(namedDistFolder)) {
+        fs.mkdirSync(namedDistFolder, { recursive: true });
       }
-    },
+
+      fs.writeFileSync(namedOutputPath, finalCode);
+      console.log(`✅ Copied build to dist/${mode}/village-widget.js`);
+    }
+    ,
   };
 
   // ──────────────────────────────
