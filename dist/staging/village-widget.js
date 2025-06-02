@@ -1,4 +1,4 @@
-// Deployed: 2025-05-29T20:46:02.262Z
+// Deployed: 2025-06-02T13:18:10.030Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2860,13 +2860,15 @@ text-align: center;
       this.inlineSearchIframes = /* @__PURE__ */ new Map();
       this.messageHandlers = new MessageHandlers(this);
       this.moduleHandlers = new ModuleHandlers(this);
-      this.apiUrl = "https://api-stg.village.do";
+      this.apiUrl = "https://staging.village.do";
       this.hasRenderedButton = false;
+      this.isRedirectingToAuth = false;
     }
     async init() {
       this.setupMessageHandlers();
       this.setupMutationObserver();
       this.scanExistingElements();
+      await this.getAuthToken();
       this.getUser();
     }
     setupMessageHandlers() {
@@ -2976,8 +2978,98 @@ text-align: center;
         }
       }
     }
+    extractTokenFromQueryParams() {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get("villageToken");
+      if (token) {
+        this.isRedirectingToAuth = true;
+        url.searchParams.delete("villageToken");
+        const cleanUrl = url.pathname + url.search + url.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+        return token;
+      }
+      return null;
+    }
+    updateCookieToken(token) {
+      if (this.isTokenValid(token)) {
+        this.saveExtensionToken(token);
+        api.set("village.token", token, { secure: location.protocol === "https:", expires: 60, path: "/" });
+        if (this.token != token) {
+          this.token = token;
+          this._refreshInlineSearchIframes();
+        }
+      }
+    }
+    isTokenValid(token) {
+      return typeof token === "string" && token.length > 10 && token !== "not_found";
+    }
+    async getAuthToken(timeout = 1e3) {
+      let token = api.get("village.token");
+      if (!this.isTokenValid(token)) {
+        token = this.extractTokenFromQueryParams();
+      }
+      if (!this.isTokenValid(token)) {
+        try {
+          token = await this.requestExtensionToken(timeout);
+        } catch (err) {
+        }
+      }
+      if (!token) {
+        if (window === window.top) {
+          const frontendDomain = new URL("https://staging.village.do").hostname;
+          const isOnVillageFrontend = location.hostname.endsWith(frontendDomain);
+          if (!isOnVillageFrontend) {
+            this.redirectToVillageAuth();
+            return null;
+          }
+        }
+      }
+      if (this.isTokenValid(token)) {
+        this.updateCookieToken(token);
+      }
+      return token;
+    }
+    redirectToVillageAuth() {
+      if (this.isRedirectingToAuth) {
+        return null;
+      }
+      const currentUrl = window.location.href;
+      const encodedReturnUrl = encodeURIComponent(currentUrl);
+      const frontendUrl = "https://staging.village.do";
+      const baseDomain = new URL(frontendUrl).origin;
+      const authUrl = `${baseDomain}/widget/get-auth-token?return=${encodedReturnUrl}`;
+      window.location.href = authUrl;
+    }
+    /**
+     * Faz um round-trip com a extensão via window.postMessage.
+     * Resolve com o token ou lança erro após o timeout.
+     */
+    requestExtensionToken(timeout) {
+      const request = { type: "STORAGE_GET_TOKEN", source: "VillageSDK" };
+      return new Promise((resolve, reject) => {
+        const listener = (event) => {
+          if (event.source !== window) return;
+          const { source, message } = event.data || {};
+          if (source === "VillageExtension" && (message == null ? void 0 : message.token)) {
+            window.removeEventListener("message", listener);
+            clearTimeout(timer);
+            resolve(message.token);
+          }
+        };
+        const timer = setTimeout(() => {
+          window.removeEventListener("message", listener);
+          reject(new Error("Extension did not respond in time"));
+        }, timeout);
+        window.addEventListener("message", listener);
+        window.postMessage(request, "*");
+      });
+    }
+    saveExtensionToken(token) {
+      const request = { type: "STORAGE_SET_TOKEN", source: "VillageSDK", token };
+      window.postMessage(request, "*");
+    }
     async getUser() {
-      const token = api.get("village.token");
+      const token = await this.getAuthToken();
       if (!token) return;
       try {
         const { data: user } = await axios.get(`${this.apiUrl}/user`, {
@@ -3001,8 +3093,7 @@ text-align: center;
       window.open(url, "paas-oauth", "popup=true,width=500,height=600");
     }
     handleOAuthSuccess(data) {
-      api.set("village.token", data.token, { secure: true, expires: 60 });
-      this.token = data.token;
+      this.updateCookieToken(data.token);
       this._refreshInlineSearchIframes();
       this.refreshSyncUrlElements();
       this.renderIframe();
@@ -3044,6 +3135,9 @@ text-align: center;
     }
     async checkPaths(url) {
       var _a, _b;
+      if (!this.token) {
+        this.token = await this.getAuthToken();
+      }
       if (!this.token) return null;
       try {
         const { data } = await axios.post(
@@ -3093,8 +3187,8 @@ text-align: center;
       }
       if (foundElement) foundElement.style.display = "none";
       if (notFoundElement) notFoundElement.style.display = "none";
-      if (loadingElement) loadingElement.style.display = "inline-flex";
       if (errorElement) errorElement.style.display = "none";
+      if (loadingElement) loadingElement.style.display = "inline-flex";
     }
     async checkPathsAndUpdateButton(element, url) {
       try {
@@ -3324,8 +3418,33 @@ text-align: center;
           if (cta && typeof cta.label === "string" && cta.callback) {
             v._config.paths_cta.push(cta);
             (_a = v.broadcast) == null ? void 0 : _a.call(v, VillageEvents.pathsCtaUpdated, v._config.paths_cta);
+          } else {
+            console.warn("[Village] Invalid CTA object:", cta);
           }
           return v;
+        },
+        sendStorageGetToken() {
+          window2.postMessage({
+            source: "VillageSDK",
+            type: "STORAGE_GET_TOKEN"
+          }, "*");
+        },
+        sendStorageSetToken(token) {
+          if (typeof token !== "string") {
+            console.warn("Token must be a string.");
+            return;
+          }
+          window2.postMessage({
+            source: "VillageSDK",
+            type: "STORAGE_SET_TOKEN",
+            token
+          }, "*");
+        },
+        sendStorageDeleteToken() {
+          window2.postMessage({
+            source: "VillageSDK",
+            type: "STORAGE_DELETE_TOKEN"
+          }, "*");
         },
         off(event, callback) {
           if (!listeners2[event]) return;
@@ -3337,6 +3456,7 @@ text-align: center;
           try {
             window2.dispatchEvent(new CustomEvent(event, { detail: data }));
           } catch (err) {
+            console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
           }
         },
         broadcast(event, data) {
@@ -3455,12 +3575,50 @@ text-align: center;
     window2.Village.on(VillageEvents.pathCtaClicked, (payload) => {
       window2.Village.executeCallback(payload);
     });
+    window2.Village.on(VillageEvents.oauthSuccess, (payload) => {
+      console.log("✅ Village OAuth success", payload);
+    });
     if (!window2.__village_message_listener_attached__) {
-      window2.addEventListener("message", (event) => {
-        const msg = event.data;
-        if (!msg || !(msg.source == "VillageSDK" || msg.source == "dynamic-cta")) return;
-        if (msg.type === VillageEvents.pathCtaClicked) {
-          window2.Village.executeCallback(msg.payload || msg);
+      window2.addEventListener("message", async (event) => {
+        const { origin: origin2, data } = event;
+        const domainA = new URL(origin2).hostname;
+        const domainB = new URL("https://staging.village.do").hostname;
+        if (domainA === domainB && (data == null ? void 0 : data.type) === "VillageSDK") {
+          console.log("[SDK cookie] message from iframe:", data);
+          const token = data.token ?? null;
+          if (!token && document.requestStorageAccess) {
+            try {
+              await document.requestStorageAccess();
+              const recoveredToken = api.get(villageToken);
+              const recoveredTokenS = sessionStorage.getItem("village.token");
+              console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
+              if (recoveredToken) {
+                sessionStorage.setItem(villageToken, recoveredToken);
+                window2.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
+              }
+            } catch (e) {
+              console.warn("[VillageSDK] Storage Access denied or failed", e);
+            }
+            return;
+          }
+          if (token) {
+            api.set(villageToken, token, {
+              secure: true,
+              sameSite: "None",
+              expires: 60
+            });
+            sessionStorage.setItem(villageToken, token);
+            window2.Village.broadcast(VillageEvents.oauthSuccess, { token });
+          } else {
+            api.remove(villageToken);
+            sessionStorage.removeItem(villageToken);
+            window2.Village.broadcast(VillageEvents.userLoggedOut, {});
+          }
+          return;
+        }
+        if (!data || data.source !== "VillageSDK") return;
+        if (data.type === VillageEvents.pathCtaClicked) {
+          window2.Village.executeCallback(data.payload || data);
         }
       });
       window2.__village_message_listener_attached__ = true;

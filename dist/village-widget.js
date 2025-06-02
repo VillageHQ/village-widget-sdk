@@ -1,11 +1,267 @@
-<<<<<<< HEAD
-// Deployed: 2025-05-15T09:46:47.275Z
-=======
-// Deployed: 2025-05-20T18:39:03.235Z
->>>>>>> 4965c6069a239d2790cac0b21e50f6fb940a6b24
+// Deployed: 2025-06-02T13:18:45.928Z
 // Version: 1.0.47
-(function(){"use strict";try{if(typeof document<"u"){var e=document.createElement("style");e.appendChild(document.createTextNode(".village-iframe{width:100%;height:100%;border:none;display:block;position:fixed;top:0;left:0;z-index:2147483647;background:#0000003d;color-scheme:light}.village-iframe.village-loading{display:flex;justify-content:center;align-items:center}.village-iframe>.village-spinner{width:1.5rem;height:1.5rem;border:2px solid #000;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;animation:spin .45s linear infinite}.village-iframe.village-hidden{display:none}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.village-hidden{display:none}[village-paths-data=facepiles]{display:flex;align-items:center;padding-right:.5rem}[village-paths-data=facepiles] img{width:1.5rem;height:1.5rem;border-radius:50%;margin-right:-.5rem}[village-paths-data=facepiles] img.village-facepiler-avatar-not-found{filter:blur(7px)}[village-paths-data=facepiles] img:last-child{margin-right:0}[village-paths-data=count]{padding-right:.25rem}")),document.head.appendChild(e)}}catch(i){console.error("vite-plugin-css-injected-by-js",i)}})();
-(function(Ce){"use strict";const L="village-data-url",F="village-module",M={SYNC:"sync",SEARCH:"search",PATHS:"paths"};function ce({token:t,partnerKey:e,userReference:n,url:r,module:s,config:i}){const o=new URLSearchParams;t&&o.append("token",t),r&&o.append("url",encodeURIComponent(r)),e&&o.append("partnerKey",e),n&&o.append("userReference",n),s&&o.append("module",s);let a="[]";typeof i<"u"&&typeof i.paths_cta<"u"&&(a=JSON.stringify(i.paths_cta));const u=encodeURIComponent(a);return o.append("paths_cta",u),`https://village.do/widget?${o.toString()}`}function yt(t,e){t.innerHTML="";const n=document.createElement("iframe");return n.src=ce({...e,module:"search"}),n.style.width="100%",n.style.height="100%",n.style.border="none",n.style.display="block",t.appendChild(n),n}class gt{constructor(){this.element=document.createElement("iframe"),this.element.className="village-iframe village-hidden",this.spinner=document.createElement("div"),this.spinner.className="village-iframe village-hidden village-loading",this.spinner.innerHTML='<div class="village-spinner"></div>'}update(e){this.element.src=ce(e);const n=e.url||e.module;this.element.className=n?"village-iframe":"village-iframe village-hidden",this.spinner.className=n?"village-iframe village-loading":"village-iframe village-hidden village-loading"}render(e){this.element.parentNode||(e.appendChild(this.spinner),e.appendChild(this.element))}hideSpinner(){this.spinner.className="village-iframe village-hidden village-loading"}}/*! js-cookie v3.0.5 | MIT */function G(t){for(var e=1;e<arguments.length;e++){var n=arguments[e];for(var r in n)t[r]=n[r]}return t}var Et={read:function(t){return t[0]==='"'&&(t=t.slice(1,-1)),t.replace(/(%[\dA-F]{2})+/gi,decodeURIComponent)},write:function(t){return encodeURIComponent(t).replace(/%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g,decodeURIComponent)}};function ue(t,e){function n(s,i,o){if(!(typeof document>"u")){o=G({},e,o),typeof o.expires=="number"&&(o.expires=new Date(Date.now()+o.expires*864e5)),o.expires&&(o.expires=o.expires.toUTCString()),s=encodeURIComponent(s).replace(/%(2[346B]|5E|60|7C)/g,decodeURIComponent).replace(/[()]/g,escape);var a="";for(var u in o)o[u]&&(a+="; "+u,o[u]!==!0&&(a+="="+o[u].split(";")[0]));return document.cookie=s+"="+t.write(i,s)+a}}function r(s){if(!(typeof document>"u"||arguments.length&&!s)){for(var i=document.cookie?document.cookie.split("; "):[],o={},a=0;a<i.length;a++){var u=i[a].split("="),c=u.slice(1).join("=");try{var d=decodeURIComponent(u[0]);if(o[d]=t.read(c,d),s===d)break}catch{}}return s?o[s]:o}}return Object.create({set:n,get:r,remove:function(s,i){n(s,"",G({},i,{expires:-1}))},withAttributes:function(s){return ue(this.converter,G({},this.attributes,s))},withConverter:function(s){return ue(G({},this.converter,s),this.attributes)}},{attributes:{value:Object.freeze(e)},converter:{value:Object.freeze(t)}})}var v=ue(Et,{path:"/"});class bt{constructor(e){this.app=e,this.handlers={VILLAGE_OAUTH_REQUEST:this.handleOAuthRequest.bind(this),VILLAGE_OAUTH_SUCCESS:this.handleOAuthSuccess.bind(this),VILLAGE_OAUTH_ERROR:this.handleOAuthError.bind(this),VILLAGE_REMOVE_IFRAME:this.handleRemoveIframe.bind(this),VILLAGE_IFRAME_LOADED:this.handleIframeLoaded.bind(this),VILLAGE_COPY_TO_CLIPBOARD:this.handleCopyToClipboard.bind(this)},this.app.oauthPopupRef=null}handle(e){if(!e.data.type||!e.data.type.startsWith("VILLAGE_"))return;const n=this.handlers[e.data.type];if(n){if((e.data.type==="VILLAGE_OAUTH_SUCCESS"||e.data.type==="VILLAGE_OAUTH_ERROR")&&e.source!==this.app.oauthPopupRef){this.app.oauthPopupRef&&this.app.oauthPopupRef.closed&&(this.app.oauthPopupRef=null);return}n(e.data,e.source)}}handleOAuthRequest(e){const{isAuthorizationFlow:n}=e,r=`https://village.do/widget/${n?"resolve-auth":"oauth"}`,s=new URLSearchParams;this.app.partnerKey&&s.append("partnerKey",this.app.partnerKey),this.app.userReference&&s.append("userReference",this.app.userReference);const i=s.toString()?`${r}?${s.toString()}`:r;this.app.oauthPopupRef=window.open(i,"paas-oauth","popup=true,width=500,height=600");const o=setInterval(()=>{this.app.oauthPopupRef&&this.app.oauthPopupRef.closed?(clearInterval(o),this.app.oauthPopupRef=null):this.app.oauthPopupRef||clearInterval(o)},1e3)}handleOAuthSuccess(e){v.set("village.token",e.token,{secure:!0,expires:60}),this.app.handleOAuthSuccess(e),this.app.oauthPopupRef&&!this.app.oauthPopupRef.closed?(this.app.oauthPopupRef.postMessage({type:"VILLAGE_OAUTH_ACKNOWLEDGED"},"https://village.do"),this.app.oauthPopupRef=null):this.app.oauthPopupRef=null}handleOAuthError(e){alert(`Sorry, something went wrong during authentication: ${(e==null?void 0:e.error)||"Unknown error"}`),this.app.oauthPopupRef&&(this.app.oauthPopupRef=null)}handleRemoveIframe(){this.app.url=null,this.app.module=null,this.app.renderIframe()}handleIframeLoaded(){this.app.iframe.hideSpinner()}handleCopyToClipboard(e){navigator.clipboard.writeText(e.text)}}const Rt=`
+(function() {
+  "use strict";
+  try {
+    if (typeof document != "undefined") {
+      var elementStyle = document.createElement("style");
+      elementStyle.appendChild(document.createTextNode('.village-iframe {\r\n  width: 100%;\r\n  height: 100%;\r\n  border: none;\r\n  display: block;\r\n  position: fixed;\r\n  top: 0;\r\n  left: 0;\r\n  z-index: 2147483647;\r\n  background: rgba(0, 0, 0, 0.24);\r\n  color-scheme: light;\r\n\r\n  &.village-loading {\r\n    display: flex;\r\n    justify-content: center;\r\n    align-items: center;\r\n  }\r\n\r\n  > .village-spinner {\r\n    width: 1.5rem;\r\n    height: 1.5rem;\r\n    border: 2px solid #000;\r\n    border-left-color: transparent;\r\n    border-bottom-color: transparent;\r\n    border-radius: 50%;\r\n    animation: spin 0.45s linear infinite;\r\n  }\r\n\r\n  &.village-hidden {\r\n    display: none;\r\n  }\r\n}\r\n\r\n@keyframes spin {\r\n  0% {\r\n    transform: rotate(0deg);\r\n  }\r\n  100% {\r\n    transform: rotate(360deg);\r\n  }\r\n}\r\n\r\n.village-hidden {\r\n  display: none;\r\n}\r\n\r\n[village-paths-data="facepiles"] {\r\n  display: flex;\r\n  align-items: center;\r\n  padding-right: 0.5rem;\r\n}\r\n\r\n[village-paths-data="facepiles"] img {\r\n  width: 1.5rem;\r\n  height: 1.5rem;\r\n  border-radius: 50%;\r\n  margin-right: -0.5rem; /* Creates overlap effect */\r\n}\r\n\r\n[village-paths-data="facepiles"] img.village-facepiler-avatar-not-found {\r\n  filter: blur(7px);\r\n}\r\n\r\n[village-paths-data="facepiles"] img:last-child {\r\n  margin-right: 0;\r\n}\r\n\r\n[village-paths-data="count"] {\r\n  padding-right: 0.25rem;\r\n}'));
+      document.head.appendChild(elementStyle);
+    }
+  } catch (e) {
+    console.error("vite-plugin-css-injected-by-js", e);
+  }
+})();
+(function(exports) {
+  "use strict";
+  const VILLAGE_URL_DATA_ATTRIBUTE = "village-data-url";
+  const VILLAGE_MODULE_ATTRIBUTE = "village-module";
+  const ModuleTypes = {
+    SYNC: "sync",
+    SEARCH: "search",
+    PATHS: "paths"
+  };
+  function buildIframeSrc({
+    token,
+    partnerKey,
+    userReference,
+    url,
+    module: villageModule,
+    config
+  }) {
+    const params = new URLSearchParams();
+    if (token) params.append("token", token);
+    if (url) params.append("url", encodeURIComponent(url));
+    if (partnerKey) params.append("partnerKey", partnerKey);
+    if (userReference) params.append("userReference", userReference);
+    if (villageModule) params.append("module", villageModule);
+    let pathsCtaJson = "[]";
+    if (typeof config !== "undefined" && typeof config.paths_cta !== "undefined") {
+      pathsCtaJson = JSON.stringify(config.paths_cta);
+    }
+    const encodedPathsCta = encodeURIComponent(pathsCtaJson);
+    params.append("paths_cta", encodedPathsCta);
+    return `${"http://localhost:3000"}/widget?${params.toString()}`;
+  }
+  function renderSearchIframeInsideElement(targetElement, params) {
+    targetElement.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.src = buildIframeSrc({ ...params, module: "search" });
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    iframe.style.display = "block";
+    targetElement.appendChild(iframe);
+    return iframe;
+  }
+  class Iframe {
+    constructor() {
+      this.element = document.createElement("iframe");
+      this.element.className = "village-iframe village-hidden";
+      this.spinner = document.createElement("div");
+      this.spinner.className = "village-iframe village-hidden village-loading";
+      this.spinner.innerHTML = '<div class="village-spinner"></div>';
+    }
+    // Update method uses the utility function to set src, but keeps class logic
+    update(params) {
+      this.element.src = buildIframeSrc(params);
+      const shouldShow = params.url || params.module;
+      this.element.className = shouldShow ? "village-iframe" : "village-iframe village-hidden";
+      this.spinner.className = shouldShow ? "village-iframe village-loading" : "village-iframe village-hidden village-loading";
+    }
+    // Keep original render method
+    render(container) {
+      if (!this.element.parentNode) {
+        container.appendChild(this.spinner);
+        container.appendChild(this.element);
+      }
+    }
+    // Keep original hideSpinner method
+    hideSpinner() {
+      this.spinner.className = "village-iframe village-hidden village-loading";
+    }
+  }
+  /*! js-cookie v3.0.5 | MIT */
+  function assign(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        target[key] = source[key];
+      }
+    }
+    return target;
+  }
+  var defaultConverter = {
+    read: function(value) {
+      if (value[0] === '"') {
+        value = value.slice(1, -1);
+      }
+      return value.replace(/(%[\dA-F]{2})+/gi, decodeURIComponent);
+    },
+    write: function(value) {
+      return encodeURIComponent(value).replace(
+        /%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g,
+        decodeURIComponent
+      );
+    }
+  };
+  function init(converter, defaultAttributes) {
+    function set(name, value, attributes) {
+      if (typeof document === "undefined") {
+        return;
+      }
+      attributes = assign({}, defaultAttributes, attributes);
+      if (typeof attributes.expires === "number") {
+        attributes.expires = new Date(Date.now() + attributes.expires * 864e5);
+      }
+      if (attributes.expires) {
+        attributes.expires = attributes.expires.toUTCString();
+      }
+      name = encodeURIComponent(name).replace(/%(2[346B]|5E|60|7C)/g, decodeURIComponent).replace(/[()]/g, escape);
+      var stringifiedAttributes = "";
+      for (var attributeName in attributes) {
+        if (!attributes[attributeName]) {
+          continue;
+        }
+        stringifiedAttributes += "; " + attributeName;
+        if (attributes[attributeName] === true) {
+          continue;
+        }
+        stringifiedAttributes += "=" + attributes[attributeName].split(";")[0];
+      }
+      return document.cookie = name + "=" + converter.write(value, name) + stringifiedAttributes;
+    }
+    function get(name) {
+      if (typeof document === "undefined" || arguments.length && !name) {
+        return;
+      }
+      var cookies2 = document.cookie ? document.cookie.split("; ") : [];
+      var jar = {};
+      for (var i = 0; i < cookies2.length; i++) {
+        var parts = cookies2[i].split("=");
+        var value = parts.slice(1).join("=");
+        try {
+          var found = decodeURIComponent(parts[0]);
+          jar[found] = converter.read(value, found);
+          if (name === found) {
+            break;
+          }
+        } catch (e) {
+        }
+      }
+      return name ? jar[name] : jar;
+    }
+    return Object.create(
+      {
+        set,
+        get,
+        remove: function(name, attributes) {
+          set(
+            name,
+            "",
+            assign({}, attributes, {
+              expires: -1
+            })
+          );
+        },
+        withAttributes: function(attributes) {
+          return init(this.converter, assign({}, this.attributes, attributes));
+        },
+        withConverter: function(converter2) {
+          return init(assign({}, this.converter, converter2), this.attributes);
+        }
+      },
+      {
+        attributes: { value: Object.freeze(defaultAttributes) },
+        converter: { value: Object.freeze(converter) }
+      }
+    );
+  }
+  var api = init(defaultConverter, { path: "/" });
+  class MessageHandlers {
+    constructor(app) {
+      this.app = app;
+      this.handlers = {
+        VILLAGE_OAUTH_REQUEST: this.handleOAuthRequest.bind(this),
+        VILLAGE_OAUTH_SUCCESS: this.handleOAuthSuccess.bind(this),
+        VILLAGE_OAUTH_ERROR: this.handleOAuthError.bind(this),
+        VILLAGE_REMOVE_IFRAME: this.handleRemoveIframe.bind(this),
+        VILLAGE_IFRAME_LOADED: this.handleIframeLoaded.bind(this),
+        VILLAGE_COPY_TO_CLIPBOARD: this.handleCopyToClipboard.bind(this)
+      };
+      this.app.oauthPopupRef = null;
+    }
+    handle(event) {
+      if (!event.data.type || !event.data.type.startsWith("VILLAGE_")) return;
+      const handler = this.handlers[event.data.type];
+      if (handler) {
+        const isPopupMessage = event.data.type === "VILLAGE_OAUTH_SUCCESS" || event.data.type === "VILLAGE_OAUTH_ERROR";
+        if (isPopupMessage && event.source !== this.app.oauthPopupRef) {
+          if (this.app.oauthPopupRef && this.app.oauthPopupRef.closed) {
+            this.app.oauthPopupRef = null;
+          }
+          return;
+        }
+        handler(event.data, event.source);
+      }
+    }
+    handleOAuthRequest(data) {
+      const { isAuthorizationFlow } = data;
+      const baseUrl = `${"http://localhost:3000"}/widget/${isAuthorizationFlow ? "resolve-auth" : "oauth"}`;
+      const params = new URLSearchParams();
+      if (this.app.partnerKey) params.append("partnerKey", this.app.partnerKey);
+      if (this.app.userReference)
+        params.append("userReference", this.app.userReference);
+      const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+      this.app.oauthPopupRef = window.open(
+        url,
+        "paas-oauth",
+        "popup=true,width=500,height=600"
+      );
+      const checkPopupClosed = setInterval(() => {
+        if (this.app.oauthPopupRef && this.app.oauthPopupRef.closed) {
+          clearInterval(checkPopupClosed);
+          this.app.oauthPopupRef = null;
+        } else if (!this.app.oauthPopupRef) {
+          clearInterval(checkPopupClosed);
+        }
+      }, 1e3);
+    }
+    handleOAuthSuccess(data) {
+      api.set("village.token", data.token, { secure: true, expires: 60 });
+      this.app.handleOAuthSuccess(data);
+      const villageOrigin = "http://localhost:3000";
+      if (this.app.oauthPopupRef && !this.app.oauthPopupRef.closed) {
+        this.app.oauthPopupRef.postMessage(
+          { type: "VILLAGE_OAUTH_ACKNOWLEDGED" },
+          villageOrigin
+        );
+        this.app.oauthPopupRef = null;
+      } else {
+        this.app.oauthPopupRef = null;
+      }
+    }
+    handleOAuthError(data) {
+      alert(
+        `Sorry, something went wrong during authentication: ${(data == null ? void 0 : data.error) || "Unknown error"}`
+      );
+      if (this.app.oauthPopupRef) {
+        this.app.oauthPopupRef = null;
+      }
+    }
+    handleRemoveIframe() {
+      this.app.url = null;
+      this.app.module = null;
+      this.app.renderIframe();
+    }
+    handleIframeLoaded() {
+      this.app.iframe.hideSpinner();
+    }
+    handleCopyToClipboard(data) {
+      navigator.clipboard.writeText(data.text);
+    }
+  }
+  const titleStyle = `
 background: linear-gradient(90deg, rgba(255, 0, 0, 1) 0%, rgba(255, 165, 0, 1) 100%);
 color: white;
 font-weight: bold;
@@ -2606,15 +2862,13 @@ text-align: center;
       this.moduleHandlers = new ModuleHandlers(this);
       this.apiUrl = "http://localhost:8000";
       this.hasRenderedButton = false;
+      this.isRedirectingToAuth = false;
     }
     async init() {
-      console.log("setupMessageHandlers");
       this.setupMessageHandlers();
-      console.log("setupMutationObserver");
       this.setupMutationObserver();
-      console.log("scanExistingElements");
       this.scanExistingElements();
-      console.log("getUser");
+      await this.getAuthToken();
       this.getUser();
     }
     setupMessageHandlers() {
@@ -2724,8 +2978,98 @@ text-align: center;
         }
       }
     }
+    extractTokenFromQueryParams() {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get("villageToken");
+      if (token) {
+        this.isRedirectingToAuth = true;
+        url.searchParams.delete("villageToken");
+        const cleanUrl = url.pathname + url.search + url.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+        return token;
+      }
+      return null;
+    }
+    updateCookieToken(token) {
+      if (this.isTokenValid(token)) {
+        this.saveExtensionToken(token);
+        api.set("village.token", token, { secure: location.protocol === "https:", expires: 60, path: "/" });
+        if (this.token != token) {
+          this.token = token;
+          this._refreshInlineSearchIframes();
+        }
+      }
+    }
+    isTokenValid(token) {
+      return typeof token === "string" && token.length > 10 && token !== "not_found";
+    }
+    async getAuthToken(timeout = 1e3) {
+      let token = api.get("village.token");
+      if (!this.isTokenValid(token)) {
+        token = this.extractTokenFromQueryParams();
+      }
+      if (!this.isTokenValid(token)) {
+        try {
+          token = await this.requestExtensionToken(timeout);
+        } catch (err) {
+        }
+      }
+      if (!token) {
+        if (window === window.top) {
+          const frontendDomain = new URL("http://localhost:3000").hostname;
+          const isOnVillageFrontend = location.hostname.endsWith(frontendDomain);
+          if (!isOnVillageFrontend) {
+            this.redirectToVillageAuth();
+            return null;
+          }
+        }
+      }
+      if (this.isTokenValid(token)) {
+        this.updateCookieToken(token);
+      }
+      return token;
+    }
+    redirectToVillageAuth() {
+      if (this.isRedirectingToAuth) {
+        return null;
+      }
+      const currentUrl = window.location.href;
+      const encodedReturnUrl = encodeURIComponent(currentUrl);
+      const frontendUrl = "http://localhost:3000";
+      const baseDomain = new URL(frontendUrl).origin;
+      const authUrl = `${baseDomain}/widget/get-auth-token?return=${encodedReturnUrl}`;
+      window.location.href = authUrl;
+    }
+    /**
+     * Faz um round-trip com a extensão via window.postMessage.
+     * Resolve com o token ou lança erro após o timeout.
+     */
+    requestExtensionToken(timeout) {
+      const request = { type: "STORAGE_GET_TOKEN", source: "VillageSDK" };
+      return new Promise((resolve, reject) => {
+        const listener = (event) => {
+          if (event.source !== window) return;
+          const { source, message } = event.data || {};
+          if (source === "VillageExtension" && (message == null ? void 0 : message.token)) {
+            window.removeEventListener("message", listener);
+            clearTimeout(timer);
+            resolve(message.token);
+          }
+        };
+        const timer = setTimeout(() => {
+          window.removeEventListener("message", listener);
+          reject(new Error("Extension did not respond in time"));
+        }, timeout);
+        window.addEventListener("message", listener);
+        window.postMessage(request, "*");
+      });
+    }
+    saveExtensionToken(token) {
+      const request = { type: "STORAGE_SET_TOKEN", source: "VillageSDK", token };
+      window.postMessage(request, "*");
+    }
     async getUser() {
-      const token = api.get("village.token");
+      const token = await this.getAuthToken();
       if (!token) return;
       try {
         const { data: user } = await axios.get(`${this.apiUrl}/user`, {
@@ -2749,8 +3093,7 @@ text-align: center;
       window.open(url, "paas-oauth", "popup=true,width=500,height=600");
     }
     handleOAuthSuccess(data) {
-      api.set("village.token", data.token, { secure: true, expires: 60 });
-      this.token = data.token;
+      this.updateCookieToken(data.token);
       this._refreshInlineSearchIframes();
       this.refreshSyncUrlElements();
       this.renderIframe();
@@ -2792,6 +3135,9 @@ text-align: center;
     }
     async checkPaths(url) {
       var _a, _b;
+      if (!this.token) {
+        this.token = await this.getAuthToken();
+      }
       if (!this.token) return null;
       try {
         const { data } = await axios.post(
@@ -2841,8 +3187,8 @@ text-align: center;
       }
       if (foundElement) foundElement.style.display = "none";
       if (notFoundElement) notFoundElement.style.display = "none";
-      if (loadingElement) loadingElement.style.display = "inline-flex";
       if (errorElement) errorElement.style.display = "none";
+      if (loadingElement) loadingElement.style.display = "inline-flex";
     }
     async checkPathsAndUpdateButton(element, url) {
       try {
@@ -3030,8 +3376,6 @@ text-align: center;
           );
         }
       });
-    } else {
-      console.warn(`[Village] No listeners registered for event: ${event}`, payload);
     }
     const message = { source: "VillageSDK", type: event, payload };
     try {
@@ -3049,15 +3393,6 @@ text-align: center;
       }
     }
   }
-  (function injectVillageAuthIframe() {
-    if (document.getElementById("villageAuth")) return;
-    const iframe = document.createElement("iframe");
-    iframe.id = "villageAuth";
-    iframe.src = `${"http://localhost:3000"}/iframe`;
-    iframe.style.display = "none";
-    iframe.sandbox = "allow-scripts allow-same-origin allow-storage-access-by-user-activation";
-    document.body.appendChild(iframe);
-  })();
   (function(window2) {
     function createVillage() {
       const listeners2 = {};
@@ -3087,6 +3422,29 @@ text-align: center;
             console.warn("[Village] Invalid CTA object:", cta);
           }
           return v;
+        },
+        sendStorageGetToken() {
+          window2.postMessage({
+            source: "VillageSDK",
+            type: "STORAGE_GET_TOKEN"
+          }, "*");
+        },
+        sendStorageSetToken(token) {
+          if (typeof token !== "string") {
+            console.warn("Token must be a string.");
+            return;
+          }
+          window2.postMessage({
+            source: "VillageSDK",
+            type: "STORAGE_SET_TOKEN",
+            token
+          }, "*");
+        },
+        sendStorageDeleteToken() {
+          window2.postMessage({
+            source: "VillageSDK",
+            type: "STORAGE_DELETE_TOKEN"
+          }, "*");
         },
         off(event, callback) {
           if (!listeners2[event]) return;
@@ -3127,7 +3485,6 @@ text-align: center;
           };
           v._initialized = true;
           v._renderWidget();
-          console.log("init", config);
           if (Array.isArray(config == null ? void 0 : config.paths_cta) && config.paths_cta.length) {
             v.updatePathsCTA(config.paths_cta);
           }
@@ -3173,21 +3530,17 @@ text-align: center;
         // ✅ Expor CTAs
         getPathsCTA() {
           var _a;
-          console.log("getPathsCTA - initial config:", v == null ? void 0 : v._config);
           const pathsCTA = Array.isArray((_a = v == null ? void 0 : v._config) == null ? void 0 : _a.paths_cta) && v._config.paths_cta.length > 0 ? v._config.paths_cta : [];
           if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
-            console.log("getPathsCTA - no valid paths_cta in config, checking URL...");
             const urlParam = new URLSearchParams(window2.location.search).get("paths_cta");
             try {
               const parsed = JSON.parse(decodeURIComponent(urlParam));
               if (Array.isArray(parsed)) {
                 pathsCTA = parsed;
               } else {
-                console.warn("getPathsCTA - URL param is not a valid array");
                 pathsCTA = [];
               }
             } catch (err) {
-              console.warn("getPathsCTA - failed to parse paths_cta from URL:", err);
               pathsCTA = [];
             }
           }
@@ -3200,11 +3553,8 @@ text-align: center;
             if (cta.callback && payload.index == index2) {
               cta.callback(payload);
               return true;
-            } else {
-              console.log("getPathsCTA not execute", index2, cta);
             }
           }
-          console.log("📨 Relay received:", payload);
           if (window2 !== window2.parent) {
             window2.parent.postMessage(payload, "*");
           }
@@ -3221,7 +3571,6 @@ text-align: center;
     window2.Village.q = existingQueue.concat(window2.Village.q);
     window2.Village._processQueue();
     window2.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
-      console.log("✅ Village widget is ready");
     });
     window2.Village.on(VillageEvents.pathCtaClicked, (payload) => {
       window2.Village.executeCallback(payload);
@@ -3230,12 +3579,10 @@ text-align: center;
       console.log("✅ Village OAuth success", payload);
     });
     if (!window2.__village_message_listener_attached__) {
-      console.log("✅ __village_message_listener_attached__");
       window2.addEventListener("message", async (event) => {
         const { origin: origin2, data } = event;
         const domainA = new URL(origin2).hostname;
         const domainB = new URL("http://localhost:3000").hostname;
-        const villageToken = "village.token";
         if (domainA === domainB && (data == null ? void 0 : data.type) === "VillageSDK") {
           console.log("[SDK cookie] message from iframe:", data);
           const token = data.token ?? null;
