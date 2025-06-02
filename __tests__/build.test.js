@@ -20,7 +20,7 @@ const envVars = fs.existsSync(envFilePath)
 
 const bundlePath = envVars.VITE_WIDGET_DEV_PATH
   ? path.resolve(process.cwd(), envVars.VITE_WIDGET_DEV_PATH)
-  : path.resolve(__dirname, '../dist/prod/index.iife.js');
+  : path.resolve(__dirname, '../dist/production/village-widget.js');
 
 describe('Production bundle', () => {
   it('builds without errors and has valid JS syntax (IIFE)', () => {
