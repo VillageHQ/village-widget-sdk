@@ -4,20 +4,6 @@ import { VillageEvents } from "./config/village-events.js";;
 import { on, emit } from "./sdk-wrapper";
 import Cookies from "js-cookie";
 
-// ---------------------------------------------------------------------------
-// Village – Session-recovery iframe
-// Always injects <https://village.do/auth/iframe> (hidden) to recover token
-// ---------------------------------------------------------------------------
-(function injectVillageAuthIframe() {
-  if (document.getElementById("villageAuth")) return;           // avoid duplicates
-  const iframe = document.createElement("iframe");
-  iframe.id = "villageAuth";
-  iframe.src = `${import.meta.env.VITE_APP_FRONTEND_URL}/iframe`;
-  iframe.style.display = "none";
-  iframe.sandbox = "allow-scripts allow-same-origin allow-storage-access-by-user-activation";
-  document.body.appendChild(iframe);
-})();
-
 (function (window) {
   function createVillage() {
     const listeners = {};
@@ -192,11 +178,9 @@ import Cookies from "js-cookie";
             if (Array.isArray(parsed)) {
               pathsCTA = parsed;
             } else {
-              // console.warn('getPathsCTA - URL param is not a valid array');
               pathsCTA = [];
             }
           } catch (err) {
-            // console.warn('getPathsCTA - failed to parse paths_cta from URL:', err);
             pathsCTA = [];
           }
         }
@@ -233,7 +217,7 @@ import Cookies from "js-cookie";
   window.Village._processQueue();
 
   window.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
-    // console.log("✅ Village widget is ready");
+    //console.log("✅ Village widget is ready");
   });
   window.Village.on(VillageEvents.pathCtaClicked, (payload) => {
     window.Village.executeCallback(payload);
@@ -243,13 +227,51 @@ import Cookies from "js-cookie";
     console.log("✅ Village OAuth success", payload);
   });
   if (!window.__village_message_listener_attached__) {
-    // console.log("✅ __village_message_listener_attached__");
-    window.addEventListener("message", (event) => {
-      const msg = event.data;
-      if (!msg || !(msg.source == "VillageSDK" || msg.source == "dynamic-cta")) return;
-      //console.log(msg);
-      if (msg.type === VillageEvents.pathCtaClicked) {
-        window.Village.executeCallback(msg.payload || msg);
+    //console.log("✅ __village_message_listener_attached__");
+    window.addEventListener("message", async (event) => {
+      const { origin, data } = event;
+      const domainA = new URL(origin).hostname;
+      const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
+
+      if (domainA === domainB && data?.type === "VillageSDK") {
+        console.log("[SDK cookie] message from iframe:", data);
+        const token = data.token ?? null;
+
+        if (!token && document.requestStorageAccess) {
+          try {
+            await document.requestStorageAccess();
+            const recoveredToken = Cookies.get(villageToken);
+            const recoveredTokenS = sessionStorage.getItem('village.token');
+            console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
+            if (recoveredToken) {
+              sessionStorage.setItem(villageToken, recoveredToken);
+              window.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
+            }
+          } catch (e) {
+            console.warn("[VillageSDK] Storage Access denied or failed", e);
+          }
+          return;
+        }
+
+        if (token) {
+          Cookies.set(villageToken, token, {
+            secure: true,
+            sameSite: "None",
+            expires: 60,
+          });
+          sessionStorage.setItem(villageToken, token);
+          window.Village.broadcast(VillageEvents.oauthSuccess, { token });
+        } else {
+          Cookies.remove(villageToken);
+          sessionStorage.removeItem(villageToken);
+          window.Village.broadcast(VillageEvents.userLoggedOut, {});
+        }
+        return;
+      }
+
+      if (!data || data.source !== "VillageSDK") return;
+      if (data.type === VillageEvents.pathCtaClicked) {
+        window.Village.executeCallback(data.payload || data);
       }
     });
 
