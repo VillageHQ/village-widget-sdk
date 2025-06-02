@@ -254,6 +254,8 @@ export class App {
 
     if (this.isTokenValid(token)) {
       this.updateCookieToken(token);
+    }else{
+      console.log('getAuthToken token is invalid', token);
     }
     return token;
   }
@@ -521,9 +523,12 @@ export class App {
     }
   }
 
-  renderIframe() {
+  async renderIframe() {
     if (!this.iframe) {
       this.iframe = new Iframe();
+    }
+    if(!this.token){
+      this.token = await this.getAuthToken();
     }
     // console.trace('renderIframe', location.hostname, this.token, this.config);
     this.iframe.update({

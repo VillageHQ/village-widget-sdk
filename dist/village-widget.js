@@ -1,4 +1,4 @@
-// Deployed: 2025-06-02T13:18:45.928Z
+// Deployed: 2025-06-02T15:54:59.164Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -41,7 +41,7 @@
     }
     const encodedPathsCta = encodeURIComponent(pathsCtaJson);
     params.append("paths_cta", encodedPathsCta);
-    return `${"http://localhost:3000"}/widget?${params.toString()}`;
+    return `${"https://staging.village.do"}/widget?${params.toString()}`;
   }
   function renderSearchIframeInsideElement(targetElement, params) {
     targetElement.innerHTML = "";
@@ -207,7 +207,7 @@
     }
     handleOAuthRequest(data) {
       const { isAuthorizationFlow } = data;
-      const baseUrl = `${"http://localhost:3000"}/widget/${isAuthorizationFlow ? "resolve-auth" : "oauth"}`;
+      const baseUrl = `${"https://staging.village.do"}/widget/${isAuthorizationFlow ? "resolve-auth" : "oauth"}`;
       const params = new URLSearchParams();
       if (this.app.partnerKey) params.append("partnerKey", this.app.partnerKey);
       if (this.app.userReference)
@@ -230,7 +230,7 @@
     handleOAuthSuccess(data) {
       api.set("village.token", data.token, { secure: true, expires: 60 });
       this.app.handleOAuthSuccess(data);
-      const villageOrigin = "http://localhost:3000";
+      const villageOrigin = "https://staging.village.do";
       if (this.app.oauthPopupRef && !this.app.oauthPopupRef.closed) {
         this.app.oauthPopupRef.postMessage(
           { type: "VILLAGE_OAUTH_ACKNOWLEDGED" },
@@ -2860,7 +2860,7 @@ text-align: center;
       this.inlineSearchIframes = /* @__PURE__ */ new Map();
       this.messageHandlers = new MessageHandlers(this);
       this.moduleHandlers = new ModuleHandlers(this);
-      this.apiUrl = "http://localhost:8000";
+      this.apiUrl = "https://staging.village.do";
       this.hasRenderedButton = false;
       this.isRedirectingToAuth = false;
     }
@@ -3016,7 +3016,7 @@ text-align: center;
       }
       if (!token) {
         if (window === window.top) {
-          const frontendDomain = new URL("http://localhost:3000").hostname;
+          const frontendDomain = new URL("https://staging.village.do").hostname;
           const isOnVillageFrontend = location.hostname.endsWith(frontendDomain);
           if (!isOnVillageFrontend) {
             this.redirectToVillageAuth();
@@ -3026,6 +3026,8 @@ text-align: center;
       }
       if (this.isTokenValid(token)) {
         this.updateCookieToken(token);
+      } else {
+        console.log("getAuthToken token is invalid", token);
       }
       return token;
     }
@@ -3035,7 +3037,7 @@ text-align: center;
       }
       const currentUrl = window.location.href;
       const encodedReturnUrl = encodeURIComponent(currentUrl);
-      const frontendUrl = "http://localhost:3000";
+      const frontendUrl = "https://staging.village.do";
       const baseDomain = new URL(frontendUrl).origin;
       const authUrl = `${baseDomain}/widget/get-auth-token?return=${encodedReturnUrl}`;
       window.location.href = authUrl;
@@ -3085,7 +3087,7 @@ text-align: center;
       }
     }
     handleOAuthRequest() {
-      const baseUrl = `${"http://localhost:3000"}/widget/oauth`;
+      const baseUrl = `${"https://staging.village.do"}/widget/oauth`;
       const params = new URLSearchParams();
       if (this.partnerKey) params.append("partnerKey", this.partnerKey);
       if (this.userReference) params.append("userReference", this.userReference);
@@ -3237,9 +3239,12 @@ text-align: center;
         if (notFoundElement) notFoundElement.style.display = "inline-flex";
       }
     }
-    renderIframe() {
+    async renderIframe() {
       if (!this.iframe) {
         this.iframe = new Iframe();
+      }
+      if (!this.token) {
+        this.token = await this.getAuthToken();
       }
       this.iframe.update({
         partnerKey: this.partnerKey,
@@ -3582,7 +3587,7 @@ text-align: center;
       window2.addEventListener("message", async (event) => {
         const { origin: origin2, data } = event;
         const domainA = new URL(origin2).hostname;
-        const domainB = new URL("http://localhost:3000").hostname;
+        const domainB = new URL("https://staging.village.do").hostname;
         if (domainA === domainB && (data == null ? void 0 : data.type) === "VillageSDK") {
           console.log("[SDK cookie] message from iframe:", data);
           const token = data.token ?? null;
