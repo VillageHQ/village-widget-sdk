@@ -254,26 +254,36 @@ export class App {
 
     if (this.isTokenValid(token)) {
       this.updateCookieToken(token);
-    }else{
+    } else {
       console.log('getAuthToken token is invalid', token);
     }
     return token;
   }
 
   redirectToVillageAuth() {
+    // Check in-memory flag
     if (this.isRedirectingToAuth) {
       return null;
     }
+
+    // Check sessionStorage flag
+    if (sessionStorage.getItem("redirected_to_village_auth") === "true") {
+      return null;
+    }
+
+    // Set both flags
+    this.isRedirectingToAuth = true;
+    sessionStorage.setItem("redirected_to_village_auth", "true");
+
+    // Redirect to Village Auth
     const currentUrl = window.location.href;
     const encodedReturnUrl = encodeURIComponent(currentUrl);
-
-    // Extract base domain from VITE_APP_FRONTEND_URL
     const frontendUrl = import.meta.env.VITE_APP_FRONTEND_URL;
-    const baseDomain = new URL(frontendUrl).origin; // ensures protocol + hostname
-
+    const baseDomain = new URL(frontendUrl).origin;
     const authUrl = `${baseDomain}/widget/get-auth-token?return=${encodedReturnUrl}`;
     window.location.href = authUrl;
   }
+
 
 
   /**
@@ -527,7 +537,7 @@ export class App {
     if (!this.iframe) {
       this.iframe = new Iframe();
     }
-    if(!this.token){
+    if (!this.token) {
       this.token = await this.getAuthToken();
     }
     // console.trace('renderIframe', location.hostname, this.token, this.config);
