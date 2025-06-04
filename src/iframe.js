@@ -13,7 +13,12 @@ export function buildIframeSrc({
   if (partnerKey) params.append("partnerKey", partnerKey);
   if (userReference) params.append("userReference", userReference);
   if (villageModule) params.append("module", villageModule);
-  //console.log('config.paths_cta', config);
+  
+  // this is important so we know this is a playground search or a embed search
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchType = urlParams.get("searchType"); 
+  if (searchType) params.append("searchType", searchType);
+
   let pathsCtaJson = '[]';
   if(typeof config !== 'undefined' && typeof config.paths_cta !== 'undefined' ){
     pathsCtaJson = JSON.stringify(config.paths_cta); 
