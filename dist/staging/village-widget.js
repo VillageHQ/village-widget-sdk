@@ -1,4 +1,4 @@
-// Deployed: 2025-06-02T16:11:22.700Z
+// Deployed: 2025-06-04T12:39:25.398Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2862,7 +2862,7 @@ text-align: center;
       this.moduleHandlers = new ModuleHandlers(this);
       this.apiUrl = "https://staging.village.do";
       this.hasRenderedButton = false;
-      this.isRedirectingToAuth = false;
+      this.isRedirectingToAuth = true;
     }
     async init() {
       this.setupMessageHandlers();
@@ -3035,6 +3035,11 @@ text-align: center;
       if (this.isRedirectingToAuth) {
         return null;
       }
+      if (sessionStorage.getItem("redirected_to_village_auth") === "true") {
+        return null;
+      }
+      this.isRedirectingToAuth = true;
+      sessionStorage.setItem("redirected_to_village_auth", "true");
       const currentUrl = window.location.href;
       const encodedReturnUrl = encodeURIComponent(currentUrl);
       const frontendUrl = "https://staging.village.do";

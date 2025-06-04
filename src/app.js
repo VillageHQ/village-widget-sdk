@@ -33,7 +33,11 @@ export class App {
 
     this.apiUrl = import.meta.env.VITE_APP_API_URL;
     this.hasRenderedButton = false;
-    this.isRedirectingToAuth = false;
+
+    // Set this to true to temporarily disable the redirect. 
+    // This feature may be removed entirely in the future, or we can re-enable it by setting it to false.
+    // to put the redirect back it needs this commit https://github.com/VillageHQ/frontend-web/commit/28a72b5d43a4a7f01883ede26bd335f442c243b5
+    this.isRedirectingToAuth = true;
   }
 
   async init() {

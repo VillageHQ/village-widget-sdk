@@ -1,4 +1,4 @@
-// Deployed: 2025-06-03T16:53:25.663Z
+// Deployed: 2025-06-04T12:39:06.354Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2862,7 +2862,7 @@ text-align: center;
       this.moduleHandlers = new ModuleHandlers(this);
       this.apiUrl = "http://localhost:8000";
       this.hasRenderedButton = false;
-      this.isRedirectingToAuth = false;
+      this.isRedirectingToAuth = true;
     }
     async init() {
       this.setupMessageHandlers();
