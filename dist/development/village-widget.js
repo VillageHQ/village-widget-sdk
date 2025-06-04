@@ -1,4 +1,4 @@
-// Deployed: 2025-06-02T13:18:45.928Z
+// Deployed: 2025-06-03T16:53:25.663Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -3026,6 +3026,8 @@ text-align: center;
       }
       if (this.isTokenValid(token)) {
         this.updateCookieToken(token);
+      } else {
+        console.log("getAuthToken token is invalid", token);
       }
       return token;
     }
@@ -3033,6 +3035,11 @@ text-align: center;
       if (this.isRedirectingToAuth) {
         return null;
       }
+      if (sessionStorage.getItem("redirected_to_village_auth") === "true") {
+        return null;
+      }
+      this.isRedirectingToAuth = true;
+      sessionStorage.setItem("redirected_to_village_auth", "true");
       const currentUrl = window.location.href;
       const encodedReturnUrl = encodeURIComponent(currentUrl);
       const frontendUrl = "http://localhost:3000";
@@ -3237,9 +3244,12 @@ text-align: center;
         if (notFoundElement) notFoundElement.style.display = "inline-flex";
       }
     }
-    renderIframe() {
+    async renderIframe() {
       if (!this.iframe) {
         this.iframe = new Iframe();
+      }
+      if (!this.token) {
+        this.token = await this.getAuthToken();
       }
       this.iframe.update({
         partnerKey: this.partnerKey,
