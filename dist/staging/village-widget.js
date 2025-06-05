@@ -1,4 +1,4 @@
-// Deployed: 2025-06-04T12:39:25.398Z
+// Deployed: 2025-06-05T15:40:20.549Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2862,7 +2862,6 @@ text-align: center;
       this.moduleHandlers = new ModuleHandlers(this);
       this.apiUrl = "https://staging.village.do";
       this.hasRenderedButton = false;
-      this.isRedirectingToAuth = true;
     }
     async init() {
       this.setupMessageHandlers();
@@ -2982,7 +2981,6 @@ text-align: center;
       const url = new URL(window.location.href);
       const token = url.searchParams.get("villageToken");
       if (token) {
-        this.isRedirectingToAuth = true;
         url.searchParams.delete("villageToken");
         const cleanUrl = url.pathname + url.search + url.hash;
         window.history.replaceState({}, document.title, cleanUrl);
@@ -3014,38 +3012,12 @@ text-align: center;
         } catch (err) {
         }
       }
-      if (!token) {
-        if (window === window.top) {
-          const frontendDomain = new URL("https://staging.village.do").hostname;
-          const isOnVillageFrontend = location.hostname.endsWith(frontendDomain);
-          if (!isOnVillageFrontend) {
-            this.redirectToVillageAuth();
-            return null;
-          }
-        }
-      }
       if (this.isTokenValid(token)) {
         this.updateCookieToken(token);
       } else {
         console.log("getAuthToken token is invalid", token);
       }
       return token;
-    }
-    redirectToVillageAuth() {
-      if (this.isRedirectingToAuth) {
-        return null;
-      }
-      if (sessionStorage.getItem("redirected_to_village_auth") === "true") {
-        return null;
-      }
-      this.isRedirectingToAuth = true;
-      sessionStorage.setItem("redirected_to_village_auth", "true");
-      const currentUrl = window.location.href;
-      const encodedReturnUrl = encodeURIComponent(currentUrl);
-      const frontendUrl = "https://staging.village.do";
-      const baseDomain = new URL(frontendUrl).origin;
-      const authUrl = `${baseDomain}/widget/get-auth-token?return=${encodedReturnUrl}`;
-      window.location.href = authUrl;
     }
     /**
      * Faz um round-trip com a extensão via window.postMessage.
@@ -3057,7 +3029,7 @@ text-align: center;
         const listener = (event) => {
           if (event.source !== window) return;
           const { source, message } = event.data || {};
-          if (source === "VillageExtension" && (message == null ? void 0 : message.token)) {
+          if ((source === "VillageExtension" || source === "VillageSDK") && (message == null ? void 0 : message.token)) {
             window.removeEventListener("message", listener);
             clearTimeout(timer);
             resolve(message.token);
@@ -3065,7 +3037,7 @@ text-align: center;
         };
         const timer = setTimeout(() => {
           window.removeEventListener("message", listener);
-          reject(new Error("Extension did not respond in time"));
+          reject(new Error(`Extension did not respond in time ${timeout}`));
         }, timeout);
         window.addEventListener("message", listener);
         window.postMessage(request, "*");

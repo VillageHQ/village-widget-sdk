@@ -33,11 +33,6 @@ export class App {
 
     this.apiUrl = import.meta.env.VITE_APP_API_URL;
     this.hasRenderedButton = false;
-
-    // Set this to true to temporarily disable the redirect. 
-    // This feature may be removed entirely in the future, or we can re-enable it by setting it to false.
-    // to put the redirect back it needs this commit https://github.com/VillageHQ/frontend-web/commit/28a72b5d43a4a7f01883ede26bd335f442c243b5
-    this.isRedirectingToAuth = true;
   }
 
   async init() {
@@ -199,7 +194,6 @@ export class App {
     const url = new URL(window.location.href);
     const token = url.searchParams.get('villageToken');
     if (token) {
-      this.isRedirectingToAuth = true;
       // Remove token from URL to keep things clean
       url.searchParams.delete('villageToken');
       const cleanUrl = url.pathname + url.search + url.hash;
@@ -237,25 +231,10 @@ export class App {
         token = await this.requestExtensionToken(timeout);
       } catch (err) {
         // Extension fallback failed — continue to redirect fallback if needed
+        // console.log('getAuthToken requestExtensionToken', token, err);
       }
     }
-    if (!token) {
-      if (window === window.top) {
-        //I am in the top-level window
-        // If still no token and current domain is not village.do, trigger redirect fallback
-        const frontendDomain = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
-        const isOnVillageFrontend = location.hostname.endsWith(frontendDomain);
-
-        if (!isOnVillageFrontend) {
-          this.redirectToVillageAuth();
-          return null;
-        } else {
-          // console.log('getAuthToken redirectToVillageAuth isOnVillageFrontend', location.hostname, frontendDomain);
-        }
-
-      }
-    }
-
+    
     if (this.isTokenValid(token)) {
       this.updateCookieToken(token);
     } else {
@@ -263,32 +242,6 @@ export class App {
     }
     return token;
   }
-
-  redirectToVillageAuth() {
-    // Check in-memory flag
-    if (this.isRedirectingToAuth) {
-      return null;
-    }
-
-    // Check sessionStorage flag
-    if (sessionStorage.getItem("redirected_to_village_auth") === "true") {
-      return null;
-    }
-
-    // Set both flags
-    this.isRedirectingToAuth = true;
-    sessionStorage.setItem("redirected_to_village_auth", "true");
-
-    // Redirect to Village Auth
-    const currentUrl = window.location.href;
-    const encodedReturnUrl = encodeURIComponent(currentUrl);
-    const frontendUrl = import.meta.env.VITE_APP_FRONTEND_URL;
-    const baseDomain = new URL(frontendUrl).origin;
-    const authUrl = `${baseDomain}/widget/get-auth-token?return=${encodedReturnUrl}`;
-    window.location.href = authUrl;
-  }
-
-
 
   /**
    * Faz um round-trip com a extensão via window.postMessage.
@@ -301,7 +254,7 @@ export class App {
       const listener = (event) => {
         if (event.source !== window) return;
         const { source, message } = event.data || {};
-        if (source === 'VillageExtension' && message?.token) {
+        if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
           window.removeEventListener('message', listener);
           clearTimeout(timer);
           resolve(message.token);
@@ -310,7 +263,7 @@ export class App {
 
       const timer = setTimeout(() => {
         window.removeEventListener('message', listener);
-        reject(new Error('Extension did not respond in time'));
+        reject(new Error(`Extension did not respond in time ${timeout}`));
       }, timeout);
 
       window.addEventListener('message', listener);
