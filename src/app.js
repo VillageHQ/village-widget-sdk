@@ -238,7 +238,7 @@ export class App {
     if (this.isTokenValid(token)) {
       this.updateCookieToken(token);
     } else {
-      console.log('getAuthToken token is invalid', token);
+      // console.log('getAuthToken token is invalid', token);
     }
     return token;
   }
