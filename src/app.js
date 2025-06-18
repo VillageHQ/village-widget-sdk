@@ -39,6 +39,7 @@ export class App {
     this.setupMessageHandlers();
     this.setupMutationObserver();
     this.scanExistingElements();
+    await this.getAuthToken();
     this.getUser();
   }
 
@@ -117,14 +118,14 @@ export class App {
     if (!string || typeof string !== 'string' || string.trim() === '') {
       return false;
     }
-  
+
     const trimmed = string.trim();
-  
+
     // Require the URL to start with http:// or https://
     if (!/^https?:\/\//i.test(trimmed)) {
       return false;
     }
-  
+
     try {
       new URL(trimmed);
       return true;
@@ -132,7 +133,7 @@ export class App {
       return false;
     }
   }
-  
+
   checkAndAddListenerIfValid(element) {
     const hasUrlAttr = element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
     let url = '';
@@ -144,8 +145,7 @@ export class App {
         this.moduleHandlers.handleDataUrl(element, '');
         return;
       }
-      //console.log("checkAndAddListenerIfValid addListenerToElement URL:", url);
-    }else{
+    } else {
       //console.log("checkAndAddListenerIfValid hasUrlAttr==false:", element);
     }
     this.addListenerToElement(element);
@@ -170,7 +170,6 @@ export class App {
       // Handle SYNC module (explicit or legacy data-url) by attaching click listener for overlay
       // Remove any potentially stale inline iframe reference if the module type changes
       this.inlineSearchIframes.delete(element);
-      //console.log("addListenerToElement", element, url, villageModule);
       //this.moduleHandlers.handleDataUrl(element, url);
       if (url && villageModule != ModuleTypes.SYNC && villageModule != ModuleTypes.SEARCH) {
         // Legacy: data-url only -> attach click listener via handleDataUrl
@@ -191,8 +190,95 @@ export class App {
     }
   }
 
+  extractTokenFromQueryParams() {
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get('villageToken');
+    if (token) {
+      // Remove token from URL to keep things clean
+      url.searchParams.delete('villageToken');
+      const cleanUrl = url.pathname + url.search + url.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+      return token;
+    }
+    return null;
+  }
+
+  updateCookieToken(token) {
+    if (this.isTokenValid(token)) {
+      this.saveExtensionToken(token);
+      Cookies.set('village.token', token, { secure: location.protocol === 'https:', expires: 60, path: "/" });
+      if (this.token != token) {
+        this.token = token;
+        this._refreshInlineSearchIframes();
+      }
+      // console.trace('updateCookieToken token saved', token);
+    } else {
+      // console.error('updateCookieToken Invalid token', token);
+    }
+  }
+
+  isTokenValid(token) {
+    return typeof token === 'string' && token.length > 10 && token !== 'not_found';
+  }
+
+  async getAuthToken(timeout = 1000) {
+    let token = Cookies.get('village.token');
+    if (!this.isTokenValid(token)) {
+      token = this.extractTokenFromQueryParams();
+    }
+    if (!this.isTokenValid(token)) {
+      try {
+        token = await this.requestExtensionToken(timeout);
+      } catch (err) {
+        // Extension fallback failed — continue to redirect fallback if needed
+        // console.log('getAuthToken requestExtensionToken', token, err);
+      }
+    }
+    
+    if (this.isTokenValid(token)) {
+      this.updateCookieToken(token);
+    } else {
+      // console.log('getAuthToken token is invalid', token);
+    }
+    return token;
+  }
+
+  /**
+   * Faz um round-trip com a extensão via window.postMessage.
+   * Resolve com o token ou lança erro após o timeout.
+   */
+  requestExtensionToken(timeout) {
+    const request = { type: 'STORAGE_GET_TOKEN', source: 'VillageSDK' };
+
+    return new Promise((resolve, reject) => {
+      const listener = (event) => {
+        if (event.source !== window) return;
+        const { source, message } = event.data || {};
+        if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
+          window.removeEventListener('message', listener);
+          clearTimeout(timer);
+          resolve(message.token);
+        }
+      };
+
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', listener);
+        reject(new Error(`Extension did not respond in time ${timeout}`));
+      }, timeout);
+
+      window.addEventListener('message', listener);
+      window.postMessage(request, '*');
+    });
+  }
+
+  saveExtensionToken(token) {
+    const request = { type: 'STORAGE_SET_TOKEN', source: 'VillageSDK', token: token };
+    window.postMessage(request, '*');
+  }
+
   async getUser() {
-    const token = Cookies.get("village.token");
+    //const token = Cookies.get("village.token");
+    const token = await this.getAuthToken();
     if (!token) return;
 
     try {
@@ -224,9 +310,7 @@ export class App {
   }
 
   handleOAuthSuccess(data) {
-    // Set token in the main app context
-    Cookies.set("village.token", data.token, { secure: true, expires: 60 });
-    this.token = data.token;
+    this.updateCookieToken(data.token);
 
     // -- Update Inline Search Iframes by reloading them with the new token --
     this._refreshInlineSearchIframes();
@@ -271,20 +355,19 @@ export class App {
   scanExistingElements() {
     const query = `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`;
     const elements = document.querySelectorAll(query);
-  
-    // console.log(`[Village] Found ${elements.length} elements to scan`, `document.querySelectorAll('${query}')`);
-  
     elements.forEach((el, index) => {
       const hasVillageUrl = el.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-      const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);  
+      const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
       this.checkAndAddListenerIfValid(el);
     });
   }
-  
+
 
   async checkPaths(url) {
+    if (!this.token) {
+      this.token = await this.getAuthToken();
+    }
     if (!this.token) return null;
-
     try {
       const { data } = await axios.post(
         `${this.apiUrl}/paths-check`,
@@ -296,7 +379,6 @@ export class App {
           },
         }
       );
-      // console.log("checkPaths - data", data, `${this.apiUrl}/paths-check`);
       return data;
     } catch (err) {
       if (err?.response?.data?.auth === false) {
@@ -314,14 +396,13 @@ export class App {
     const errorElement = element.querySelector('[village-paths-availability="error"]');
     // Added not-activated state because it is present in the docs, but there is no reference in the code
     const not_activated = element.querySelector('[village-paths-availability="not-activated"]');
-  
+
     return { foundElement, notFoundElement, loadingElement, errorElement, not_activated };
   }
 
   showErrorState(element) {
-    // console.log("showErrorState", element);
     const { foundElement, notFoundElement, loadingElement, errorElement, not_activated } = this.getButtonChildren(element);
-  
+
     if (not_activated) not_activated.style.display = "none";
     if (foundElement) foundElement.style.display = "none";
     if (notFoundElement) notFoundElement.style.display = "none";
@@ -345,8 +426,8 @@ export class App {
     //console.trace("initializeButtonState - Token present");
     if (foundElement) foundElement.style.display = "none";
     if (notFoundElement) notFoundElement.style.display = "none";
-    if (loadingElement) loadingElement.style.display = "inline-flex";
     if (errorElement) errorElement.style.display = "none";
+    if (loadingElement) loadingElement.style.display = "inline-flex";
   }
 
   async checkPathsAndUpdateButton(element, url) {
@@ -398,7 +479,6 @@ export class App {
     if (errorElement) errorElement.style.display = "none";
 
     if (relationship) {
-      // console.log("updateButtonContent - Relationship found", relationship);
       if (foundElement) {
         foundElement.style.display = "inline-flex";
         this.addFacePilesAndCount(foundElement, relationship);
@@ -410,11 +490,14 @@ export class App {
     }
   }
 
-  renderIframe() {
+  async renderIframe() {
     if (!this.iframe) {
       this.iframe = new Iframe();
     }
-    //console.log('renderIframe', this.config);
+    if (!this.token) {
+      this.token = await this.getAuthToken();
+    }
+    // console.trace('renderIframe', location.hostname, this.token, this.config);
     this.iframe.update({
       partnerKey: this.partnerKey,
       userReference: this.userReference,

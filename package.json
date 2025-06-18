@@ -17,13 +17,14 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --mode development",
+    "devStg": "vite build --watch --mode staging",
     "prepublishOnly": "npm run build",
     "deploy": "node scripts/deploy.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "format": "prettier --write .",
-    "check:bundle": "npm run build && node --check dist/index.es.js",
+    "check:bundle": "npm run build && node --check dist/production/village-widget.js",
     "docs": "node scripts/generate-docs.js"
   },
   "dependencies": {
