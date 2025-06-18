@@ -57,6 +57,15 @@ export class ModuleHandlers {
           partnerKey: this.app.partnerKey,
         });
 
+        // Check if user is authenticated before opening iframe
+        if (!this.app.token) {
+          // Store the intended sync operation for after OAuth
+          this.app.pendingSyncModule = moduleValue;
+          // User is not authenticated, trigger OAuth flow directly via MessageHandlers
+          this.app.messageHandlers.handleOAuthRequest({ isAuthorizationFlow: false });
+          return;
+        }
+
         this.app.url = null; // No URL for module-based trigger
         this.app.module = moduleValue;
         this.app.renderIframe();

@@ -26,6 +26,7 @@ export class App {
     this.iframe = null;
     this.observer = null;
     this.inlineSearchIframes = new Map();
+    this.pendingSyncModule = null;
 
     // Initialize services and handlers
     this.messageHandlers = new MessageHandlers(this);
@@ -234,8 +235,16 @@ export class App {
     // -- Re-evaluate SYNC buttons on the host page --
     this.refreshSyncUrlElements(); // Call new method to update sync buttons
 
-    // Re-render the main overlay iframe (if it was open, e.g., during onboarding)
-    this.renderIframe();
+    // -- Continue with pending sync operation if there was one --
+    if (this.pendingSyncModule) {
+      this.url = null;
+      this.module = this.pendingSyncModule;
+      this.pendingSyncModule = null; // Clear the pending operation
+      this.renderIframe();
+    } else {
+      // Re-render the main overlay iframe (if it was open, e.g., during onboarding)
+      this.renderIframe();
+    }
   }
 
   _refreshInlineSearchIframes() {
