@@ -59,8 +59,8 @@ export class ModuleHandlers {
 
         // Check if user is authenticated before opening iframe
         if (!this.app.token) {
-          // Store the intended sync operation for after OAuth
-          this.app.pendingSyncModule = moduleValue;
+          // Queue the intended sync operation for after OAuth
+          this.app.pendingSyncModules.push(moduleValue);
           // User is not authenticated, trigger OAuth flow directly via MessageHandlers
           this.app.messageHandlers.handleOAuthRequest({ isAuthorizationFlow: false });
           return;

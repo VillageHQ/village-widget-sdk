@@ -26,7 +26,7 @@ export class App {
     this.iframe = null;
     this.observer = null;
     this.inlineSearchIframes = new Map();
-    this.pendingSyncModule = null;
+    this.pendingSyncModules = [];
 
     // Initialize services and handlers
     this.messageHandlers = new MessageHandlers(this);
@@ -235,11 +235,11 @@ export class App {
     // -- Re-evaluate SYNC buttons on the host page --
     this.refreshSyncUrlElements(); // Call new method to update sync buttons
 
-    // -- Continue with pending sync operation if there was one --
-    if (this.pendingSyncModule) {
+    // -- Process pending sync operations sequentially --
+    if (this.pendingSyncModules.length > 0) {
+      const nextModule = this.pendingSyncModules.shift(); // Get and remove first item from queue
       this.url = null;
-      this.module = this.pendingSyncModule;
-      this.pendingSyncModule = null; // Clear the pending operation
+      this.module = nextModule;
       this.renderIframe();
     } else {
       // Re-render the main overlay iframe (if it was open, e.g., during onboarding)
@@ -262,6 +262,8 @@ export class App {
   }
 
   handleOAuthError(data) {
+    // Clear pending sync queue on OAuth failure to avoid stale state
+    this.pendingSyncModules = [];
     alert("Sorry, something went wrong with your login");
   }
 
