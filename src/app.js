@@ -34,9 +34,10 @@ export class App {
     this.apiUrl = import.meta.env.VITE_APP_API_URL;
     this.hasRenderedButton = false;
 
-    // ✅ NEW: Request deduplication and versioning
+    // ✅ FIXED: Per-element request tracking instead of global counter
     this.elementRequests = new Map(); // element -> Promise
-    this.requestCounter = 0; // Simple versioning for stale request prevention
+    this.elementRequestIds = new Map(); // element -> latest request ID
+    this.globalRequestCounter = 0; // Only for generating unique IDs
   }
 
   async init() {
@@ -124,6 +125,7 @@ export class App {
   async addListenerToElement(element) {
     // ✅ ENHANCED: Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
+    this.elementRequestIds.delete(element);
 
     const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
     const villageModule = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE);
@@ -329,15 +331,17 @@ export class App {
     }
 
     // ✅ SIMPLE: Version check for stale request prevention
-    const requestId = ++this.requestCounter;
+    const requestId = ++this.globalRequestCounter;
 
     const requestPromise = this._executePathCheck(element, url, requestId);
     this.elementRequests.set(element, requestPromise);
+    this.elementRequestIds.set(element, requestId);
 
     try {
       await requestPromise;
     } finally {
       this.elementRequests.delete(element);
+      this.elementRequestIds.delete(element);
     }
   }
 
@@ -348,9 +352,8 @@ export class App {
     try {
       const data = await this.checkPaths(url);
 
-      // ✅ SIMPLE: Version check prevents stale updates
-      if (requestId >= this.requestCounter - 10) {
-        // Allow some tolerance for rapid requests
+      // ✅ FIXED: Only allow the exact latest request to update UI
+      if (requestId === this.elementRequestIds.get(element)) {
         this._setElementState(
           element,
           data?.relationship ? "found" : "not-found",
@@ -366,7 +369,8 @@ export class App {
         },
       });
 
-      if (requestId >= this.requestCounter - 10) {
+      // ✅ FIXED: Only allow the exact latest request to update UI
+      if (requestId === this.elementRequestIds.get(element)) {
         this._setElementState(element, "not-found");
       }
     }
@@ -408,7 +412,8 @@ export class App {
   // ✅ SIMPLE: Clear all requests (used during auth changes)
   _clearAllRequests() {
     this.elementRequests.clear();
-    this.requestCounter += 1000; // Invalidate old requests
+    this.elementRequestIds.clear();
+    this.globalRequestCounter += 1000; // Invalidate old requests
   }
 
   addFacePilesAndCount(element, relationship) {
