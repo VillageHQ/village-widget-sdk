@@ -12,7 +12,7 @@ export class ModuleHandlers {
 
   // Restored original handleDataUrl
   handleDataUrl(element, url) {
-    const validURL = url;
+    const validURL = this.isValidUrl(url) ? url : "http://invalidURL.com";
 
     // ✅ ENHANCED: Clear any existing requests for this element
     this.app.elementRequests.delete(element);
@@ -105,5 +105,25 @@ export class ModuleHandlers {
   // Method to get all tracked elements for destroy cleanup
   getAllElementsWithListeners() {
     return this.elementsWithListeners;
+  }
+
+  isValidUrl(string) {
+    if (!string || typeof string !== "string" || string.trim() === "") {
+      return false;
+    }
+
+    const trimmed = string.trim();
+
+    // Require the URL to start with http:// or https://
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return false;
+    }
+
+    try {
+      new URL(trimmed);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }

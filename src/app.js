@@ -117,26 +117,6 @@ export class App {
     );
   }
 
-  isValidUrl(string) {
-    if (!string || typeof string !== "string" || string.trim() === "") {
-      return false;
-    }
-
-    const trimmed = string.trim();
-
-    // Require the URL to start with http:// or https://
-    if (!/^https?:\/\//i.test(trimmed)) {
-      return false;
-    }
-
-    try {
-      new URL(trimmed);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
   checkAndAddListenerIfValid(element) {
     this.addListenerToElement(element);
   }
