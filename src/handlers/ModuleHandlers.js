@@ -12,7 +12,11 @@ export class ModuleHandlers {
 
   // Restored original handleDataUrl
   handleDataUrl(element, url) {
-    const validURL = url === '' ? 'http://invalidURL.com' : url;
+    const validURL = url;
+
+    // ✅ ENHANCED: Clear any existing requests for this element
+    this.app.elementRequests.delete(element);
+
     this.removeListener(element); // Remove previous general listeners
     this.syncUrlElements.set(element, validURL); // Track this element and its URL
 
@@ -30,7 +34,7 @@ export class ModuleHandlers {
     this.listenerMap.set(element, clickHandler);
     element.addEventListener("click", clickHandler);
     this.elementsWithListeners.add(element); // Track element
-    if (url !== '') {
+    if (url !== "") {
       this.app.initializeButtonState(element);
     }
     if (this.app.token) {
@@ -40,6 +44,9 @@ export class ModuleHandlers {
 
   // Restored original handleModule (primarily for SYNC onboarding click)
   handleModule(element, moduleValue) {
+    // ✅ ENHANCED: Clear any existing requests for this element
+    this.app.elementRequests.delete(element);
+
     // If an element switches from data-url to module="sync", stop tracking it here
     this.syncUrlElements.delete(element);
     // Basic validation
@@ -81,6 +88,10 @@ export class ModuleHandlers {
     if (existingHandler) {
       element.removeEventListener("click", existingHandler);
     }
+
+    // ✅ ENHANCED: Clear any existing requests when removing listeners
+    this.app.elementRequests.delete(element);
+
     // Also clean up tracking if listener is removed externally
     this.syncUrlElements.delete(element);
     this.elementsWithListeners.delete(element); // Stop tracking if listener is removed

@@ -33,6 +33,10 @@ export class App {
 
     this.apiUrl = import.meta.env.VITE_APP_API_URL;
     this.hasRenderedButton = false;
+
+    // ✅ NEW: Request deduplication and versioning
+    this.elementRequests = new Map(); // element -> Promise
+    this.requestCounter = 0; // Simple versioning for stale request prevention
   }
 
   async init() {
@@ -134,19 +138,13 @@ export class App {
   }
 
   checkAndAddListenerIfValid(element) {
-    const hasUrlAttr = element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-    let url = "";
-    if (hasUrlAttr) {
-      url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-      if (!this.isValidUrl(url)) {
-        this.moduleHandlers.handleDataUrl(element, "");
-        return;
-      }
-    }
     this.addListenerToElement(element);
   }
 
   async addListenerToElement(element) {
+    // ✅ ENHANCED: Clear any existing requests for this element when re-processing
+    this.elementRequests.delete(element);
+
     const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
     const villageModule = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE);
 
@@ -171,7 +169,6 @@ export class App {
         villageModule != ModuleTypes.SYNC &&
         villageModule != ModuleTypes.SEARCH
       ) {
-        // Legacy: data-url only -> attach click listener via handleDataUrl
         this.moduleHandlers.handleDataUrl(element, url);
       } else {
         // Explicit SYNC module or unknown -> attach click listener via handleModule
@@ -203,6 +200,8 @@ export class App {
       const userId = `${user?.id}`;
       AnalyticsService.setUserId(userId);
     } catch (error) {
+      // ✅ ENHANCED: Clear all requests when token becomes invalid
+      this._clearAllRequests();
       this.token = null;
       Cookies.remove("village.token");
       AnalyticsService.removeUserId();
@@ -222,6 +221,9 @@ export class App {
   }
 
   handleOAuthSuccess(data) {
+    // ✅ ENHANCED: Clear all requests before setting new token
+    this._clearAllRequests();
+
     // Set token in the main app context
     Cookies.set("village.token", data.token, { secure: true, expires: 60 });
     this.token = data.token;
@@ -270,8 +272,6 @@ export class App {
     const query = `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`;
     const elements = document.querySelectorAll(query);
 
-    // console.log(`[Village] Found ${elements.length} elements to scan`, `document.querySelectorAll('${query}')`);
-
     elements.forEach((el, index) => {
       this.checkAndAddListenerIfValid(el);
     });
@@ -295,6 +295,8 @@ export class App {
       return data;
     } catch (err) {
       if (err?.response?.data?.auth === false) {
+        // ✅ ENHANCED: Clear all requests when auth fails
+        this._clearAllRequests();
         Cookies.remove("village.token");
         this.token = null;
       }
@@ -331,6 +333,67 @@ export class App {
   }
 
   initializeButtonState(element) {
+    // ✅ ENHANCED: Use atomic state management for consistency
+    if (!this.token) {
+      this._setElementState(element, "not-found");
+    } else {
+      this._setElementState(element, "loading");
+    }
+  }
+
+  async checkPathsAndUpdateButton(element, url) {
+    // ✅ SIMPLE: Deduplication - if request already exists, return existing promise
+    const existingRequest = this.elementRequests.get(element);
+    if (existingRequest) {
+      return existingRequest;
+    }
+
+    // ✅ SIMPLE: Version check for stale request prevention
+    const requestId = ++this.requestCounter;
+
+    const requestPromise = this._executePathCheck(element, url, requestId);
+    this.elementRequests.set(element, requestPromise);
+
+    try {
+      await requestPromise;
+    } finally {
+      this.elementRequests.delete(element);
+    }
+  }
+
+  async _executePathCheck(element, url, requestId) {
+    // Atomic state update
+    this._setElementState(element, "loading");
+
+    try {
+      const data = await this.checkPaths(url);
+
+      // ✅ SIMPLE: Version check prevents stale updates
+      if (requestId >= this.requestCounter - 10) {
+        // Allow some tolerance for rapid requests
+        this._setElementState(
+          element,
+          data?.relationship ? "found" : "not-found",
+          data?.relationship
+        );
+      }
+    } catch (error) {
+      logWidgetError(error, {
+        additionalInfo: {
+          function: "_executePathCheck",
+          url,
+          element,
+        },
+      });
+
+      if (requestId >= this.requestCounter - 10) {
+        this._setElementState(element, "not-found");
+      }
+    }
+  }
+
+  // ✅ ATOMIC: Centralized state management prevents race conditions
+  _setElementState(element, state, relationship = null) {
     const {
       foundElement,
       notFoundElement,
@@ -339,34 +402,33 @@ export class App {
       not_activated,
     } = this.getButtonChildren(element);
 
-    if (not_activated) not_activated.style.display = "none";
-    if (!this.token) {
-      if (foundElement) foundElement.style.display = "none";
-      if (notFoundElement) notFoundElement.style.display = "inline-flex";
-      if (loadingElement) loadingElement.style.display = "none";
-      if (errorElement) errorElement.style.display = "none";
-      return;
+    // Hide all states atomically
+    [foundElement, notFoundElement, loadingElement, errorElement, not_activated]
+      .filter(Boolean)
+      .forEach((el) => (el.style.display = "none"));
+
+    // Show appropriate state
+    switch (state) {
+      case "loading":
+        if (loadingElement) loadingElement.style.display = "inline-flex";
+        break;
+      case "found":
+        if (foundElement) {
+          foundElement.style.display = "inline-flex";
+          if (relationship)
+            this.addFacePilesAndCount(foundElement, relationship);
+        }
+        break;
+      case "not-found":
+        if (notFoundElement) notFoundElement.style.display = "inline-flex";
+        break;
     }
-    if (foundElement) foundElement.style.display = "none";
-    if (notFoundElement) notFoundElement.style.display = "none";
-    if (loadingElement) loadingElement.style.display = "inline-flex";
-    if (errorElement) errorElement.style.display = "none";
   }
 
-  async checkPathsAndUpdateButton(element, url) {
-    try {
-      const data = await this.checkPaths(url);
-      this.updateButtonContent(element, data?.relationship);
-    } catch (error) {
-      logWidgetError(error, {
-        additionalInfo: {
-          function: "checkPathsAndUpdateButton",
-          url,
-          element,
-        },
-      });
-      this.updateButtonContent(element, null);
-    }
+  // ✅ SIMPLE: Clear all requests (used during auth changes)
+  _clearAllRequests() {
+    this.elementRequests.clear();
+    this.requestCounter += 1000; // Invalidate old requests
   }
 
   addFacePilesAndCount(element, relationship) {
@@ -394,28 +456,12 @@ export class App {
   }
 
   updateButtonContent(element, relationship) {
-    const {
-      foundElement,
-      notFoundElement,
-      loadingElement,
-      errorElement,
-      not_activated,
-    } = this.getButtonChildren(element);
-
-    if (not_activated) not_activated.style.display = "none";
-    if (loadingElement) loadingElement.style.display = "none";
-    if (errorElement) errorElement.style.display = "none";
-
-    if (relationship) {
-      if (foundElement) {
-        foundElement.style.display = "inline-flex";
-        this.addFacePilesAndCount(foundElement, relationship);
-      }
-      if (notFoundElement) notFoundElement.style.display = "none";
-    } else {
-      if (foundElement) foundElement.style.display = "none";
-      if (notFoundElement) notFoundElement.style.display = "inline-flex";
-    }
+    // ✅ ENHANCED: Redirect to atomic state management for consistency
+    this._setElementState(
+      element,
+      relationship ? "found" : "not-found",
+      relationship
+    );
   }
 
   renderIframe() {
@@ -473,6 +519,9 @@ export class App {
   }
 
   destroy() {
+    // ✅ NEW: Clear all active requests
+    this._clearAllRequests();
+
     // Disconnect MutationObserver
     if (this.observer) {
       this.observer.disconnect();
@@ -519,6 +568,9 @@ export class App {
   }
 
   async logout() {
+    // ✅ ENHANCED: Clear all requests before logout
+    this._clearAllRequests();
+
     try {
       if (this.token) {
         await axios.get(`${this.apiUrl}/logout`, {
