@@ -63,17 +63,17 @@ export default defineConfig(({ mode }) => {
       const code = fs.readFileSync(devFileFullPath, "utf8");
       const finalCode = code.startsWith("// Deployed:") ? code : banner + code;
 
-      // 1. Atualiza o original
+      // 1. Update the original
       fs.writeFileSync(devFileFullPath, finalCode);
       console.log("✅ Banner prepended to original build");
 
-      // 2. Copia para ./dist/ com o mesmo nome
+      // 2. Copy to ./dist/ with the same name
       const outputBaseName = path.basename(devFileFullPath);
       const distCopyPath = path.resolve(__dirname, "dist", outputBaseName);
       fs.writeFileSync(distCopyPath, finalCode);
       console.log(`✅ Copied build to ./dist/${outputBaseName}`);
 
-      // 3. Copia adicional para dist/{mode}/village-widget.js
+      // 3. Additional copy to dist/{mode}/village-widget.js
       const namedDistFolder = path.resolve(__dirname, `dist/${mode}`);
       const namedOutputPath = path.resolve(
         namedDistFolder,
