@@ -123,7 +123,7 @@ export class App {
   }
 
   async addListenerToElement(element) {
-    // ✅ ENHANCED: Clear any existing requests for this element when re-processing
+    // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
     this.elementRequestIds.delete(element);
 
@@ -182,7 +182,7 @@ export class App {
       const userId = `${user?.id}`;
       AnalyticsService.setUserId(userId);
     } catch (error) {
-      // ✅ ENHANCED: Clear all requests when token becomes invalid
+      // Clear all requests when token becomes invalid
       this._clearAllRequests();
       this.token = null;
       Cookies.remove("village.token");
@@ -203,7 +203,7 @@ export class App {
   }
 
   handleOAuthSuccess(data) {
-    // ✅ ENHANCED: Clear all requests before setting new token
+    // Clear all requests before setting new token
     this._clearAllRequests();
 
     // Set token in the main app context
@@ -277,7 +277,7 @@ export class App {
       return data;
     } catch (err) {
       if (err?.response?.data?.auth === false) {
-        // ✅ ENHANCED: Clear all requests when auth fails
+        // Clear all requests when auth fails
         this._clearAllRequests();
         Cookies.remove("village.token");
         this.token = null;
@@ -315,7 +315,7 @@ export class App {
   }
 
   initializeButtonState(element) {
-    // ✅ ENHANCED: Use atomic state management for consistency
+    // Use atomic state management for consistency
     if (!this.token) {
       this._setElementState(element, "not-found");
     } else {
@@ -324,13 +324,13 @@ export class App {
   }
 
   async checkPathsAndUpdateButton(element, url) {
-    // ✅ SIMPLE: Deduplication - if request already exists, return existing promise
+    // Deduplication - if request already exists, return existing promise
     const existingRequest = this.elementRequests.get(element);
     if (existingRequest) {
       return existingRequest;
     }
 
-    // ✅ SIMPLE: Version check for stale request prevention
+    // Version check for stale request prevention
     const requestId = ++this.globalRequestCounter;
 
     const requestPromise = this._executePathCheck(element, url, requestId);
@@ -409,7 +409,7 @@ export class App {
     }
   }
 
-  // ✅ SIMPLE: Clear all requests (used during auth changes)
+  // Clear all requests (used during auth changes)
   _clearAllRequests() {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
@@ -441,7 +441,7 @@ export class App {
   }
 
   updateButtonContent(element, relationship) {
-    // ✅ ENHANCED: Redirect to atomic state management for consistency
+    // Redirect to atomic state management for consistency
     this._setElementState(
       element,
       relationship ? "found" : "not-found",
@@ -504,7 +504,7 @@ export class App {
   }
 
   destroy() {
-    // ✅ NEW: Clear all active requests
+    // Clear all active requests
     this._clearAllRequests();
 
     // Disconnect MutationObserver
@@ -553,7 +553,7 @@ export class App {
   }
 
   async logout() {
-    // ✅ ENHANCED: Clear all requests before logout
+    // Clear all requests before logout
     this._clearAllRequests();
 
     try {
