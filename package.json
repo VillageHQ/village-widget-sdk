@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "build": "vite build",
+    "build:staging": "vite build --mode staging",
     "dev": "vite build --watch --mode development",
     "prepublishOnly": "npm run build",
     "deploy": "node scripts/deploy.js",
