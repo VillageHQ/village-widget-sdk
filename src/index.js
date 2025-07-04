@@ -5,6 +5,11 @@ import { on, emit } from "./sdk-wrapper";
 import Cookies from "js-cookie";
 
 (function (window) {
+  // Avoid executing in server-side environments
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
   function createVillage() {
     const listeners = {};
 
@@ -214,9 +219,21 @@ import Cookies from "js-cookie";
   window.Village.on = on;
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
-  window.Village._processQueue();
+  
+  // Delay processing queue and initialization until after DOM is ready
+  // This prevents hydration issues in SSR environments
+  function initializeVillage() {
+    window.Village._processQueue();
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeVillage);
+  } else {
+    // DOM is already ready, initialize immediately
+    setTimeout(initializeVillage, 0);
+  }
 
-  window.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
+  window.Village.on(VillageEvents.widgetReady, () => {
     //console.log("✅ Village widget is ready");
   });
   window.Village.on(VillageEvents.pathCtaClicked, (payload) => {

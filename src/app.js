@@ -37,10 +37,21 @@ export class App {
 
   async init() {
     this.setupMessageHandlers();
-    this.setupMutationObserver();
-    this.scanExistingElements();
     await this.getAuthToken();
     this.getUser();
+    
+    // Delay DOM operations until after potential hydration
+    this.delayedInitialize();
+  }
+  
+  delayedInitialize() {
+    // Use multiple requestAnimationFrame calls to ensure we're after hydration
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.setupMutationObserver();
+        this.scanExistingElements();
+      });
+    });
   }
 
   setupMessageHandlers() {
@@ -158,14 +169,19 @@ export class App {
 
     // Check if it's the SEARCH module type
     if (villageModule === ModuleTypes.SEARCH) {
-      const params = {
-        partnerKey: this.partnerKey,
-        userReference: this.userReference,
-        token: this.token,
-      };
-      // Render and store the created iframe
-      const inlineIframe = renderSearchIframeInsideElement(element, params);
-      this.inlineSearchIframes.set(element, inlineIframe);
+      // Only render iframes on the client-side to avoid SSR hydration issues
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        const params = {
+          partnerKey: this.partnerKey,
+          userReference: this.userReference,
+          token: this.token,
+        };
+        // Render and store the created iframe
+        const inlineIframe = renderSearchIframeInsideElement(element, params);
+        if (inlineIframe) {
+          this.inlineSearchIframes.set(element, inlineIframe);
+        }
+      }
     } else {
       // Handle SYNC module (explicit or legacy data-url) by attaching click listener for overlay
       // Remove any potentially stale inline iframe reference if the module type changes
@@ -323,7 +339,7 @@ export class App {
   }
 
   _refreshInlineSearchIframes() {
-    this.inlineSearchIframes.forEach((iframe, containerElement) => {
+    this.inlineSearchIframes.forEach((iframe) => {
       if (iframe && iframe.contentWindow) {
         const params = {
           partnerKey: this.partnerKey,
@@ -336,7 +352,7 @@ export class App {
     });
   }
 
-  handleOAuthError(data) {
+  handleOAuthError() {
     alert("Sorry, something went wrong with your login");
   }
 
@@ -355,9 +371,7 @@ export class App {
   scanExistingElements() {
     const query = `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`;
     const elements = document.querySelectorAll(query);
-    elements.forEach((el, index) => {
-      const hasVillageUrl = el.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-      const hasVillageModule = el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
+    elements.forEach((el) => {
       this.checkAndAddListenerIfValid(el);
     });
   }
