@@ -21,15 +21,15 @@ export default defineConfig(({ mode }) => {
 
   const parsedEnv = fs.existsSync(envFile)
     ? Object.fromEntries(
-      fs
-        .readFileSync(envFile, "utf-8")
-        .split("\n")
-        .filter(l => l.trim() && !l.startsWith("#"))
-        .map(l => {
-          const [k, ...v] = l.split("=");
-          return [k.trim(), v.join("=").trim()];
-        })
-    )
+        fs
+          .readFileSync(envFile, "utf-8")
+          .split("\n")
+          .filter((l) => l.trim() && !l.startsWith("#"))
+          .map((l) => {
+            const [k, ...v] = l.split("=");
+            return [k.trim(), v.join("=").trim()];
+          })
+      )
     : {};
 
   // ──────────────────────────────
@@ -39,7 +39,8 @@ export default defineConfig(({ mode }) => {
   const outputDir = (() => {
     if (parsedEnv.VITE_WIDGET_DEV_PATH) {
       const full = path.resolve(process.cwd(), parsedEnv.VITE_WIDGET_DEV_PATH);
-      if (!full.endsWith(".js")) throw new Error("VITE_WIDGET_DEV_PATH must be a .js file");
+      if (!full.endsWith(".js"))
+        throw new Error("VITE_WIDGET_DEV_PATH must be a .js file");
       devFileFullPath = full;
       return path.dirname(full);
     }
@@ -55,25 +56,30 @@ export default defineConfig(({ mode }) => {
   const addBannerPlugin = {
     name: "banner",
     writeBundle() {
-      const banner = `// Deployed: ${new Date().toISOString()}\n// Version: ${pkg.version}\n`;
+      const banner = `// Deployed: ${new Date().toISOString()}\n// Version: ${
+        pkg.version
+      }\n`;
       if (!fs.existsSync(devFileFullPath)) return;
 
       const code = fs.readFileSync(devFileFullPath, "utf8");
       const finalCode = code.startsWith("// Deployed:") ? code : banner + code;
 
-      // 1. Atualiza o original
+      // 1. Update the original
       fs.writeFileSync(devFileFullPath, finalCode);
       console.log("✅ Banner prepended to original build");
 
-      // 2. Copia para ./dist/ com o mesmo nome
+      // 2. Copy to ./dist/ with the same name
       const outputBaseName = path.basename(devFileFullPath);
       const distCopyPath = path.resolve(__dirname, "dist", outputBaseName);
       fs.writeFileSync(distCopyPath, finalCode);
       console.log(`✅ Copied build to ./dist/${outputBaseName}`);
 
-      // 3. Copia adicional para dist/{mode}/village-widget.js
+      // 3. Additional copy to dist/{mode}/village-widget.js
       const namedDistFolder = path.resolve(__dirname, `dist/${mode}`);
-      const namedOutputPath = path.resolve(namedDistFolder, "village-widget.js");
+      const namedOutputPath = path.resolve(
+        namedDistFolder,
+        "village-widget.js"
+      );
 
       if (!fs.existsSync(namedDistFolder)) {
         fs.mkdirSync(namedDistFolder, { recursive: true });
@@ -81,8 +87,7 @@ export default defineConfig(({ mode }) => {
 
       fs.writeFileSync(namedOutputPath, finalCode);
       console.log(`✅ Copied build to dist/${mode}/village-widget.js`);
-    }
-    ,
+    },
   };
 
   // ──────────────────────────────
@@ -93,7 +98,10 @@ export default defineConfig(({ mode }) => {
       global: "window",
       __DEV_WIDGET_PATH__: JSON.stringify(devFileFullPath),
       ...Object.fromEntries(
-        Object.entries(parsedEnv).map(([k, v]) => [`import.meta.env.${k}`, JSON.stringify(v)])
+        Object.entries(parsedEnv).map(([k, v]) => [
+          `import.meta.env.${k}`,
+          JSON.stringify(v),
+        ])
       ),
     },
 
