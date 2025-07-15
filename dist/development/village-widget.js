@@ -1,11 +1,11 @@
-// Deployed: 2025-06-05T15:39:39.255Z
+// Deployed: 2025-07-15T08:28:01.468Z
 // Version: 1.0.47
 (function() {
   "use strict";
   try {
     if (typeof document != "undefined") {
       var elementStyle = document.createElement("style");
-      elementStyle.appendChild(document.createTextNode('.village-iframe {\r\n  width: 100%;\r\n  height: 100%;\r\n  border: none;\r\n  display: block;\r\n  position: fixed;\r\n  top: 0;\r\n  left: 0;\r\n  z-index: 2147483647;\r\n  background: rgba(0, 0, 0, 0.24);\r\n  color-scheme: light;\r\n\r\n  &.village-loading {\r\n    display: flex;\r\n    justify-content: center;\r\n    align-items: center;\r\n  }\r\n\r\n  > .village-spinner {\r\n    width: 1.5rem;\r\n    height: 1.5rem;\r\n    border: 2px solid #000;\r\n    border-left-color: transparent;\r\n    border-bottom-color: transparent;\r\n    border-radius: 50%;\r\n    animation: spin 0.45s linear infinite;\r\n  }\r\n\r\n  &.village-hidden {\r\n    display: none;\r\n  }\r\n}\r\n\r\n@keyframes spin {\r\n  0% {\r\n    transform: rotate(0deg);\r\n  }\r\n  100% {\r\n    transform: rotate(360deg);\r\n  }\r\n}\r\n\r\n.village-hidden {\r\n  display: none;\r\n}\r\n\r\n[village-paths-data="facepiles"] {\r\n  display: flex;\r\n  align-items: center;\r\n  padding-right: 0.5rem;\r\n}\r\n\r\n[village-paths-data="facepiles"] img {\r\n  width: 1.5rem;\r\n  height: 1.5rem;\r\n  border-radius: 50%;\r\n  margin-right: -0.5rem; /* Creates overlap effect */\r\n}\r\n\r\n[village-paths-data="facepiles"] img.village-facepiler-avatar-not-found {\r\n  filter: blur(7px);\r\n}\r\n\r\n[village-paths-data="facepiles"] img:last-child {\r\n  margin-right: 0;\r\n}\r\n\r\n[village-paths-data="count"] {\r\n  padding-right: 0.25rem;\r\n}'));
+      elementStyle.appendChild(document.createTextNode('.village-iframe {\n  width: 100%;\n  height: 100%;\n  border: none;\n  display: block;\n  position: fixed;\n  top: 0;\n  left: 0;\n  z-index: 2147483647;\n  background: rgba(0, 0, 0, 0.24);\n  color-scheme: light;\n\n  &.village-loading {\n    display: flex;\n    justify-content: center;\n    align-items: center;\n  }\n\n  > .village-spinner {\n    width: 1.5rem;\n    height: 1.5rem;\n    border: 2px solid #000;\n    border-left-color: transparent;\n    border-bottom-color: transparent;\n    border-radius: 50%;\n    animation: spin 0.45s linear infinite;\n  }\n\n  &.village-hidden {\n    display: none;\n  }\n}\n\n@keyframes spin {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n\n.village-hidden {\n  display: none;\n}\n\n[village-paths-data="facepiles"] {\n  display: flex;\n  align-items: center;\n  padding-right: 0.5rem;\n}\n\n[village-paths-data="facepiles"] img {\n  width: 1.5rem;\n  height: 1.5rem;\n  border-radius: 50%;\n  margin-right: -0.5rem; /* Creates overlap effect */\n}\n\n[village-paths-data="facepiles"] img.village-facepiler-avatar-not-found {\n  filter: blur(7px);\n}\n\n[village-paths-data="facepiles"] img:last-child {\n  margin-right: 0;\n}\n\n[village-paths-data="count"] {\n  padding-right: 0.25rem;\n}'));
       document.head.appendChild(elementStyle);
     }
   } catch (e) {
@@ -44,6 +44,9 @@
     return `${"http://localhost:3000"}/widget?${params.toString()}`;
   }
   function renderSearchIframeInsideElement(targetElement, params) {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return null;
+    }
     targetElement.innerHTML = "";
     const iframe = document.createElement("iframe");
     iframe.src = buildIframeSrc({ ...params, module: "search" });
@@ -2774,7 +2777,8 @@ text-align: center;
     }
     // Restored original handleDataUrl
     handleDataUrl(element, url) {
-      const validURL = url === "" ? "http://invalidURL.com" : url;
+      const validURL = this.isValidUrl(url) ? url : "http://invalidURL.com";
+      this.app.elementRequests.delete(element);
       this.removeListener(element);
       this.syncUrlElements.set(element, validURL);
       const clickHandler = () => {
@@ -2799,6 +2803,7 @@ text-align: center;
     }
     // Restored original handleModule (primarily for SYNC onboarding click)
     handleModule(element, moduleValue) {
+      this.app.elementRequests.delete(element);
       this.syncUrlElements.delete(element);
       if (!Object.values(ModuleTypes).includes(moduleValue)) {
         console.warn(`Invalid module type: ${moduleValue}`);
@@ -2835,6 +2840,7 @@ text-align: center;
       if (existingHandler) {
         element.removeEventListener("click", existingHandler);
       }
+      this.app.elementRequests.delete(element);
       this.syncUrlElements.delete(element);
       this.elementsWithListeners.delete(element);
     }
@@ -2845,6 +2851,21 @@ text-align: center;
     // Method to get all tracked elements for destroy cleanup
     getAllElementsWithListeners() {
       return this.elementsWithListeners;
+    }
+    isValidUrl(string) {
+      if (!string || typeof string !== "string" || string.trim() === "") {
+        return false;
+      }
+      const trimmed = string.trim();
+      if (!/^https?:\/\//i.test(trimmed)) {
+        return false;
+      }
+      try {
+        new URL(trimmed);
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
   }
   class App {
@@ -2862,13 +2883,23 @@ text-align: center;
       this.moduleHandlers = new ModuleHandlers(this);
       this.apiUrl = "http://localhost:8000";
       this.hasRenderedButton = false;
+      this.elementRequests = /* @__PURE__ */ new Map();
+      this.elementRequestIds = /* @__PURE__ */ new Map();
+      this.globalRequestCounter = 0;
     }
     async init() {
       this.setupMessageHandlers();
-      this.setupMutationObserver();
-      this.scanExistingElements();
       await this.getAuthToken();
       this.getUser();
+      this.delayedInitialize();
+    }
+    delayedInitialize() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.setupMutationObserver();
+          this.scanExistingElements();
+        });
+      });
     }
     setupMessageHandlers() {
       window.addEventListener("message", (event) => {
@@ -2951,16 +2982,22 @@ text-align: center;
       this.addListenerToElement(element);
     }
     async addListenerToElement(element) {
+      this.elementRequests.delete(element);
+      this.elementRequestIds.delete(element);
       const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
       const villageModule = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE);
       if (villageModule === ModuleTypes.SEARCH) {
-        const params = {
-          partnerKey: this.partnerKey,
-          userReference: this.userReference,
-          token: this.token
-        };
-        const inlineIframe = renderSearchIframeInsideElement(element, params);
-        this.inlineSearchIframes.set(element, inlineIframe);
+        if (typeof window !== "undefined" && typeof document !== "undefined") {
+          const params = {
+            partnerKey: this.partnerKey,
+            userReference: this.userReference,
+            token: this.token
+          };
+          const inlineIframe = renderSearchIframeInsideElement(element, params);
+          if (inlineIframe) {
+            this.inlineSearchIframes.set(element, inlineIframe);
+          }
+        }
       } else {
         this.inlineSearchIframes.delete(element);
         if (url && villageModule != ModuleTypes.SYNC && villageModule != ModuleTypes.SEARCH) {
@@ -2989,6 +3026,7 @@ text-align: center;
       return null;
     }
     updateCookieToken(token) {
+      this._clearAllRequests();
       if (this.isTokenValid(token)) {
         this.saveExtensionToken(token);
         api.set("village.token", token, { secure: location.protocol === "https:", expires: 60, path: "/" });
@@ -3014,8 +3052,6 @@ text-align: center;
       }
       if (this.isTokenValid(token)) {
         this.updateCookieToken(token);
-      } else {
-        console.log("getAuthToken token is invalid", token);
       }
       return token;
     }
@@ -3058,6 +3094,7 @@ text-align: center;
         const userId = `${user == null ? void 0 : user.id}`;
         AnalyticsService.setUserId(userId);
       } catch (error) {
+        this._clearAllRequests();
         this.token = null;
         api.remove("village.token");
         AnalyticsService.removeUserId();
@@ -3078,7 +3115,7 @@ text-align: center;
       this.renderIframe();
     }
     _refreshInlineSearchIframes() {
-      this.inlineSearchIframes.forEach((iframe, containerElement) => {
+      this.inlineSearchIframes.forEach((iframe) => {
         if (iframe && iframe.contentWindow) {
           const params = {
             partnerKey: this.partnerKey,
@@ -3090,7 +3127,7 @@ text-align: center;
         }
       });
     }
-    handleOAuthError(data) {
+    handleOAuthError() {
       alert("Sorry, something went wrong with your login");
     }
     handleRemoveIframe() {
@@ -3107,8 +3144,6 @@ text-align: center;
       const query = `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`;
       const elements = document.querySelectorAll(query);
       elements.forEach((el, index2) => {
-        el.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-        el.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
         this.checkAndAddListenerIfValid(el);
       });
     }
@@ -3132,6 +3167,7 @@ text-align: center;
         return data;
       } catch (err) {
         if (((_b = (_a = err == null ? void 0 : err.response) == null ? void 0 : _a.data) == null ? void 0 : _b.auth) === false) {
+          this._clearAllRequests();
           api.remove("village.token");
           this.token = null;
         }
@@ -3139,50 +3175,107 @@ text-align: center;
       }
     }
     getButtonChildren(element) {
-      const foundElement = element.querySelector('[village-paths-availability="found"]');
-      const notFoundElement = element.querySelector('[village-paths-availability="not-found"]');
-      const loadingElement = element.querySelector('[village-paths-availability="loading"]');
-      const errorElement = element.querySelector('[village-paths-availability="error"]');
-      const not_activated = element.querySelector('[village-paths-availability="not-activated"]');
-      return { foundElement, notFoundElement, loadingElement, errorElement, not_activated };
-    }
-    showErrorState(element) {
-      const { foundElement, notFoundElement, loadingElement, errorElement, not_activated } = this.getButtonChildren(element);
-      if (not_activated) not_activated.style.display = "none";
-      if (foundElement) foundElement.style.display = "none";
-      if (notFoundElement) notFoundElement.style.display = "none";
-      if (loadingElement) loadingElement.style.display = "none";
-      if (errorElement) errorElement.style.display = "inline-flex";
+      const foundElement = element.querySelector(
+        '[village-paths-availability="found"]'
+      );
+      const notFoundElement = element.querySelector(
+        '[village-paths-availability="not-found"]'
+      );
+      const loadingElement = element.querySelector(
+        '[village-paths-availability="loading"]'
+      );
+      const errorElement = element.querySelector(
+        '[village-paths-availability="error"]'
+      );
+      const not_activated = element.querySelector(
+        '[village-paths-availability="not-activated"]'
+      );
+      return {
+        foundElement,
+        notFoundElement,
+        loadingElement,
+        errorElement,
+        not_activated
+      };
     }
     initializeButtonState(element) {
-      const { foundElement, notFoundElement, loadingElement, errorElement, not_activated } = this.getButtonChildren(element);
-      if (not_activated) not_activated.style.display = "none";
       if (!this.token) {
-        if (foundElement) foundElement.style.display = "none";
-        if (notFoundElement) notFoundElement.style.display = "inline-flex";
-        if (loadingElement) loadingElement.style.display = "none";
-        if (errorElement) errorElement.style.display = "none";
-        return;
+        this._setElementState(element, "not-found");
+      } else {
+        this._setElementState(element, "loading");
       }
-      if (foundElement) foundElement.style.display = "none";
-      if (notFoundElement) notFoundElement.style.display = "none";
-      if (errorElement) errorElement.style.display = "none";
-      if (loadingElement) loadingElement.style.display = "inline-flex";
     }
     async checkPathsAndUpdateButton(element, url) {
+      const existingRequest = this.elementRequests.get(element);
+      if (existingRequest) {
+        return existingRequest;
+      }
+      const requestId = ++this.globalRequestCounter;
+      const requestPromise = this._executePathCheck(element, url, requestId);
+      this.elementRequests.set(element, requestPromise);
+      this.elementRequestIds.set(element, requestId);
+      try {
+        await requestPromise;
+      } finally {
+        this.elementRequests.delete(element);
+        this.elementRequestIds.delete(element);
+      }
+    }
+    async _executePathCheck(element, url, requestId) {
+      this._setElementState(element, "loading");
       try {
         const data = await this.checkPaths(url);
-        this.updateButtonContent(element, data == null ? void 0 : data.relationship);
+        if (requestId === this.elementRequestIds.get(element)) {
+          this._setElementState(
+            element,
+            (data == null ? void 0 : data.relationship) ? "found" : "not-found",
+            data == null ? void 0 : data.relationship
+          );
+        }
       } catch (error) {
         logWidgetError(error, {
           additionalInfo: {
-            function: "checkPathsAndUpdateButton",
+            function: "_executePathCheck",
             url,
             element
           }
         });
-        this.updateButtonContent(element, null);
+        if (requestId === this.elementRequestIds.get(element)) {
+          this._setElementState(element, "not-found");
+        }
       }
+    }
+    // ✅ ATOMIC: Centralized state management prevents race conditions
+    _setElementState(element, state, relationship = null) {
+      const {
+        foundElement,
+        notFoundElement,
+        loadingElement,
+        errorElement,
+        not_activated
+      } = this.getButtonChildren(element);
+      [foundElement, notFoundElement, loadingElement, errorElement, not_activated].filter(Boolean).forEach((el) => el.style.display = "none");
+      switch (state) {
+        case "loading":
+          if (loadingElement) loadingElement.style.display = "inline-flex";
+          break;
+        case "found":
+          if (foundElement) {
+            foundElement.style.display = "inline-flex";
+            if (relationship)
+              this.addFacePilesAndCount(foundElement, relationship);
+          }
+          break;
+        case "not-found":
+          if (notFoundElement) notFoundElement.style.display = "inline-flex";
+          break;
+      }
+    }
+    // Clear all requests (used during auth changes)
+    _clearAllRequests() {
+      this.elementRequests.clear();
+      this.elementRequestIds.clear();
+      this.globalRequestCounter += 1e3;
     }
     addFacePilesAndCount(element, relationship) {
       const facePilesContainer = element.querySelector(
@@ -3201,20 +3294,11 @@ text-align: center;
       }
     }
     updateButtonContent(element, relationship) {
-      const { foundElement, notFoundElement, loadingElement, errorElement, not_activated } = this.getButtonChildren(element);
-      if (not_activated) not_activated.style.display = "none";
-      if (loadingElement) loadingElement.style.display = "none";
-      if (errorElement) errorElement.style.display = "none";
-      if (relationship) {
-        if (foundElement) {
-          foundElement.style.display = "inline-flex";
-          this.addFacePilesAndCount(foundElement, relationship);
-        }
-        if (notFoundElement) notFoundElement.style.display = "none";
-      } else {
-        if (foundElement) foundElement.style.display = "none";
-        if (notFoundElement) notFoundElement.style.display = "inline-flex";
-      }
+      this._setElementState(
+        element,
+        relationship ? "found" : "not-found",
+        relationship
+      );
     }
     async renderIframe() {
       if (!this.iframe) {
@@ -3266,6 +3350,7 @@ text-align: center;
       }
     }
     destroy() {
+      this._clearAllRequests();
       if (this.observer) {
         this.observer.disconnect();
         this.observer = null;
@@ -3297,6 +3382,7 @@ text-align: center;
       });
     }
     async logout() {
+      this._clearAllRequests();
       try {
         if (this.token) {
           await axios.get(`${this.apiUrl}/logout`, {
@@ -3376,6 +3462,9 @@ text-align: center;
     }
   }
   (function(window2) {
+    if (typeof window2 === "undefined" || typeof document === "undefined") {
+      return;
+    }
     function createVillage() {
       const listeners2 = {};
       const v = {
@@ -3551,8 +3640,15 @@ text-align: center;
     window2.Village.on = on;
     window2.Village.emit = emit;
     window2.Village.q = existingQueue.concat(window2.Village.q);
-    window2.Village._processQueue();
-    window2.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
+    function initializeVillage() {
+      window2.Village._processQueue();
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initializeVillage);
+    } else {
+      setTimeout(initializeVillage, 0);
+    }
+    window2.Village.on(VillageEvents.widgetReady, () => {
     });
     window2.Village.on(VillageEvents.pathCtaClicked, (payload) => {
       window2.Village.executeCallback(payload);
