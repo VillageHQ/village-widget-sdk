@@ -63,7 +63,11 @@ export class App {
   async init() {
     this.setupMessageHandlers();
     await this.getAuthToken();
-    this.getUser();
+    
+    // Add small delay to prevent interference with OAuth callbacks
+    setTimeout(() => {
+      this.getUser();
+    }, 500);
 
     // Delay DOM operations until after potential hydration
     this.delayedInitialize();
@@ -430,6 +434,21 @@ export class App {
   }
 
   async getUser() {
+    // Don't interfere with ongoing OAuth flows
+    const isOAuthCallback = window.location.search.includes('code=') || 
+                          window.location.search.includes('state=') ||
+                          window.location.pathname.includes('/login');
+    
+    if (isOAuthCallback) {
+      this._logCookieInfo('getUser', 'Skipping user validation during OAuth callback', {
+        currentLocation: window.location.href,
+        hasCodeParam: window.location.search.includes('code='),
+        hasStateParam: window.location.search.includes('state='),
+        isLoginPath: window.location.pathname.includes('/login')
+      });
+      return;
+    }
+    
     const token = await this.getAuthToken();
     
     this._logCookieInfo('getUser', 'Starting user validation', {
@@ -471,20 +490,38 @@ export class App {
       });
       
     } catch (error) {
-      // Clear all requests when token becomes invalid
-      this._clearAllRequests();
-      this.token = null;
+      // Only remove tokens for specific auth errors, not network errors
+      const shouldRemoveToken = error.response?.status === 401 || 
+                               error.response?.status === 403 ||
+                               error.message.includes('No user ID');
       
-      this._logCookieInfo('getUser', 'Removing invalid token cookie', {
+      this._logCookieInfo('getUser', 'User validation failed', {
         reason: 'auth error or no user ID',
         errorMessage: error.message,
         errorStatus: error.response?.status,
         errorStatusText: error.response?.statusText,
         errorData: error.response?.data,
-        apiUrl: this.apiUrl
+        apiUrl: this.apiUrl,
+        willRemoveToken: shouldRemoveToken
       });
-      Cookies.remove("village.token");
-      AnalyticsService.removeUserId();
+      
+      if (shouldRemoveToken) {
+        // Clear all requests when token becomes invalid
+        this._clearAllRequests();
+        this.token = null;
+        
+        this._logCookieInfo('getUser', 'Removing invalid token cookie', {
+          reason: 'confirmed auth failure',
+          errorStatus: error.response?.status
+        });
+        Cookies.remove("village.token");
+        AnalyticsService.removeUserId();
+      } else {
+        this._logCookieInfo('getUser', 'Keeping token despite error', {
+          reason: 'network error or temporary failure',
+          errorStatus: error.response?.status
+        });
+      }
     }
   }
 
