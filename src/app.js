@@ -232,7 +232,7 @@ export class App {
 
   updateCookieToken(token) {
       // Clear all requests before setting new token
-      this._clearAllRequests();
+      // this._clearAllRequests();
     if (this.isTokenValid(token)) {
       this.saveExtensionToken(token);
       Cookies.set('village.token', token, { secure: location.protocol === 'https:', expires: 60, path: "/" });

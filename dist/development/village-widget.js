@@ -1,4 +1,4 @@
-// Deployed: 2025-07-15T08:28:01.468Z
+// Deployed: 2025-07-16T10:04:08.893Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -3026,7 +3026,6 @@ text-align: center;
       return null;
     }
     updateCookieToken(token) {
-      this._clearAllRequests();
       if (this.isTokenValid(token)) {
         this.saveExtensionToken(token);
         api.set("village.token", token, { secure: location.protocol === "https:", expires: 60, path: "/" });
