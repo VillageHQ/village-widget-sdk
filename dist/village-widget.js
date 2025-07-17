@@ -1,4 +1,4 @@
-// Deployed: 2025-07-16T12:20:55.240Z
+// Deployed: 2025-07-16T12:14:55.277Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -3098,40 +3098,16 @@ text-align: center;
       }
     }
     isTokenValid(token) {
-      const basicCheck = typeof token === "string" && token.length > 10 && token !== "not_found";
-      if (!basicCheck) {
-        this._logCookieInfo("isTokenValid", "Token validation failed - basic check", {
+      const isValid = typeof token === "string" && token.length > 10 && token !== "not_found";
+      if (!isValid) {
+        this._logCookieInfo("isTokenValid", "Token validation failed", {
           tokenType: typeof token,
           tokenLength: token ? token.length : 0,
           tokenValue: token,
           reason: !token ? "no token" : typeof token !== "string" ? "not string" : token.length <= 10 ? "too short" : token === "not_found" ? "not_found value" : "unknown"
         });
-        return false;
       }
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const now = Math.floor(Date.now() / 1e3);
-        if (payload.exp && payload.exp < now) {
-          this._logCookieInfo("isTokenValid", "Token validation failed - expired", {
-            tokenExpiry: payload.exp,
-            currentTime: now,
-            expiredBy: now - payload.exp
-          });
-          return false;
-        }
-        this._logCookieInfo("isTokenValid", "Token validation passed", {
-          tokenExpiry: payload.exp,
-          currentTime: now,
-          expiresIn: payload.exp - now
-        });
-      } catch (error) {
-        this._logCookieInfo("isTokenValid", "Token validation failed - invalid JWT", {
-          error: error.message,
-          tokenPreview: token.substring(0, 20) + "..."
-        });
-        return false;
-      }
-      return true;
+      return isValid;
     }
     async getAuthToken(timeout = 1e3) {
       this._logCookieInfo("getAuthToken", "Starting token retrieval process", {
@@ -3208,49 +3184,20 @@ text-align: center;
       window.postMessage(request, "*");
     }
     async getUser() {
-      var _a, _b, _c;
       const token = await this.getAuthToken();
-      this._logCookieInfo("getUser", "Starting user validation", {
-        hasToken: !!token,
-        tokenLength: token ? token.length : 0,
-        apiUrl: this.apiUrl,
-        partnerKey: this.partnerKey
-      });
-      if (!token) {
-        this._logCookieInfo("getUser", "No token available for user validation");
-        return;
-      }
+      if (!token) return;
       try {
         const { data: user } = await axios.get(`${this.apiUrl}/user`, {
           headers: { "x-access-token": token, "app-public-key": this.partnerKey }
         });
-        this._logCookieInfo("getUser", "User API call successful", {
-          hasUserId: !!(user == null ? void 0 : user.id),
-          userId: user == null ? void 0 : user.id,
-          userKeys: user ? Object.keys(user) : []
-        });
-        if (!(user == null ? void 0 : user.id)) {
-          this._logCookieInfo("getUser", "No user ID in response", {
-            userData: user,
-            reason: "missing user ID"
-          });
-          throw new Error("No user ID");
-        }
+        if (!(user == null ? void 0 : user.id)) throw new Error("No user ID");
         const userId = `${user == null ? void 0 : user.id}`;
         AnalyticsService.setUserId(userId);
-        this._logCookieInfo("getUser", "User validation successful", {
-          userId
-        });
       } catch (error) {
         this._clearAllRequests();
         this.token = null;
         this._logCookieInfo("getUser", "Removing invalid token cookie", {
-          reason: "auth error or no user ID",
-          errorMessage: error.message,
-          errorStatus: (_a = error.response) == null ? void 0 : _a.status,
-          errorStatusText: (_b = error.response) == null ? void 0 : _b.statusText,
-          errorData: (_c = error.response) == null ? void 0 : _c.data,
-          apiUrl: this.apiUrl
+          reason: "auth error or no user ID"
         });
         api.remove("village.token");
         AnalyticsService.removeUserId();

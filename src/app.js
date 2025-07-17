@@ -298,10 +298,10 @@ export class App {
   }
 
   isTokenValid(token) {
-    const basicCheck = typeof token === 'string' && token.length > 10 && token !== 'not_found';
+    const isValid = typeof token === 'string' && token.length > 10 && token !== 'not_found';
     
-    if (!basicCheck) {
-      this._logCookieInfo('isTokenValid', 'Token validation failed - basic check', {
+    if (!isValid) {
+      this._logCookieInfo('isTokenValid', 'Token validation failed', {
         tokenType: typeof token,
         tokenLength: token ? token.length : 0,
         tokenValue: token,
@@ -310,38 +310,9 @@ export class App {
                 token.length <= 10 ? 'too short' :
                 token === 'not_found' ? 'not_found value' : 'unknown'
       });
-      return false;
     }
     
-    // Check JWT expiry
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const now = Math.floor(Date.now() / 1000);
-      
-      if (payload.exp && payload.exp < now) {
-        this._logCookieInfo('isTokenValid', 'Token validation failed - expired', {
-          tokenExpiry: payload.exp,
-          currentTime: now,
-          expiredBy: now - payload.exp
-        });
-        return false;
-      }
-      
-      this._logCookieInfo('isTokenValid', 'Token validation passed', {
-        tokenExpiry: payload.exp,
-        currentTime: now,
-        expiresIn: payload.exp - now
-      });
-      
-    } catch (error) {
-      this._logCookieInfo('isTokenValid', 'Token validation failed - invalid JWT', {
-        error: error.message,
-        tokenPreview: token.substring(0, 20) + '...'
-      });
-      return false;
-    }
-    
-    return true;
+    return isValid;
   }
 
   async getAuthToken(timeout = 1000) {
@@ -430,58 +401,26 @@ export class App {
   }
 
   async getUser() {
+    //const token = Cookies.get("village.token");
     const token = await this.getAuthToken();
-    
-    this._logCookieInfo('getUser', 'Starting user validation', {
-      hasToken: !!token,
-      tokenLength: token ? token.length : 0,
-      apiUrl: this.apiUrl,
-      partnerKey: this.partnerKey
-    });
-    
-    if (!token) {
-      this._logCookieInfo('getUser', 'No token available for user validation');
-      return;
-    }
+    if (!token) return;
 
     try {
       const { data: user } = await axios.get(`${this.apiUrl}/user`, {
         headers: { "x-access-token": token, "app-public-key": this.partnerKey },
       });
 
-      this._logCookieInfo('getUser', 'User API call successful', {
-        hasUserId: !!user?.id,
-        userId: user?.id,
-        userKeys: user ? Object.keys(user) : []
-      });
-
-      if (!user?.id) {
-        this._logCookieInfo('getUser', 'No user ID in response', {
-          userData: user,
-          reason: 'missing user ID'
-        });
-        throw new Error("No user ID");
-      }
+      if (!user?.id) throw new Error("No user ID");
 
       const userId = `${user?.id}`;
       AnalyticsService.setUserId(userId);
-      
-      this._logCookieInfo('getUser', 'User validation successful', {
-        userId: userId
-      });
-      
     } catch (error) {
       // Clear all requests when token becomes invalid
       this._clearAllRequests();
       this.token = null;
       
       this._logCookieInfo('getUser', 'Removing invalid token cookie', {
-        reason: 'auth error or no user ID',
-        errorMessage: error.message,
-        errorStatus: error.response?.status,
-        errorStatusText: error.response?.statusText,
-        errorData: error.response?.data,
-        apiUrl: this.apiUrl
+        reason: 'auth error or no user ID'
       });
       Cookies.remove("village.token");
       AnalyticsService.removeUserId();
