@@ -38,26 +38,6 @@ export class App {
     this.elementRequests = new Map(); // element -> Promise
     this.elementRequestIds = new Map(); // element -> latest request ID
     this.globalRequestCounter = 0; // Only for generating unique IDs
-
-    // Initialize cookie logging
-    this._logCookieInfo('constructor', 'Initializing Village SDK');
-  }
-
-  // Cookie and token logging utility
-  _logCookieInfo(method, message, extraData = {}) {
-    const logData = {
-      timestamp: new Date().toISOString(),
-      method,
-      message,
-      domain: location.hostname,
-      protocol: location.protocol,
-      userAgent: navigator.userAgent.substring(0, 100),
-      currentToken: this.token ? `${this.token.substring(0, 10)}...` : 'null',
-      cookieValue: Cookies.get('village.token') ? `${Cookies.get('village.token').substring(0, 10)}...` : 'null',
-      ...extraData
-    };
-    
-    console.log(`[VILLAGE-SDK-COOKIE] ${method}:`, logData);
   }
 
   async init() {
@@ -253,117 +233,42 @@ export class App {
   updateCookieToken(token) {
       // Clear all requests before setting new token
       this._clearAllRequests();
-    
-    const cookieAttributes = { 
-      secure: location.protocol === 'https:', 
-      expires: 60, 
-      path: "/" 
-    };
-    
-    this._logCookieInfo('updateCookieToken', 'Attempting to update cookie token', {
-      tokenLength: token ? token.length : 0,
-      isValid: this.isTokenValid(token),
-      cookieAttributes,
-      currentLocation: location.href
-    });
-    
     if (this.isTokenValid(token)) {
       this.saveExtensionToken(token);
-      
-      try {
-        Cookies.set('village.token', token, cookieAttributes);
-        this._logCookieInfo('updateCookieToken', 'Cookie set successfully', {
-          tokenPreview: `${token.substring(0, 10)}...`,
-          cookieAttributes
-        });
-      } catch (error) {
-        this._logCookieInfo('updateCookieToken', 'Failed to set cookie', {
-          error: error.message,
-          cookieAttributes
-        });
-      }
-      
+      Cookies.set('village.token', token, { secure: location.protocol === 'https:', expires: 60, path: "/" });
       if (this.token != token) {
         this.token = token;
         this._refreshInlineSearchIframes();
-        this._logCookieInfo('updateCookieToken', 'Token updated, refreshing iframes');
       }
+      // console.trace('updateCookieToken token saved', token);
     } else {
-      this._logCookieInfo('updateCookieToken', 'Invalid token provided', {
-        tokenType: typeof token,
-        tokenLength: token ? token.length : 0,
-        tokenPreview: token ? `${token.substring(0, 10)}...` : 'null'
-      });
+      // console.error('updateCookieToken Invalid token', token);
     }
   }
 
   isTokenValid(token) {
-    const isValid = typeof token === 'string' && token.length > 10 && token !== 'not_found';
-    
-    if (!isValid) {
-      this._logCookieInfo('isTokenValid', 'Token validation failed', {
-        tokenType: typeof token,
-        tokenLength: token ? token.length : 0,
-        tokenValue: token,
-        reason: !token ? 'no token' : 
-                typeof token !== 'string' ? 'not string' :
-                token.length <= 10 ? 'too short' :
-                token === 'not_found' ? 'not_found value' : 'unknown'
-      });
-    }
-    
-    return isValid;
+    return typeof token === 'string' && token.length > 10 && token !== 'not_found';
   }
 
   async getAuthToken(timeout = 1000) {
-    this._logCookieInfo('getAuthToken', 'Starting token retrieval process', {
-      timeout,
-      currentLocation: location.href
-    });
-    
     let token = Cookies.get('village.token');
-    this._logCookieInfo('getAuthToken', 'Retrieved token from cookie', {
-      hasToken: !!token,
-      isValid: this.isTokenValid(token),
-      tokenLength: token ? token.length : 0
-    });
-    
     if (!this.isTokenValid(token)) {
       token = this.extractTokenFromQueryParams();
-      this._logCookieInfo('getAuthToken', 'Extracted token from query params', {
-        hasToken: !!token,
-        isValid: this.isTokenValid(token),
-        tokenLength: token ? token.length : 0
-      });
     }
-    
     if (!this.isTokenValid(token)) {
       try {
-        this._logCookieInfo('getAuthToken', 'Attempting to get token from extension', { timeout });
         token = await this.requestExtensionToken(timeout);
-        this._logCookieInfo('getAuthToken', 'Got token from extension', {
-          hasToken: !!token,
-          isValid: this.isTokenValid(token),
-          tokenLength: token ? token.length : 0
-        });
       } catch (err) {
-        this._logCookieInfo('getAuthToken', 'Extension token request failed', {
-          error: err.message,
-          timeout
-        });
+        // Extension fallback failed — continue to redirect fallback if needed
+        // console.log('getAuthToken requestExtensionToken', token, err);
       }
     }
 
     if (this.isTokenValid(token)) {
-      this._logCookieInfo('getAuthToken', 'Valid token found, updating cookie');
       this.updateCookieToken(token);
     } else {
-      this._logCookieInfo('getAuthToken', 'No valid token found', {
-        tokenType: typeof token,
-        tokenValue: token
-      });
+      // console.log('getAuthToken token is invalid', token);
     }
-    
     return token;
   }
 
@@ -418,10 +323,6 @@ export class App {
       // Clear all requests when token becomes invalid
       this._clearAllRequests();
       this.token = null;
-      
-      this._logCookieInfo('getUser', 'Removing invalid token cookie', {
-        reason: 'auth error or no user ID'
-      });
       Cookies.remove("village.token");
       AnalyticsService.removeUserId();
     }
@@ -512,11 +413,6 @@ export class App {
       if (err?.response?.data?.auth === false) {
         // Clear all requests when auth fails
         this._clearAllRequests();
-        
-        this._logCookieInfo('checkPaths', 'Removing token cookie due to auth failure', {
-          apiUrl: this.apiUrl,
-          error: err.message
-        });
         Cookies.remove("village.token");
         this.token = null;
       }
@@ -652,16 +548,6 @@ export class App {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
     this.globalRequestCounter += 1000; // Invalidate old requests
-  }
-
-  // Show error state for invalid URLs
-  showErrorState(element) {
-    this._logCookieInfo('showErrorState', 'Showing error state for invalid URL', {
-      elementTag: element.tagName,
-      elementId: element.id,
-      elementClass: element.className
-    });
-    this._setElementState(element, "not-found");
   }
 
   addFacePilesAndCount(element, relationship) {
@@ -819,9 +705,6 @@ export class App {
     } catch (error) {}
 
     // Clear local state regardless of API call success
-    this._logCookieInfo('logout', 'Removing token cookie during logout', {
-      apiUrl: this.apiUrl
-    });
     Cookies.remove("village.token");
     this.token = null;
     AnalyticsService.removeUserId(); // Clear analytics user ID

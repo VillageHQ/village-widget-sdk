@@ -61,25 +61,7 @@ export class MessageHandlers {
   }
 
   handleOAuthSuccess(data) {
-    const cookieAttributes = { secure: true, expires: 60 };
-    
-    console.log(`[VILLAGE-SDK-OAUTH] handleOAuthSuccess: Setting OAuth token cookie`, {
-      timestamp: new Date().toISOString(),
-      domain: location.hostname,
-      protocol: location.protocol,
-      tokenPreview: data.token ? `${data.token.substring(0, 10)}...` : 'null',
-      cookieAttributes
-    });
-    
-    try {
-      Cookies.set("village.token", data.token, cookieAttributes);
-      console.log(`[VILLAGE-SDK-OAUTH] handleOAuthSuccess: Cookie set successfully`);
-    } catch (error) {
-      console.error(`[VILLAGE-SDK-OAUTH] handleOAuthSuccess: Failed to set cookie`, {
-        error: error.message,
-        cookieAttributes
-      });
-    }
+    Cookies.set("village.token", data.token, { secure: true, expires: 60 });
     
     this.app.handleOAuthSuccess(data);
 

@@ -4,21 +4,6 @@ import { VillageEvents } from "./config/village-events.js";;
 import { on, emit } from "./sdk-wrapper";
 import Cookies from "js-cookie";
 
-// Cookie logging utility for cross-site scenarios
-function logCrossSiteCookie(method, message, extraData = {}) {
-  const logData = {
-    timestamp: new Date().toISOString(),
-    method,
-    message,
-    domain: location.hostname,
-    protocol: location.protocol,
-    userAgent: navigator.userAgent.substring(0, 100),
-    ...extraData
-  };
-  
-  console.log(`[VILLAGE-SDK-CROSS-SITE] ${method}:`, logData);
-}
-
 (function (window) {
   // Avoid executing in server-side environments
   if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -235,15 +220,6 @@ function logCrossSiteCookie(method, message, extraData = {}) {
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
   
-  // Log initial SDK state
-  logCrossSiteCookie('initialization', 'Village SDK loaded', {
-    queueLength: window.Village.q.length,
-    existingQueueLength: existingQueue.length,
-    cookieValue: Cookies.get('village.token') ? `${Cookies.get('village.token').substring(0, 10)}...` : 'null',
-    sessionValue: sessionStorage.getItem('village.token') ? `${sessionStorage.getItem('village.token').substring(0, 10)}...` : 'null',
-    documentReady: document.readyState
-  });
-  
   // Delay processing queue and initialization until after DOM is ready
   // This prevents hydration issues in SSR environments
   function initializeVillage() {
@@ -275,65 +251,34 @@ function logCrossSiteCookie(method, message, extraData = {}) {
       const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
 
       if (domainA === domainB && data?.type === "VillageSDK") {
-        logCrossSiteCookie('messageListener', 'Received message from iframe', {
-          origin: domainA,
-          expectedOrigin: domainB,
-          hasToken: !!data.token,
-          tokenLength: data.token ? data.token.length : 0
-        });
-        
+        console.log("[SDK cookie] message from iframe:", data);
         const token = data.token ?? null;
 
         if (!token && document.requestStorageAccess) {
-          logCrossSiteCookie('messageListener', 'Requesting storage access for token recovery');
           try {
             await document.requestStorageAccess();
             const recoveredToken = Cookies.get(villageToken);
             const recoveredTokenS = sessionStorage.getItem('village.token');
-            
-            logCrossSiteCookie('messageListener', 'Storage access granted', {
-              cookieToken: recoveredToken ? `${recoveredToken.substring(0, 10)}...` : 'null',
-              sessionToken: recoveredTokenS ? `${recoveredTokenS.substring(0, 10)}...` : 'null'
-            });
-            
+            console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
             if (recoveredToken) {
               sessionStorage.setItem(villageToken, recoveredToken);
               window.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
             }
           } catch (e) {
-            logCrossSiteCookie('messageListener', 'Storage access failed', {
-              error: e.message
-            });
+            console.warn("[VillageSDK] Storage Access denied or failed", e);
           }
           return;
         }
 
         if (token) {
-          const cookieAttributes = {
+          Cookies.set(villageToken, token, {
             secure: true,
             sameSite: "None",
             expires: 60,
-          };
-          
-          logCrossSiteCookie('messageListener', 'Setting cross-site cookie', {
-            tokenPreview: `${token.substring(0, 10)}...`,
-            cookieAttributes
           });
-          
-          try {
-            Cookies.set(villageToken, token, cookieAttributes);
-            sessionStorage.setItem(villageToken, token);
-            window.Village.broadcast(VillageEvents.oauthSuccess, { token });
-            
-            logCrossSiteCookie('messageListener', 'Cross-site cookie set successfully');
-          } catch (error) {
-            logCrossSiteCookie('messageListener', 'Failed to set cross-site cookie', {
-              error: error.message,
-              cookieAttributes
-            });
-          }
+          sessionStorage.setItem(villageToken, token);
+          window.Village.broadcast(VillageEvents.oauthSuccess, { token });
         } else {
-          logCrossSiteCookie('messageListener', 'Removing cross-site cookie and session storage');
           Cookies.remove(villageToken);
           sessionStorage.removeItem(villageToken);
           window.Village.broadcast(VillageEvents.userLoggedOut, {});

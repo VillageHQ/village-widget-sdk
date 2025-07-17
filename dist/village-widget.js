@@ -1,4 +1,4 @@
-// Deployed: 2025-07-16T12:14:55.277Z
+// Deployed: 2025-07-16T10:10:04.023Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -231,23 +231,7 @@
       }, 1e3);
     }
     handleOAuthSuccess(data) {
-      const cookieAttributes = { secure: true, expires: 60 };
-      console.log(`[VILLAGE-SDK-OAUTH] handleOAuthSuccess: Setting OAuth token cookie`, {
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        domain: location.hostname,
-        protocol: location.protocol,
-        tokenPreview: data.token ? `${data.token.substring(0, 10)}...` : "null",
-        cookieAttributes
-      });
-      try {
-        api.set("village.token", data.token, cookieAttributes);
-        console.log(`[VILLAGE-SDK-OAUTH] handleOAuthSuccess: Cookie set successfully`);
-      } catch (error) {
-        console.error(`[VILLAGE-SDK-OAUTH] handleOAuthSuccess: Failed to set cookie`, {
-          error: error.message,
-          cookieAttributes
-        });
-      }
+      api.set("village.token", data.token, { secure: true, expires: 60 });
       this.app.handleOAuthSuccess(data);
       const villageOrigin = "http://localhost:3000";
       if (this.app.oauthPopupRef && !this.app.oauthPopupRef.closed) {
@@ -2902,22 +2886,6 @@ text-align: center;
       this.elementRequests = /* @__PURE__ */ new Map();
       this.elementRequestIds = /* @__PURE__ */ new Map();
       this.globalRequestCounter = 0;
-      this._logCookieInfo("constructor", "Initializing Village SDK");
-    }
-    // Cookie and token logging utility
-    _logCookieInfo(method, message, extraData = {}) {
-      const logData = {
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        method,
-        message,
-        domain: location.hostname,
-        protocol: location.protocol,
-        userAgent: navigator.userAgent.substring(0, 100),
-        currentToken: this.token ? `${this.token.substring(0, 10)}...` : "null",
-        cookieValue: api.get("village.token") ? `${api.get("village.token").substring(0, 10)}...` : "null",
-        ...extraData
-      };
-      console.log(`[VILLAGE-SDK-COOKIE] ${method}:`, logData);
     }
     async init() {
       this.setupMessageHandlers();
@@ -3059,99 +3027,31 @@ text-align: center;
     }
     updateCookieToken(token) {
       this._clearAllRequests();
-      const cookieAttributes = {
-        secure: location.protocol === "https:",
-        expires: 60,
-        path: "/"
-      };
-      this._logCookieInfo("updateCookieToken", "Attempting to update cookie token", {
-        tokenLength: token ? token.length : 0,
-        isValid: this.isTokenValid(token),
-        cookieAttributes,
-        currentLocation: location.href
-      });
       if (this.isTokenValid(token)) {
         this.saveExtensionToken(token);
-        try {
-          api.set("village.token", token, cookieAttributes);
-          this._logCookieInfo("updateCookieToken", "Cookie set successfully", {
-            tokenPreview: `${token.substring(0, 10)}...`,
-            cookieAttributes
-          });
-        } catch (error) {
-          this._logCookieInfo("updateCookieToken", "Failed to set cookie", {
-            error: error.message,
-            cookieAttributes
-          });
-        }
+        api.set("village.token", token, { secure: location.protocol === "https:", expires: 60, path: "/" });
         if (this.token != token) {
           this.token = token;
           this._refreshInlineSearchIframes();
-          this._logCookieInfo("updateCookieToken", "Token updated, refreshing iframes");
         }
-      } else {
-        this._logCookieInfo("updateCookieToken", "Invalid token provided", {
-          tokenType: typeof token,
-          tokenLength: token ? token.length : 0,
-          tokenPreview: token ? `${token.substring(0, 10)}...` : "null"
-        });
       }
     }
     isTokenValid(token) {
-      const isValid = typeof token === "string" && token.length > 10 && token !== "not_found";
-      if (!isValid) {
-        this._logCookieInfo("isTokenValid", "Token validation failed", {
-          tokenType: typeof token,
-          tokenLength: token ? token.length : 0,
-          tokenValue: token,
-          reason: !token ? "no token" : typeof token !== "string" ? "not string" : token.length <= 10 ? "too short" : token === "not_found" ? "not_found value" : "unknown"
-        });
-      }
-      return isValid;
+      return typeof token === "string" && token.length > 10 && token !== "not_found";
     }
     async getAuthToken(timeout = 1e3) {
-      this._logCookieInfo("getAuthToken", "Starting token retrieval process", {
-        timeout,
-        currentLocation: location.href
-      });
       let token = api.get("village.token");
-      this._logCookieInfo("getAuthToken", "Retrieved token from cookie", {
-        hasToken: !!token,
-        isValid: this.isTokenValid(token),
-        tokenLength: token ? token.length : 0
-      });
       if (!this.isTokenValid(token)) {
         token = this.extractTokenFromQueryParams();
-        this._logCookieInfo("getAuthToken", "Extracted token from query params", {
-          hasToken: !!token,
-          isValid: this.isTokenValid(token),
-          tokenLength: token ? token.length : 0
-        });
       }
       if (!this.isTokenValid(token)) {
         try {
-          this._logCookieInfo("getAuthToken", "Attempting to get token from extension", { timeout });
           token = await this.requestExtensionToken(timeout);
-          this._logCookieInfo("getAuthToken", "Got token from extension", {
-            hasToken: !!token,
-            isValid: this.isTokenValid(token),
-            tokenLength: token ? token.length : 0
-          });
         } catch (err) {
-          this._logCookieInfo("getAuthToken", "Extension token request failed", {
-            error: err.message,
-            timeout
-          });
         }
       }
       if (this.isTokenValid(token)) {
-        this._logCookieInfo("getAuthToken", "Valid token found, updating cookie");
         this.updateCookieToken(token);
-      } else {
-        this._logCookieInfo("getAuthToken", "No valid token found", {
-          tokenType: typeof token,
-          tokenValue: token
-        });
       }
       return token;
     }
@@ -3196,9 +3096,6 @@ text-align: center;
       } catch (error) {
         this._clearAllRequests();
         this.token = null;
-        this._logCookieInfo("getUser", "Removing invalid token cookie", {
-          reason: "auth error or no user ID"
-        });
         api.remove("village.token");
         AnalyticsService.removeUserId();
       }
@@ -3271,10 +3168,6 @@ text-align: center;
       } catch (err) {
         if (((_b = (_a = err == null ? void 0 : err.response) == null ? void 0 : _a.data) == null ? void 0 : _b.auth) === false) {
           this._clearAllRequests();
-          this._logCookieInfo("checkPaths", "Removing token cookie due to auth failure", {
-            apiUrl: this.apiUrl,
-            error: err.message
-          });
           api.remove("village.token");
           this.token = null;
         }
@@ -3383,15 +3276,6 @@ text-align: center;
       this.elementRequests.clear();
       this.elementRequestIds.clear();
       this.globalRequestCounter += 1e3;
-    }
-    // Show error state for invalid URLs
-    showErrorState(element) {
-      this._logCookieInfo("showErrorState", "Showing error state for invalid URL", {
-        elementTag: element.tagName,
-        elementId: element.id,
-        elementClass: element.className
-      });
-      this._setElementState(element, "not-found");
     }
     addFacePilesAndCount(element, relationship) {
       const facePilesContainer = element.querySelector(
@@ -3510,9 +3394,6 @@ text-align: center;
         }
       } catch (error) {
       }
-      this._logCookieInfo("logout", "Removing token cookie during logout", {
-        apiUrl: this.apiUrl
-      });
       api.remove("village.token");
       this.token = null;
       AnalyticsService.removeUserId();
@@ -3579,18 +3460,6 @@ text-align: center;
         );
       }
     }
-  }
-  function logCrossSiteCookie(method, message, extraData = {}) {
-    const logData = {
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      method,
-      message,
-      domain: location.hostname,
-      protocol: location.protocol,
-      userAgent: navigator.userAgent.substring(0, 100),
-      ...extraData
-    };
-    console.log(`[VILLAGE-SDK-CROSS-SITE] ${method}:`, logData);
   }
   (function(window2) {
     if (typeof window2 === "undefined" || typeof document === "undefined") {
@@ -3771,13 +3640,6 @@ text-align: center;
     window2.Village.on = on;
     window2.Village.emit = emit;
     window2.Village.q = existingQueue.concat(window2.Village.q);
-    logCrossSiteCookie("initialization", "Village SDK loaded", {
-      queueLength: window2.Village.q.length,
-      existingQueueLength: existingQueue.length,
-      cookieValue: api.get("village.token") ? `${api.get("village.token").substring(0, 10)}...` : "null",
-      sessionValue: sessionStorage.getItem("village.token") ? `${sessionStorage.getItem("village.token").substring(0, 10)}...` : "null",
-      documentReady: document.readyState
-    });
     function initializeVillage() {
       window2.Village._processQueue();
     }
@@ -3800,57 +3662,32 @@ text-align: center;
         const domainA = new URL(origin2).hostname;
         const domainB = new URL("http://localhost:3000").hostname;
         if (domainA === domainB && (data == null ? void 0 : data.type) === "VillageSDK") {
-          logCrossSiteCookie("messageListener", "Received message from iframe", {
-            origin: domainA,
-            expectedOrigin: domainB,
-            hasToken: !!data.token,
-            tokenLength: data.token ? data.token.length : 0
-          });
+          console.log("[SDK cookie] message from iframe:", data);
           const token = data.token ?? null;
           if (!token && document.requestStorageAccess) {
-            logCrossSiteCookie("messageListener", "Requesting storage access for token recovery");
             try {
               await document.requestStorageAccess();
               const recoveredToken = api.get(villageToken);
               const recoveredTokenS = sessionStorage.getItem("village.token");
-              logCrossSiteCookie("messageListener", "Storage access granted", {
-                cookieToken: recoveredToken ? `${recoveredToken.substring(0, 10)}...` : "null",
-                sessionToken: recoveredTokenS ? `${recoveredTokenS.substring(0, 10)}...` : "null"
-              });
+              console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
               if (recoveredToken) {
                 sessionStorage.setItem(villageToken, recoveredToken);
                 window2.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
               }
             } catch (e) {
-              logCrossSiteCookie("messageListener", "Storage access failed", {
-                error: e.message
-              });
+              console.warn("[VillageSDK] Storage Access denied or failed", e);
             }
             return;
           }
           if (token) {
-            const cookieAttributes = {
+            api.set(villageToken, token, {
               secure: true,
               sameSite: "None",
               expires: 60
-            };
-            logCrossSiteCookie("messageListener", "Setting cross-site cookie", {
-              tokenPreview: `${token.substring(0, 10)}...`,
-              cookieAttributes
             });
-            try {
-              api.set(villageToken, token, cookieAttributes);
-              sessionStorage.setItem(villageToken, token);
-              window2.Village.broadcast(VillageEvents.oauthSuccess, { token });
-              logCrossSiteCookie("messageListener", "Cross-site cookie set successfully");
-            } catch (error) {
-              logCrossSiteCookie("messageListener", "Failed to set cross-site cookie", {
-                error: error.message,
-                cookieAttributes
-              });
-            }
+            sessionStorage.setItem(villageToken, token);
+            window2.Village.broadcast(VillageEvents.oauthSuccess, { token });
           } else {
-            logCrossSiteCookie("messageListener", "Removing cross-site cookie and session storage");
             api.remove(villageToken);
             sessionStorage.removeItem(villageToken);
             window2.Village.broadcast(VillageEvents.userLoggedOut, {});
