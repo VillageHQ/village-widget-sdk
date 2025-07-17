@@ -1,4 +1,4 @@
-// Deployed: 2025-07-16T12:35:44.500Z
+// Deployed: 2025-07-16T12:20:55.240Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2922,9 +2922,7 @@ text-align: center;
     async init() {
       this.setupMessageHandlers();
       await this.getAuthToken();
-      setTimeout(() => {
-        this.getUser();
-      }, 500);
+      this.getUser();
       this.delayedInitialize();
     }
     delayedInitialize() {
@@ -3210,17 +3208,7 @@ text-align: center;
       window.postMessage(request, "*");
     }
     async getUser() {
-      var _a, _b, _c, _d, _e, _f, _g;
-      const isOAuthCallback = window.location.search.includes("code=") || window.location.search.includes("state=") || window.location.pathname.includes("/login");
-      if (isOAuthCallback) {
-        this._logCookieInfo("getUser", "Skipping user validation during OAuth callback", {
-          currentLocation: window.location.href,
-          hasCodeParam: window.location.search.includes("code="),
-          hasStateParam: window.location.search.includes("state="),
-          isLoginPath: window.location.pathname.includes("/login")
-        });
-        return;
-      }
+      var _a, _b, _c;
       const token = await this.getAuthToken();
       this._logCookieInfo("getUser", "Starting user validation", {
         hasToken: !!token,
@@ -3254,31 +3242,18 @@ text-align: center;
           userId
         });
       } catch (error) {
-        const shouldRemoveToken = ((_a = error.response) == null ? void 0 : _a.status) === 401 || ((_b = error.response) == null ? void 0 : _b.status) === 403 || error.message.includes("No user ID");
-        this._logCookieInfo("getUser", "User validation failed", {
+        this._clearAllRequests();
+        this.token = null;
+        this._logCookieInfo("getUser", "Removing invalid token cookie", {
           reason: "auth error or no user ID",
           errorMessage: error.message,
-          errorStatus: (_c = error.response) == null ? void 0 : _c.status,
-          errorStatusText: (_d = error.response) == null ? void 0 : _d.statusText,
-          errorData: (_e = error.response) == null ? void 0 : _e.data,
-          apiUrl: this.apiUrl,
-          willRemoveToken: shouldRemoveToken
+          errorStatus: (_a = error.response) == null ? void 0 : _a.status,
+          errorStatusText: (_b = error.response) == null ? void 0 : _b.statusText,
+          errorData: (_c = error.response) == null ? void 0 : _c.data,
+          apiUrl: this.apiUrl
         });
-        if (shouldRemoveToken) {
-          this._clearAllRequests();
-          this.token = null;
-          this._logCookieInfo("getUser", "Removing invalid token cookie", {
-            reason: "confirmed auth failure",
-            errorStatus: (_f = error.response) == null ? void 0 : _f.status
-          });
-          api.remove("village.token");
-          AnalyticsService.removeUserId();
-        } else {
-          this._logCookieInfo("getUser", "Keeping token despite error", {
-            reason: "network error or temporary failure",
-            errorStatus: (_g = error.response) == null ? void 0 : _g.status
-          });
-        }
+        api.remove("village.token");
+        AnalyticsService.removeUserId();
       }
     }
     handleOAuthRequest() {
