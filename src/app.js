@@ -52,13 +52,6 @@ export class App {
       }
     })();
     
-    console.log('[Village SDK] Init - Context:', {
-      isIframe,
-      isCrossDomain,
-      origin: window.location.origin,
-      protocol: window.location.protocol
-    });
-    
     this.setupMessageHandlers();
     await this.getAuthToken();
     this.getUser();
@@ -252,7 +245,6 @@ export class App {
       // Clear all requests before setting new token
       this._clearAllRequests();
     if (this.isTokenValid(token)) {
-      console.log('[Village SDK] Updating cookie token');
       this.saveExtensionToken(token);
       
       const cookieOptions = { 
@@ -260,18 +252,15 @@ export class App {
         expires: 60, 
         path: "/" 
       };
-      console.log('[Village SDK] Cookie options:', cookieOptions);
       
       Cookies.set('village.token', token, cookieOptions);
-      console.log('[Village SDK] Cookie set successfully');
       
       if (this.token != token) {
-        console.log('[Village SDK] Token changed, refreshing inline search iframes');
         this.token = token;
         this._refreshInlineSearchIframes();
       }
     } else {
-      console.log('[Village SDK] Invalid token provided to updateCookieToken:', token);
+      // console.log('[Village SDK] Invalid token provided to updateCookieToken:', token);
     }
   }
 
@@ -280,43 +269,28 @@ export class App {
   }
 
   async getAuthToken(timeout = 1000) {
-    console.log('[Village SDK] getAuthToken started');
     
     // Try to detect if cookies are blocked
     const cookiesEnabled = navigator.cookieEnabled;
-    console.log('[Village SDK] Cookies enabled:', cookiesEnabled);
     
     let token = Cookies.get('village.token');
-    console.log('[Village SDK] Cookie token:', token);
-    
-    // Log all cookies to see if we can access any
-    try {
-      console.log('[Village SDK] All cookies:', document.cookie);
-    } catch (e) {
-      console.log('[Village SDK] Cannot access document.cookie:', e.message);
-    }
     
     if (!this.isTokenValid(token)) {
-      console.log('[Village SDK] Cookie token invalid, checking query params');
       token = this.extractTokenFromQueryParams();
-      console.log('[Village SDK] Query param token:', token);
     }
     
     if (!this.isTokenValid(token)) {
-      console.log('[Village SDK] No valid token found, trying extension fallback');
       try {
         token = await this.requestExtensionToken(timeout);
-        console.log('[Village SDK] Extension token retrieval successful');
       } catch (err) {
-        console.log('[Village SDK] Extension fallback failed:', err.message);
+        // console.log('[Village SDK] Extension fallback failed:', err.message);
       }
     }
 
     if (this.isTokenValid(token)) {
-      console.log('[Village SDK] Valid token found, updating cookie');
       this.updateCookieToken(token);
     } else {
-      console.log('[Village SDK] No valid token available');
+      // console.log('[Village SDK] No valid token available');
     }
     return token;
   }
@@ -327,16 +301,13 @@ export class App {
    */
   requestExtensionToken(timeout) {
     const request = { type: 'STORAGE_GET_TOKEN', source: 'VillageSDK' };
-    console.log('[Village SDK] Requesting token from extension:', request);
 
     return new Promise((resolve, reject) => {
       const listener = (event) => {
         if (event.source !== window) return;
         const { source, message } = event.data || {};
-        console.log('[Village SDK] Received message:', { source, message, eventData: event.data });
         
         if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
-          console.log('[Village SDK] Extension token received:', message.token);
           window.removeEventListener('message', listener);
           clearTimeout(timer);
           resolve(message.token);
@@ -344,20 +315,17 @@ export class App {
       };
 
       const timer = setTimeout(() => {
-        console.log('[Village SDK] Extension timeout - no response after', timeout, 'ms');
         window.removeEventListener('message', listener);
         reject(new Error(`Extension did not respond in time ${timeout}`));
       }, timeout);
 
       window.addEventListener('message', listener);
       window.postMessage(request, '*');
-      console.log('[Village SDK] Posted message to extension');
     });
   }
 
   saveExtensionToken(token) {
     const request = { type: 'STORAGE_SET_TOKEN', source: 'VillageSDK', token: token };
-    console.log('[Village SDK] Saving token to extension:', request);
     window.postMessage(request, '*');
   }
 
@@ -646,7 +614,6 @@ export class App {
     if (!this.token) {
       this.token = await this.getAuthToken();
     }
-    // console.trace('renderIframe', location.hostname, this.token, this.config);
     this.iframe.update({
       partnerKey: this.partnerKey,
       userReference: this.userReference,
