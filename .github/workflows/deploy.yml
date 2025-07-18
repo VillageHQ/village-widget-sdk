@@ -1,9 +1,7 @@
-name: Deploy to NPM
+name: Deploy to Cloudflare R2
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  push
 
 jobs:
   build-and-publish:
@@ -17,7 +15,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org/
 
       - name: 📦 Install dependencies
         run: npm ci
@@ -28,7 +25,26 @@ jobs:
       - name: 🏗️ Build widget (includes dist copy and banner)
         run: npm run build
 
-      - name: 🚀 Publish to NPM
-        run: npm publish --access public
+      - name: 📁 Prepare files for R2
+        run: |
+          # Extract version from package.json
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Preparing files for version: $VERSION"
+          
+          # Create upload directory
+          mkdir -p r2-upload
+          
+          # Copy built files with version-specific names
+          cp dist/village-widget.js "r2-upload/village-widget-${VERSION}.js"
+          cp dist/village-widget.js "r2-upload/village-widget-latest.js"
+          
+          echo "Files prepared for R2 upload:"
+          ls -la r2-upload/
+
+      - name: 🌐 Upload to Cloudflare R2
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: r2 object put widget --file=r2-upload --recursive
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
