@@ -25,10 +25,15 @@ jobs:
       - name: 🏗️ Build widget (includes dist copy and banner)
         run: npm run build
 
+      - name: 🔧 Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
       - name: 🌐 Upload to R2
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: r2 object put widget/village-widget-latest.js --file=dist/village-widget.js
+        run: |
+          aws s3 cp dist/village-widget.js s3://widget/village-widget-latest.js --endpoint-url=https://f9a54063a3c4cbbf0c1f36fb267e8007.r2.cloudflarestorage.com
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
