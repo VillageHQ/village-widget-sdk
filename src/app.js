@@ -41,17 +41,6 @@ export class App {
   }
 
   async init() {
-    // Detect iframe context
-    const isIframe = window !== window.parent;
-    const isCrossDomain = (() => {
-      try {
-        return isIframe && window.parent.location.origin !== window.location.origin;
-      } catch (e) {
-        // Cross-origin access blocked
-        return true;
-      }
-    })();
-    
     this.setupMessageHandlers();
     await this.getAuthToken();
     this.getUser();
@@ -61,12 +50,10 @@ export class App {
   }
 
   delayedInitialize() {
-    // Use multiple requestAnimationFrame calls to ensure we're after hydration
+    // Ensure DOM operations happen after current render cycle
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.setupMutationObserver();
-        this.scanExistingElements();
-      });
+      this.setupMutationObserver();
+      this.scanExistingElements();
     });
   }
 
@@ -141,40 +128,7 @@ export class App {
     );
   }
 
-  isValidUrl(string) {
-    if (!string || typeof string !== 'string' || string.trim() === '') {
-      return false;
-    }
-
-    const trimmed = string.trim();
-
-    // Require the URL to start with http:// or https://
-    if (!/^https?:\/\//i.test(trimmed)) {
-      return false;
-    }
-
-    try {
-      new URL(trimmed);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
   checkAndAddListenerIfValid(element) {
-    const hasUrlAttr = element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-    let url = '';
-    if (hasUrlAttr) {
-      url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-      if (!this.isValidUrl(url)) {
-        console.warn("Skipping element due to invalid URL:", element);
-        this.showErrorState(element);
-        this.moduleHandlers.handleDataUrl(element, '');
-        return;
-      }
-    } else {
-      //console.log("checkAndAddListenerIfValid hasUrlAttr==false:", element);
-    }
     this.addListenerToElement(element);
   }
 
@@ -188,18 +142,15 @@ export class App {
 
     // Check if it's the SEARCH module type
     if (villageModule === ModuleTypes.SEARCH) {
-      // Only render iframes on the client-side to avoid SSR hydration issues
-      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-        const params = {
-          partnerKey: this.partnerKey,
-          userReference: this.userReference,
-          token: this.token,
-        };
-        // Render and store the created iframe
-        const inlineIframe = renderSearchIframeInsideElement(element, params);
-        if (inlineIframe) {
-          this.inlineSearchIframes.set(element, inlineIframe);
-        }
+      const params = {
+        partnerKey: this.partnerKey,
+        userReference: this.userReference,
+        token: this.token,
+      };
+      // Render and store the created iframe
+      const inlineIframe = renderSearchIframeInsideElement(element, params);
+      if (inlineIframe) {
+        this.inlineSearchIframes.set(element, inlineIframe);
       }
     } else {
       // Handle SYNC module (explicit or legacy data-url) by attaching click listener for overlay
@@ -270,9 +221,6 @@ export class App {
 
   async getAuthToken(timeout = 1000) {
     
-    // Try to detect if cookies are blocked
-    const cookiesEnabled = navigator.cookieEnabled;
-    
     let token = Cookies.get('village.token');
     
     if (!this.isTokenValid(token)) {
@@ -295,10 +243,7 @@ export class App {
     return token;
   }
 
-  /**
-   * Faz um round-trip com a extensão via window.postMessage.
-   * Resolve com o token ou lança erro após o timeout.
-   */
+
   requestExtensionToken(timeout) {
     const request = { type: 'STORAGE_GET_TOKEN', source: 'VillageSDK' };
 
@@ -330,7 +275,6 @@ export class App {
   }
 
   async getUser() {
-    //const token = Cookies.get("village.token");
     const token = await this.getAuthToken();
     if (!token) return;
 

@@ -1,4 +1,4 @@
-// Deployed: 2025-07-17T11:33:53.245Z
+// Deployed: 2025-07-18T10:54:13.467Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2888,14 +2888,6 @@ text-align: center;
       this.globalRequestCounter = 0;
     }
     async init() {
-      const isIframe = window !== window.parent;
-      (() => {
-        try {
-          return isIframe && window.parent.location.origin !== window.location.origin;
-        } catch (e) {
-          return true;
-        }
-      })();
       this.setupMessageHandlers();
       await this.getAuthToken();
       this.getUser();
@@ -2903,10 +2895,8 @@ text-align: center;
     }
     delayedInitialize() {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.setupMutationObserver();
-          this.scanExistingElements();
-        });
+        this.setupMutationObserver();
+        this.scanExistingElements();
       });
     }
     setupMessageHandlers() {
@@ -2960,33 +2950,7 @@ text-align: center;
     hasVillageAttributes(element) {
       return element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || element.hasAttribute(VILLAGE_MODULE_ATTRIBUTE);
     }
-    isValidUrl(string) {
-      if (!string || typeof string !== "string" || string.trim() === "") {
-        return false;
-      }
-      const trimmed = string.trim();
-      if (!/^https?:\/\//i.test(trimmed)) {
-        return false;
-      }
-      try {
-        new URL(trimmed);
-        return true;
-      } catch (_) {
-        return false;
-      }
-    }
     checkAndAddListenerIfValid(element) {
-      const hasUrlAttr = element.hasAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-      let url = "";
-      if (hasUrlAttr) {
-        url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
-        if (!this.isValidUrl(url)) {
-          console.warn("Skipping element due to invalid URL:", element);
-          this.showErrorState(element);
-          this.moduleHandlers.handleDataUrl(element, "");
-          return;
-        }
-      }
       this.addListenerToElement(element);
     }
     async addListenerToElement(element) {
@@ -2995,16 +2959,14 @@ text-align: center;
       const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
       const villageModule = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE);
       if (villageModule === ModuleTypes.SEARCH) {
-        if (typeof window !== "undefined" && typeof document !== "undefined") {
-          const params = {
-            partnerKey: this.partnerKey,
-            userReference: this.userReference,
-            token: this.token
-          };
-          const inlineIframe = renderSearchIframeInsideElement(element, params);
-          if (inlineIframe) {
-            this.inlineSearchIframes.set(element, inlineIframe);
-          }
+        const params = {
+          partnerKey: this.partnerKey,
+          userReference: this.userReference,
+          token: this.token
+        };
+        const inlineIframe = renderSearchIframeInsideElement(element, params);
+        if (inlineIframe) {
+          this.inlineSearchIframes.set(element, inlineIframe);
         }
       } else {
         this.inlineSearchIframes.delete(element);
@@ -3068,10 +3030,6 @@ text-align: center;
       }
       return token;
     }
-    /**
-     * Faz um round-trip com a extensão via window.postMessage.
-     * Resolve com o token ou lança erro após o timeout.
-     */
     requestExtensionToken(timeout) {
       const request = { type: "STORAGE_GET_TOKEN", source: "VillageSDK" };
       return new Promise((resolve, reject) => {
@@ -3680,11 +3638,11 @@ text-align: center;
           if (!token && document.requestStorageAccess) {
             try {
               await document.requestStorageAccess();
-              const recoveredToken = api.get(villageToken);
+              const recoveredToken = api.get("village.token");
               const recoveredTokenS = sessionStorage.getItem("village.token");
               console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
               if (recoveredToken) {
-                sessionStorage.setItem(villageToken, recoveredToken);
+                sessionStorage.setItem("village.token", recoveredToken);
                 window2.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
               }
             } catch (e) {
@@ -3693,16 +3651,16 @@ text-align: center;
             return;
           }
           if (token) {
-            api.set(villageToken, token, {
+            api.set("village.token", token, {
               secure: true,
               sameSite: "None",
               expires: 60
             });
-            sessionStorage.setItem(villageToken, token);
+            sessionStorage.setItem("village.token", token);
             window2.Village.broadcast(VillageEvents.oauthSuccess, { token });
           } else {
-            api.remove(villageToken);
-            sessionStorage.removeItem(villageToken);
+            api.remove("village.token");
+            sessionStorage.removeItem("village.token");
             window2.Village.broadcast(VillageEvents.userLoggedOut, {});
           }
           return;
