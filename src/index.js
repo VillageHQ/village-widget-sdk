@@ -257,11 +257,11 @@ import Cookies from "js-cookie";
         if (!token && document.requestStorageAccess) {
           try {
             await document.requestStorageAccess();
-            const recoveredToken = Cookies.get(villageToken);
+            const recoveredToken = Cookies.get("village.token");
             const recoveredTokenS = sessionStorage.getItem('village.token');
             console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
             if (recoveredToken) {
-              sessionStorage.setItem(villageToken, recoveredToken);
+              sessionStorage.setItem("village.token", recoveredToken);
               window.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
             }
           } catch (e) {
@@ -271,16 +271,16 @@ import Cookies from "js-cookie";
         }
 
         if (token) {
-          Cookies.set(villageToken, token, {
+          Cookies.set("village.token", token, {
             secure: true,
             sameSite: "None",
             expires: 60,
           });
-          sessionStorage.setItem(villageToken, token);
+          sessionStorage.setItem("village.token", token);
           window.Village.broadcast(VillageEvents.oauthSuccess, { token });
         } else {
-          Cookies.remove(villageToken);
-          sessionStorage.removeItem(villageToken);
+          Cookies.remove("village.token");
+          sessionStorage.removeItem("village.token");
           window.Village.broadcast(VillageEvents.userLoggedOut, {});
         }
         return;
