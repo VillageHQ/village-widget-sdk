@@ -1,4 +1,4 @@
-// Deployed: 2025-07-18T10:54:13.467Z
+// Deployed: 2025-07-18T11:36:58.433Z
 // Version: 1.0.47
 (function() {
   "use strict";
@@ -2890,7 +2890,7 @@ text-align: center;
     async init() {
       this.setupMessageHandlers();
       await this.getAuthToken();
-      this.getUser();
+      await this.getUser();
       this.delayedInitialize();
     }
     delayedInitialize() {

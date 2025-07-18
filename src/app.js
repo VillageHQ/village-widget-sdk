@@ -43,7 +43,7 @@ export class App {
   async init() {
     this.setupMessageHandlers();
     await this.getAuthToken();
-    this.getUser();
+    await this.getUser();
 
     // Delay DOM operations until after potential hydration
     this.delayedInitialize();
