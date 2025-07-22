@@ -25,7 +25,8 @@ jobs:
       - name: 🏗️ Build production widget
         run: npm run build
 
-      - name: 🏗️ Build staging widget
+      - name: 🏗️ Build staging widget (if commit contains "stg build")
+        if: contains(github.event.head_commit.message, 'stg build')
         run: npm run build:staging
 
       - name: 🌐 Upload production to R2
@@ -35,7 +36,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
-      - name: 🌐 Upload staging to R2
+      - name: 🌐 Upload staging to R2 (if staging was built)
+        if: contains(github.event.head_commit.message, 'stg build')
         run: |
           aws s3 cp dist/staging/village-widget.js s3://widget/village-widget-staging.js --endpoint-url=https://f9a54063a3c4cbbf0c1f36fb267e8007.r2.cloudflarestorage.com
         env:
