@@ -22,12 +22,22 @@ jobs:
       - name: ✅ Run tests
         run: npm test
 
-      - name: 🏗️ Build widget (includes dist copy and banner)
+      - name: 🏗️ Build production widget
         run: npm run build
 
-      - name: 🌐 Upload to R2
+      - name: 🏗️ Build staging widget
+        run: npm run build:staging
+
+      - name: 🌐 Upload production to R2
         run: |
           aws s3 cp dist/village-widget.js s3://widget/village-widget-latest.js --endpoint-url=https://f9a54063a3c4cbbf0c1f36fb267e8007.r2.cloudflarestorage.com
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: 🌐 Upload staging to R2
+        run: |
+          aws s3 cp dist/staging/village-widget.js s3://widget/village-widget-staging.js --endpoint-url=https://f9a54063a3c4cbbf0c1f36fb267e8007.r2.cloudflarestorage.com
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
