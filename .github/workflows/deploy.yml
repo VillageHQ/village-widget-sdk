@@ -1,34 +1,49 @@
-name: Deploy to NPM
+name: Deploy SDK to R2 - Production
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - main
 
 jobs:
-  build-and-publish:
+  deploy-production:
+    name: Deploy Production Build
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org/
+          cache: 'npm'
 
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: ✅ Run tests
+      - name: 🧪 Run tests
         run: npm test
 
-      - name: 🏗️ Build widget (includes dist copy and banner)
+      - name: 🏗️ Build production widget
         run: npm run build
 
-      - name: 🚀 Publish to NPM
-        run: npm publish --access public
+      - name: 🌐 Upload production to R2
+        run: |
+          aws s3 cp dist/village-widget.js s3://widget/village-widget-latest.js --endpoint-url=https://f9a54063a3c4cbbf0c1f36fb267e8007.r2.cloudflarestorage.com
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: 📋 Production deployment summary
+        run: |
+          echo "## 🚀 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **File**: village-widget-latest.js" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: Push to main branch" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Production CDN" >> $GITHUB_STEP_SUMMARY
+          echo "```html" >> $GITHUB_STEP_SUMMARY
+          echo '<script src="https://pub-[YOUR_BUCKET_ID].r2.dev/village-widget-latest.js"></script>' >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
