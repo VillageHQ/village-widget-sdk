@@ -1,0 +1,49 @@
+name: Deploy SDK to R2 - Staging
+
+on:
+  push:
+    # Only runs when commit message contains "stg build"
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging Build
+    if: contains(github.event.head_commit.message, 'stg build')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run tests
+        run: npm test
+
+      - name: 🏗️ Build staging widget
+        run: npm run build:staging
+
+      - name: 🌐 Upload staging to R2
+        run: |
+          aws s3 cp dist/staging/village-widget.js s3://widget/village-widget-staging.js --endpoint-url=https://f9a54063a3c4cbbf0c1f36fb267e8007.r2.cloudflarestorage.com
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: 📋 Staging deployment summary
+        run: |
+          echo "## 🚀 Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **File**: village-widget-staging.js" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: Commit message contained 'stg build'" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Staging CDN" >> $GITHUB_STEP_SUMMARY
+          echo "```html" >> $GITHUB_STEP_SUMMARY
+          echo '<script src="https://pub-[YOUR_BUCKET_ID].r2.dev/village-widget-staging.js"></script>' >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY 

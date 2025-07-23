@@ -27,6 +27,11 @@ export function buildIframeSrc({
 
 // Function to render the search iframe directly inside a target element
 export function renderSearchIframeInsideElement(targetElement, params) {
+  // Check if we're in a browser environment to avoid SSR issues
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return null;
+  }
+
   // Clear any existing content in the target element
   targetElement.innerHTML = "";
 

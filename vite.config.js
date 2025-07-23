@@ -1,7 +1,8 @@
 import path from "path";
 import fs from "fs";
 import { defineConfig } from "vitest/config";
-import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js"; // npm i -D vite-plugin-css-injected-by-js
+import { loadEnv } from "vite";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";   // npm i -D vite-plugin-css-injected-by-js
 
 // ──────────────────────────────
 // Project metadata (package.json)

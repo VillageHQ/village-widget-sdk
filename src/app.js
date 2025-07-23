@@ -42,9 +42,19 @@ export class App {
 
   async init() {
     this.setupMessageHandlers();
-    this.setupMutationObserver();
-    this.scanExistingElements();
-    this.getUser();
+    await this.getAuthToken();
+    await this.getUser();
+
+    // Delay DOM operations until after potential hydration
+    this.delayedInitialize();
+  }
+
+  delayedInitialize() {
+    // Ensure DOM operations happen after current render cycle
+    requestAnimationFrame(() => {
+      this.setupMutationObserver();
+      this.scanExistingElements();
+    });
   }
 
   setupMessageHandlers() {
@@ -139,12 +149,13 @@ export class App {
       };
       // Render and store the created iframe
       const inlineIframe = renderSearchIframeInsideElement(element, params);
-      this.inlineSearchIframes.set(element, inlineIframe);
+      if (inlineIframe) {
+        this.inlineSearchIframes.set(element, inlineIframe);
+      }
     } else {
       // Handle SYNC module (explicit or legacy data-url) by attaching click listener for overlay
       // Remove any potentially stale inline iframe reference if the module type changes
       this.inlineSearchIframes.delete(element);
-      //console.log("addListenerToElement", element, url, villageModule);
       //this.moduleHandlers.handleDataUrl(element, url);
       if (
         url &&
@@ -168,8 +179,103 @@ export class App {
     }
   }
 
+  extractTokenFromQueryParams() {
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get('villageToken');
+    if (token) {
+      // Remove token from URL to keep things clean
+      url.searchParams.delete('villageToken');
+      const cleanUrl = url.pathname + url.search + url.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+      return token;
+    }
+    return null;
+  }
+
+  updateCookieToken(token) {
+      // Clear all requests before setting new token
+      this._clearAllRequests();
+    if (this.isTokenValid(token)) {
+      this.saveExtensionToken(token);
+      
+      const cookieOptions = { 
+        secure: location.protocol === 'https:', 
+        expires: 60, 
+        path: "/" 
+      };
+      
+      Cookies.set('village.token', token, cookieOptions);
+      
+      if (this.token != token) {
+        this.token = token;
+        this._refreshInlineSearchIframes();
+      }
+    } else {
+      // console.log('[Village SDK] Invalid token provided to updateCookieToken:', token);
+    }
+  }
+
+  isTokenValid(token) {
+    return typeof token === 'string' && token.length > 10 && token !== 'not_found';
+  }
+
+  async getAuthToken(timeout = 1000) {
+    
+    let token = Cookies.get('village.token');
+    
+    if (!this.isTokenValid(token)) {
+      token = this.extractTokenFromQueryParams();
+    }
+    
+    if (!this.isTokenValid(token)) {
+      try {
+        token = await this.requestExtensionToken(timeout);
+      } catch (err) {
+        // console.log('[Village SDK] Extension fallback failed:', err.message);
+      }
+    }
+
+    if (this.isTokenValid(token)) {
+      this.updateCookieToken(token);
+    } else {
+      // console.log('[Village SDK] No valid token available');
+    }
+    return token;
+  }
+
+
+  requestExtensionToken(timeout) {
+    const request = { type: 'STORAGE_GET_TOKEN', source: 'VillageSDK' };
+
+    return new Promise((resolve, reject) => {
+      const listener = (event) => {
+        if (event.source !== window) return;
+        const { source, message } = event.data || {};
+        
+        if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
+          window.removeEventListener('message', listener);
+          clearTimeout(timer);
+          resolve(message.token);
+        }
+      };
+
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', listener);
+        reject(new Error(`Extension did not respond in time ${timeout}`));
+      }, timeout);
+
+      window.addEventListener('message', listener);
+      window.postMessage(request, '*');
+    });
+  }
+
+  saveExtensionToken(token) {
+    const request = { type: 'STORAGE_SET_TOKEN', source: 'VillageSDK', token: token };
+    window.postMessage(request, '*');
+  }
+
   async getUser() {
-    const token = Cookies.get("village.token");
+    const token = await this.getAuthToken();
     if (!token) return;
 
     try {
@@ -203,12 +309,7 @@ export class App {
   }
 
   handleOAuthSuccess(data) {
-    // Clear all requests before setting new token
-    this._clearAllRequests();
-
-    // Set token in the main app context
-    Cookies.set("village.token", data.token, { secure: true, expires: 60 });
-    this.token = data.token;
+    this.updateCookieToken(data.token);
 
     // -- Update Inline Search Iframes by reloading them with the new token --
     this._refreshInlineSearchIframes();
@@ -221,7 +322,7 @@ export class App {
   }
 
   _refreshInlineSearchIframes() {
-    this.inlineSearchIframes.forEach((iframe, containerElement) => {
+    this.inlineSearchIframes.forEach((iframe) => {
       if (iframe && iframe.contentWindow) {
         const params = {
           partnerKey: this.partnerKey,
@@ -234,7 +335,7 @@ export class App {
     });
   }
 
-  handleOAuthError(data) {
+  handleOAuthError() {
     alert("Sorry, something went wrong with your login");
   }
 
@@ -254,14 +355,16 @@ export class App {
     const query = `[${VILLAGE_URL_DATA_ATTRIBUTE}], [${VILLAGE_MODULE_ATTRIBUTE}]`;
     const elements = document.querySelectorAll(query);
 
-    elements.forEach((el, index) => {
+    elements.forEach((el) => {
       this.checkAndAddListenerIfValid(el);
     });
   }
 
   async checkPaths(url) {
+    if (!this.token) {
+      this.token = await this.getAuthToken();
+    }
     if (!this.token) return null;
-
     try {
       const { data } = await axios.post(
         `${this.apiUrl}/paths-check`,
@@ -273,7 +376,6 @@ export class App {
           },
         }
       );
-      // console.log("checkPaths - data", data, `${this.apiUrl}/paths-check`);
       return data;
     } catch (err) {
       if (err?.response?.data?.auth === false) {
@@ -449,11 +551,13 @@ export class App {
     );
   }
 
-  renderIframe() {
+  async renderIframe() {
     if (!this.iframe) {
       this.iframe = new Iframe();
     }
-    //console.log('renderIframe', this.config);
+    if (!this.token) {
+      this.token = await this.getAuthToken();
+    }
     this.iframe.update({
       partnerKey: this.partnerKey,
       userReference: this.userReference,

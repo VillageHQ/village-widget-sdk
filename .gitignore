@@ -5,3 +5,4 @@ env.production
 .env.development
 .env.production
 .env.staging
+.idea

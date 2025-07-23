@@ -2,8 +2,14 @@ import { App } from "./app.js";
 import "./styles.css";
 import { VillageEvents } from "./config/village-events.js";;
 import { on, emit } from "./sdk-wrapper";
+import Cookies from "js-cookie";
 
 (function (window) {
+  // Avoid executing in server-side environments
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
   function createVillage() {
     const listeners = {};
 
@@ -30,11 +36,37 @@ import { on, emit } from "./sdk-wrapper";
           v._config.paths_cta.push(cta);
           v.broadcast?.(VillageEvents.pathsCtaUpdated, v._config.paths_cta);
         } else {
-          // console.warn("[Village] Invalid CTA object:", cta);
+          console.warn("[Village] Invalid CTA object:", cta);
         }
         return v;
       },
 
+      sendStorageGetToken() {
+        window.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_GET_TOKEN"
+        }, "*");
+      },
+
+      sendStorageSetToken(token) {
+        if (typeof token !== "string") {
+          console.warn("Token must be a string.");
+          return;
+        }
+
+        window.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_SET_TOKEN",
+          token: token
+        }, "*");
+      },
+
+      sendStorageDeleteToken() {
+        window.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_DELETE_TOKEN"
+        }, "*");
+      },
 
       off(event, callback) {
         if (!listeners[event]) return;
@@ -48,7 +80,7 @@ import { on, emit } from "./sdk-wrapper";
         try {
           window.dispatchEvent(new CustomEvent(event, { detail: data }));
         } catch (err) {
-          // console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
+          console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${event}":`, err);
         }
       },
 
@@ -83,7 +115,6 @@ import { on, emit } from "./sdk-wrapper";
         v._initialized = true;
         v._renderWidget();        // widgetReady will be broadcast here
 
-        // console.log('init', config)
         // If the caller passed paths_cta, replace the list and broadcast the update
         if (Array.isArray(config?.paths_cta) && config.paths_cta.length) {
           v.updatePathsCTA(config.paths_cta);   // <— emits pathsCtaUpdated
@@ -138,59 +169,39 @@ import { on, emit } from "./sdk-wrapper";
 
       // ✅ Expor CTAs
       getPathsCTA() {
-        // 🔍 Debug: log the initial config
-        // console.log('getPathsCTA - initial config:', v?._config);
-
         // Try to get from internal config
         const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
           ? v._config.paths_cta
           : [];
 
-
         // If not present or empty, try to load from the URL
         if (!Array.isArray(pathsCTA) || pathsCTA.length === 0) {
-          // console.log('getPathsCTA - no valid paths_cta in config, checking URL...');
-
           const urlParam = new URLSearchParams(window.location.search).get('paths_cta');
-
           try {
             // Try to decode and parse the URL parameter as JSON
             const parsed = JSON.parse(decodeURIComponent(urlParam));
-            //console.log('getPathsCTA - parsed from URL:', parsed);
-
             if (Array.isArray(parsed)) {
               pathsCTA = parsed;
             } else {
-              // console.warn('getPathsCTA - URL param is not a valid array');
               pathsCTA = [];
             }
           } catch (err) {
-            // console.warn('getPathsCTA - failed to parse paths_cta from URL:', err);
             pathsCTA = [];
           }
         }
-
-        // 🔍 Final result
-        //console.log('getPathsCTA - returning:', pathsCTA);
 
         return pathsCTA || [];
       },
 
       executeCallback(payload) {
         const ctas = v.getPathsCTA();
-        //console.log("getPathsCTA", ctas, payload);
         for (let index = 0; index < ctas.length; index++) {
           const cta = ctas[index];
           if (cta.callback && payload.index == index) {
-            //console.log("executeCallback", cta);
             cta.callback(payload);
             return true;
-          } else {
-            // console.log("getPathsCTA not execute", index, cta);
-          }
+          } 
         }
-        // console.log("📨 Relay received:", payload);
-
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }
@@ -208,24 +219,79 @@ import { on, emit } from "./sdk-wrapper";
   window.Village.on = on;
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
-  window.Village._processQueue();
+  
+  // Delay processing queue and initialization until after DOM is ready
+  // This prevents hydration issues in SSR environments
+  function initializeVillage() {
+    window.Village._processQueue();
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeVillage);
+  } else {
+    // DOM is already ready, initialize immediately
+    setTimeout(initializeVillage, 0);
+  }
 
-  window.Village.on(VillageEvents.widgetReady, ({ partnerKey, userReference }) => {
-    // console.log("✅ Village widget is ready");
+  window.Village.on(VillageEvents.widgetReady, () => {
+    //console.log("✅ Village widget is ready");
   });
   window.Village.on(VillageEvents.pathCtaClicked, (payload) => {
     window.Village.executeCallback(payload);
   });
+
+  window.Village.on(VillageEvents.oauthSuccess, (payload) => {
+    console.log("✅ Village OAuth success", payload);
+  });
   if (!window.__village_message_listener_attached__) {
-    // console.log("✅ __village_message_listener_attached__");
-    window.addEventListener("message", (event) => {
-      const msg = event.data;
-      if (!msg || !(msg.source == "VillageSDK" || msg.source == "dynamic-cta")) return;
-      //console.log(msg);
-      if (msg.type === VillageEvents.pathCtaClicked) {
-        window.Village.executeCallback(msg.payload || msg);
+    //console.log("✅ __village_message_listener_attached__");
+    window.addEventListener("message", async (event) => {
+      const { origin, data } = event;
+      const domainA = new URL(origin).hostname;
+      const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
+
+      if (domainA === domainB && data?.type === "VillageSDK") {
+        console.log("[SDK cookie] message from iframe:", data);
+        const token = data.token ?? null;
+
+        if (!token && document.requestStorageAccess) {
+          try {
+            await document.requestStorageAccess();
+            const recoveredToken = Cookies.get("village.token");
+            const recoveredTokenS = sessionStorage.getItem('village.token');
+            console.warn("[VillageSDK] Storage Access ", recoveredToken, recoveredTokenS);
+            if (recoveredToken) {
+              sessionStorage.setItem("village.token", recoveredToken);
+              window.Village.broadcast(VillageEvents.oauthSuccess, { token: recoveredToken });
+            }
+          } catch (e) {
+            console.warn("[VillageSDK] Storage Access denied or failed", e);
+          }
+          return;
+        }
+
+        if (token) {
+          Cookies.set("village.token", token, {
+            secure: true,
+            sameSite: "None",
+            expires: 60,
+          });
+          sessionStorage.setItem("village.token", token);
+          window.Village.broadcast(VillageEvents.oauthSuccess, { token });
+        } else {
+          Cookies.remove("village.token");
+          sessionStorage.removeItem("village.token");
+          window.Village.broadcast(VillageEvents.userLoggedOut, {});
+        }
+        return;
+      }
+
+      if (!data || data.source !== "VillageSDK") return;
+      if (data.type === VillageEvents.pathCtaClicked) {
+        window.Village.executeCallback(data.payload || data);
       }
     });
+
 
     window.__village_message_listener_attached__ = true;
   }
