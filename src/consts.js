@@ -5,4 +5,5 @@ export const ModuleTypes = {
   SYNC: "sync",
   SEARCH: "search",
   PATHS: "paths",
+  AUTOPILOT: "autopilot",
 };

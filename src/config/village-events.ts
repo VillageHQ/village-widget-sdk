@@ -44,7 +44,19 @@ export const VillageEvents = {
   widgetError: "village.widget.error",
 
   /** Fired when the widget (App) is fully initialized and ready */
-  widgetReady: "village.widget.ready"
+  widgetReady: "village.widget.ready",
+
+  /** Fired when user is logged out */
+  userLoggedOut: "village.user.logged.out",
+
+  /** Fired when autopilot result is clicked */
+  autopilotResultClick: "village.autopilot.result.click",
+
+  /** Fired when autopilot flow is completed */
+  autopilotComplete: "village.autopilot.complete",
+
+  /** Fired when autopilot is closed */
+  autopilotClose: "village.autopilot.close"
 } as const;
 
 /**
@@ -178,6 +190,36 @@ export interface VillageEventMap {
    * Fired when the list of available CTAs changes.
    */
   [VillageEvents.pathsCtaUpdated]: PathCTA[];
+
+  /**
+   * @event village.user.logged.out
+   * Fired when the user is logged out.
+   */
+  [VillageEvents.userLoggedOut]: void;
+
+  /**
+   * @event village.autopilot.result.click
+   * Fired when a result is clicked in autopilot mode.
+   */
+  [VillageEvents.autopilotResultClick]: {
+    result: any;
+    context?: any;
+  };
+
+  /**
+   * @event village.autopilot.complete
+   * Fired when the autopilot flow is completed.
+   */
+  [VillageEvents.autopilotComplete]: {
+    results?: any[];
+    query?: string;
+  };
+
+  /**
+   * @event village.autopilot.close
+   * Fired when the autopilot is closed.
+   */
+  [VillageEvents.autopilotClose]: void;
 }
 
 

@@ -30,6 +30,36 @@ export interface VillageInitOptions {
 }
 
 /**
+ * Configuration for the autopilot feature
+ */
+export interface AutopilotConfig {
+  /** Initial search query to populate */
+  initialQuery?: string;
+  
+  /** Search criteria/filters */
+  criteria?: {
+    /** Filter by location */
+    location?: string;
+    /** Filter by company */
+    company?: string;
+    /** Filter by role/title */
+    role?: string;
+    /** Custom filters */
+    [key: string]: any;
+  };
+  
+  /** Callback functions for autopilot events */
+  callbacks?: {
+    /** Called when a result is clicked */
+    onResultClick?: (result: any) => void;
+    /** Called when autopilot flow is completed */
+    onComplete?: (data: any) => void;
+    /** Called when autopilot is closed */
+    onClose?: () => void;
+  };
+}
+
+/**
  * Extension of the browser `window` object to include the `Village` SDK.
  */
 export interface Window {

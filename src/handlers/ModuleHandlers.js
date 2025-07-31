@@ -20,7 +20,11 @@ export class ModuleHandlers {
     this.removeListener(element); // Remove previous general listeners
     this.syncUrlElements.set(element, validURL); // Track this element and its URL
 
-    const clickHandler = () => {
+    const clickHandler = (event) => {
+      // Prevent default behavior to stop navigation
+      event.preventDefault();
+      event.stopPropagation();
+      
       AnalyticsService.trackButtonClick({
         type: "paths",
         validURL,
@@ -56,16 +60,29 @@ export class ModuleHandlers {
     }
 
     this.removeListener(element);
-    const clickHandler = () => {
+    const clickHandler = (event) => {
+      // Prevent default behavior to stop navigation
+      event.preventDefault();
+      event.stopPropagation();
+      
       try {
+        // Determine analytics type based on module
+        const analyticsType = moduleValue === ModuleTypes.AUTOPILOT ? "autopilot" : "onboarding";
+        
         AnalyticsService.trackButtonClick({
-          type: "onboarding", // Assuming non-url module is onboarding
+          type: analyticsType,
           module: moduleValue,
           partnerKey: this.app.partnerKey,
         });
 
         this.app.url = null; // No URL for module-based trigger
         this.app.module = moduleValue;
+        
+        // For autopilot, check if there's any config stored
+        if (moduleValue === ModuleTypes.AUTOPILOT && window.Village?._autopilotConfig) {
+          this.app.autopilotConfig = window.Village._autopilotConfig;
+        }
+        
         this.app.renderIframe();
       } catch (error) {
         logWidgetError(error, {

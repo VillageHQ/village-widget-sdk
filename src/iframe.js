@@ -5,6 +5,7 @@ export function buildIframeSrc({
   url,
   module: villageModule,
   config,
+  autopilotConfig,
 }) {
   const params = new URLSearchParams();
 
@@ -13,6 +14,17 @@ export function buildIframeSrc({
   if (partnerKey) params.append("partnerKey", partnerKey);
   if (userReference) params.append("userReference", userReference);
   if (villageModule) params.append("module", villageModule);
+  
+  // Handle autopilot-specific parameters
+  if (villageModule === "autopilot" && autopilotConfig) {
+    if (autopilotConfig.initialQuery) {
+      params.append("initialQuery", autopilotConfig.initialQuery);
+    }
+    if (autopilotConfig.criteria) {
+      params.append("criteria", JSON.stringify(autopilotConfig.criteria));
+    }
+  }
+  
   //console.log('config.paths_cta', config);
   let pathsCtaJson = '[]';
   if(typeof config !== 'undefined' && typeof config.paths_cta !== 'undefined' ){
@@ -67,7 +79,7 @@ export class Iframe {
 
   // Update method uses the utility function to set src, but keeps class logic
   update(params) {
-    // params: { token, partnerKey, userReference, url, module }
+    // params: { token, partnerKey, userReference, url, module, config, autopilotConfig }
     // Use the utility function to build the source URL
     //console.trace('buildIframeSrc call 3');
     this.element.src = buildIframeSrc(params);

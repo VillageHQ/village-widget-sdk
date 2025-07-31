@@ -147,6 +147,47 @@ import Cookies from "js-cookie";
         }
       },
 
+      startAutopilot: function (config = {}) {
+        if (!v._initialized) {
+          v.q.push(["startAutopilot", config]);
+          return Promise.resolve();
+        }
+        
+        return new Promise(async (resolve, reject) => {
+          try {
+            // Store autopilot config for later use
+            v._autopilotConfig = config;
+            
+            // Set up event handlers for autopilot callbacks if provided
+            if (config.callbacks) {
+              if (config.callbacks.onResultClick) {
+                v.on(VillageEvents.autopilotResultClick, config.callbacks.onResultClick);
+              }
+              if (config.callbacks.onComplete) {
+                v.on(VillageEvents.autopilotComplete, config.callbacks.onComplete);
+              }
+              if (config.callbacks.onClose) {
+                v.on(VillageEvents.autopilotClose, config.callbacks.onClose);
+              }
+            }
+            
+            // Generate token for non-authenticated users if needed
+            if (!v._app.token && !v._userReference) {
+              await v._app.getAuthToken();
+            }
+            
+            // Set module to autopilot and render iframe
+            v._app.module = "autopilot";
+            v._app.autopilotConfig = config;
+            await v._app.renderIframe();
+            
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+
       _renderWidget: function () {
         return new Promise((resolve, reject) => {
           try {
@@ -289,6 +330,17 @@ import Cookies from "js-cookie";
       if (!data || data.source !== "VillageSDK") return;
       if (data.type === VillageEvents.pathCtaClicked) {
         window.Village.executeCallback(data.payload || data);
+      }
+      
+      // Handle autopilot events
+      if (data.type === VillageEvents.autopilotResultClick) {
+        window.Village.emit(VillageEvents.autopilotResultClick, data.payload);
+      }
+      if (data.type === VillageEvents.autopilotComplete) {
+        window.Village.emit(VillageEvents.autopilotComplete, data.payload);
+      }
+      if (data.type === VillageEvents.autopilotClose) {
+        window.Village.emit(VillageEvents.autopilotClose, data.payload);
       }
     });
 

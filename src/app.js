@@ -152,6 +152,9 @@ export class App {
       if (inlineIframe) {
         this.inlineSearchIframes.set(element, inlineIframe);
       }
+    } else if (villageModule === ModuleTypes.AUTOPILOT) {
+      // Handle AUTOPILOT module - attach click listener for overlay
+      this.moduleHandlers.handleModule(element, ModuleTypes.AUTOPILOT);
     } else {
       // Handle SYNC module (explicit or legacy data-url) by attaching click listener for overlay
       // Remove any potentially stale inline iframe reference if the module type changes
@@ -565,6 +568,7 @@ export class App {
       url: this.url,
       module: this.module,
       config: this.config,
+      autopilotConfig: this.autopilotConfig,
     });
 
     this.iframe.render(document.body);
