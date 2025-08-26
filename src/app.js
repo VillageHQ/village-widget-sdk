@@ -15,8 +15,16 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { logWidgetError } from "./utils/errorLogger";
 
+// Global singleton instance to prevent multiple initializations
+let appInstance = null;
+
 export class App {
   constructor(partnerKey, config) {
+    // Singleton pattern - return existing instance if it exists
+    if (appInstance) {
+      return appInstance;
+    }
+    
     this.partnerKey = partnerKey;
     this.userReference = null;
     this.token = Cookies.get("village.token");
@@ -38,9 +46,24 @@ export class App {
     this.elementRequests = new Map(); // element -> Promise
     this.elementRequestIds = new Map(); // element -> latest request ID
     this.globalRequestCounter = 0; // Only for generating unique IDs
+    
+    // Signature-based tracking to prevent React re-render issues
+    this.processedSignatures = new Set();
+    
+    // Init guard to prevent double initialization
+    this.initialized = false;
+    
+    // Store singleton instance
+    appInstance = this;
   }
 
   async init() {
+    // Guard against multiple init calls
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+    
     this.setupMessageHandlers();
     await this.getAuthToken();
     await this.getUser();
@@ -133,6 +156,19 @@ export class App {
   }
 
   async addListenerToElement(element) {
+    // Check signature to prevent reprocessing same element in React re-renders
+    const signature = this.getElementSignature(element);
+    if (this.processedSignatures.has(signature)) {
+      return; // Already processed this element
+    }
+    this.processedSignatures.add(signature);
+    
+    // Immediately hide ALL state elements to prevent any flash or overlap
+    const allStates = element.querySelectorAll('[village-paths-availability]');
+    allStates.forEach(el => {
+      el.style.display = "none";
+    });
+    
     // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
     this.elementRequestIds.delete(element);
@@ -403,6 +439,9 @@ export class App {
     const errorElement = element.querySelector(
       '[village-paths-availability="error"]'
     );
+    if (errorElement) {
+      errorElement.style.display = "none";
+    }
     const not_activated = element.querySelector(
       '[village-paths-availability="not-activated"]'
     );
@@ -417,6 +456,12 @@ export class App {
   }
 
   initializeButtonState(element) {
+    // First ensure ALL states are hidden to prevent overlap
+    const allStates = element.querySelectorAll('[village-paths-availability]');
+    allStates.forEach(el => {
+      el.style.display = "none";
+    });
+    
     // Use atomic state management for consistency
     if (!this.token) {
       this._setElementState(element, "not-found");
@@ -488,25 +533,38 @@ export class App {
       not_activated,
     } = this.getButtonChildren(element);
 
-    // Hide all states atomically
+    // Hide ALL states atomically with important flag to ensure they're hidden
     [foundElement, notFoundElement, loadingElement, errorElement, not_activated]
       .filter(Boolean)
-      .forEach((el) => (el.style.display = "none"));
+      .forEach((el) => {
+        el.style.display = "none";
+        el.setAttribute('style', 'display: none !important');
+      });
 
-    // Show appropriate state
+    // Show ONLY the appropriate state (overriding CSS with inline styles)
     switch (state) {
       case "loading":
-        if (loadingElement) loadingElement.style.display = "inline-flex";
+        if (loadingElement) {
+          loadingElement.style.cssText = 'display: inline-flex !important';
+        }
         break;
       case "found":
         if (foundElement) {
-          foundElement.style.display = "inline-flex";
+          foundElement.style.cssText = 'display: inline-flex !important';
           if (relationship)
             this.addFacePilesAndCount(foundElement, relationship);
         }
         break;
       case "not-found":
-        if (notFoundElement) notFoundElement.style.display = "inline-flex";
+        if (notFoundElement) {
+          notFoundElement.style.cssText = 'display: inline-flex !important';
+        }
+        break;
+      case "error":
+        // Never show error state - show not-found instead
+        if (notFoundElement) {
+          notFoundElement.style.cssText = 'display: inline-flex !important';
+        }
         break;
     }
   }
@@ -516,6 +574,17 @@ export class App {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
     this.globalRequestCounter += 1000; // Invalidate old requests
+    // Clear processed signatures so elements can be reprocessed after auth errors
+    this.processedSignatures?.clear();
+  }
+  
+  // Generate a unique signature for an element based on its attributes and content
+  getElementSignature(element) {
+    const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || '';
+    const module = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE) || '';
+    const id = element.id || '';
+    const textContent = element.textContent?.trim().substring(0, 100) || '';
+    return `${url}|${module}|${id}|${textContent}`;
   }
 
   addFacePilesAndCount(element, relationship) {
@@ -611,6 +680,9 @@ export class App {
     // Clear all active requests
     this._clearAllRequests();
 
+    // Clear processed signatures
+    this.processedSignatures.clear();
+
     // Disconnect MutationObserver
     if (this.observer) {
       this.observer.disconnect();
@@ -641,7 +713,13 @@ export class App {
     }
     this.iframe = null;
 
-    // Clear any other potential references or intervals if added later
+    // Clear singleton instance reference
+    if (appInstance === this) {
+      appInstance = null;
+    }
+    
+    // Reset initialization flag
+    this.initialized = false;
   }
 
   // New method placeholder
