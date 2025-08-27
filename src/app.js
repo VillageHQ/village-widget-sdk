@@ -15,15 +15,17 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { logWidgetError } from "./utils/errorLogger";
 
-// Global singleton instance to prevent multiple initializations
-let appInstance = null;
-
 export class App {
-  constructor(partnerKey, config) {
-    // Singleton pattern - return existing instance if it exists
-    if (appInstance) {
-      return appInstance;
+  static instance = null;
+  
+  static getInstance(partnerKey, config) {
+    if (!App.instance) {
+      App.instance = new App(partnerKey, config);
     }
+    return App.instance;
+  }
+  
+  constructor(partnerKey, config) {
     
     this.partnerKey = partnerKey;
     this.userReference = null;
@@ -53,8 +55,6 @@ export class App {
     // Init guard to prevent double initialization
     this.initialized = false;
     
-    // Store singleton instance
-    appInstance = this;
   }
 
   async init() {
@@ -162,12 +162,6 @@ export class App {
       return; // Already processed this element
     }
     this.processedSignatures.add(signature);
-    
-    // Immediately hide ALL state elements to prevent any flash or overlap
-    const allStates = element.querySelectorAll('[village-paths-availability]');
-    allStates.forEach(el => {
-      el.style.display = "none";
-    });
     
     // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
@@ -456,13 +450,7 @@ export class App {
   }
 
   initializeButtonState(element) {
-    // First ensure ALL states are hidden to prevent overlap
-    const allStates = element.querySelectorAll('[village-paths-availability]');
-    allStates.forEach(el => {
-      el.style.display = "none";
-    });
-    
-    // Use atomic state management for consistency
+    // CSS already handles default states, just set the appropriate one
     if (!this.token) {
       this._setElementState(element, "not-found");
     } else {
@@ -533,39 +521,36 @@ export class App {
       not_activated,
     } = this.getButtonChildren(element);
 
-    // Hide ALL states atomically with important flag to ensure they're hidden
+    // Hide all states first (CSS already hides most, but ensure all are hidden)
     [foundElement, notFoundElement, loadingElement, errorElement, not_activated]
       .filter(Boolean)
       .forEach((el) => {
-        el.style.display = "none";
-        el.setAttribute('style', 'display: none !important');
+        el.style.cssText = 'display: none !important';
       });
 
-    // Show ONLY the appropriate state (overriding CSS with inline styles)
+    // Show only the appropriate state
+    let elementToShow = null;
     switch (state) {
       case "loading":
-        if (loadingElement) {
-          loadingElement.style.cssText = 'display: inline-flex !important';
-        }
+        elementToShow = loadingElement;
         break;
       case "found":
-        if (foundElement) {
-          foundElement.style.cssText = 'display: inline-flex !important';
-          if (relationship)
-            this.addFacePilesAndCount(foundElement, relationship);
+        elementToShow = foundElement;
+        if (elementToShow && relationship) {
+          this.addFacePilesAndCount(foundElement, relationship);
         }
         break;
       case "not-found":
-        if (notFoundElement) {
-          notFoundElement.style.cssText = 'display: inline-flex !important';
-        }
+      case "error": // Error always shows not-found
+        elementToShow = notFoundElement;
         break;
-      case "error":
-        // Never show error state - show not-found instead
-        if (notFoundElement) {
-          notFoundElement.style.cssText = 'display: inline-flex !important';
-        }
+      case "not-activated":
+        elementToShow = not_activated;
         break;
+    }
+
+    if (elementToShow) {
+      elementToShow.style.cssText = 'display: inline-flex !important';
     }
   }
 
@@ -714,8 +699,8 @@ export class App {
     this.iframe = null;
 
     // Clear singleton instance reference
-    if (appInstance === this) {
-      appInstance = null;
+    if (App.instance === this) {
+      App.instance = null;
     }
     
     // Reset initialization flag
