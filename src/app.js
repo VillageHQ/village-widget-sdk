@@ -304,6 +304,29 @@ export class App {
     window.postMessage(request, '*');
   }
 
+  async validateToken(token) {
+    if (!this.isTokenValid(token)) {
+      return false;
+    }
+    
+    try {
+      const { data: user } = await axios.get(`${this.apiUrl}/user`, {
+        headers: { "x-access-token": token, "app-public-key": this.partnerKey },
+      });
+      
+      if (!user?.id) {
+        return false;
+      }
+      
+      const userId = `${user?.id}`;
+      AnalyticsService.setUserId(userId);
+      return true;
+    } catch (error) {
+      console.warn('[Village] Token validation failed:', error.message);
+      return false;
+    }
+  }
+
   async getUser() {
     const token = await this.getAuthToken();
     if (!token) return;
@@ -450,12 +473,8 @@ export class App {
   }
 
   initializeButtonState(element) {
-    // CSS already handles default states, just set the appropriate one
-    if (!this.token) {
-      this._setElementState(element, "not-found");
-    } else {
-      this._setElementState(element, "loading");
-    }
+    // Always start with loading state - we'll check for token during path check
+    this._setElementState(element, "loading");
   }
 
   async checkPathsAndUpdateButton(element, url) {
@@ -489,6 +508,9 @@ export class App {
 
       // ✅ FIXED: Only allow the exact latest request to update UI
       if (requestId === this.elementRequestIds.get(element)) {
+        // If data is null (no token or error), show not-found
+        // If data has relationship, show found
+        // Otherwise show not-found
         this._setElementState(
           element,
           data?.relationship ? "found" : "not-found",

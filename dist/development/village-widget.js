@@ -1,17 +1,20 @@
-// Deployed: 2025-07-22T11:57:43.949Z
+// Deployed: 2025-09-02T17:58:57.314Z
 // Version: 1.0.47
 (function() {
   "use strict";
   try {
     if (typeof document != "undefined") {
       var elementStyle = document.createElement("style");
-      elementStyle.appendChild(document.createTextNode('.village-iframe {\n  width: 100%;\n  height: 100%;\n  border: none;\n  display: block;\n  position: fixed;\n  top: 0;\n  left: 0;\n  z-index: 2147483647;\n  background: rgba(0, 0, 0, 0.24);\n  color-scheme: light;\n\n  &.village-loading {\n    display: flex;\n    justify-content: center;\n    align-items: center;\n  }\n\n  > .village-spinner {\n    width: 1.5rem;\n    height: 1.5rem;\n    border: 2px solid #000;\n    border-left-color: transparent;\n    border-bottom-color: transparent;\n    border-radius: 50%;\n    animation: spin 0.45s linear infinite;\n  }\n\n  &.village-hidden {\n    display: none;\n  }\n}\n\n@keyframes spin {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n\n.village-hidden {\n  display: none;\n}\n\n[village-paths-data="facepiles"] {\n  display: flex;\n  align-items: center;\n  padding-right: 0.5rem;\n}\n\n[village-paths-data="facepiles"] img {\n  width: 1.5rem;\n  height: 1.5rem;\n  border-radius: 50%;\n  margin-right: -0.5rem; /* Creates overlap effect */\n}\n\n[village-paths-data="facepiles"] img.village-facepiler-avatar-not-found {\n  filter: blur(7px);\n}\n\n[village-paths-data="facepiles"] img:last-child {\n  margin-right: 0;\n}\n\n[village-paths-data="count"] {\n  padding-right: 0.25rem;\n}'));
+      elementStyle.appendChild(document.createTextNode('.village-iframe {\n  width: 100%;\n  height: 100%;\n  border: none;\n  display: block;\n  position: fixed;\n  top: 0;\n  left: 0;\n  z-index: 2147483647;\n  background: rgba(0, 0, 0, 0.24);\n  color-scheme: light;\n\n  &.village-loading {\n    display: flex;\n    justify-content: center;\n    align-items: center;\n  }\n\n  > .village-spinner {\n    width: 1.5rem;\n    height: 1.5rem;\n    border: 2px solid #000;\n    border-left-color: transparent;\n    border-bottom-color: transparent;\n    border-radius: 50%;\n    animation: spin 0.45s linear infinite;\n  }\n\n  &.village-hidden {\n    display: none;\n  }\n}\n\n@keyframes spin {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n\n.village-hidden {\n  display: none;\n}\n\n[village-paths-data="facepiles"] {\n  display: flex;\n  align-items: center;\n  padding-right: 0.5rem;\n}\n\n[village-paths-data="facepiles"] img {\n  width: 1.5rem;\n  height: 1.5rem;\n  border-radius: 50%;\n  margin-right: -0.5rem; /* Creates overlap effect */\n}\n\n[village-paths-data="facepiles"] img.village-facepiler-avatar-not-found {\n  filter: blur(7px);\n}\n\n[village-paths-data="facepiles"] img:last-child {\n  margin-right: 0;\n}\n\n[village-paths-data="count"] {\n  padding-right: 0.25rem;\n}\n\n/* Critical: Hide deprecated error state immediately on page load */\n[village-paths-availability="error"] {\n  display: none !important;\n}\n\n/* Hide all states except loading by default */\n[village-paths-availability="found"],\n[village-paths-availability="not-found"],\n[village-paths-availability="not-activated"] {\n  display: none !important;\n}\n\n/* Show loading state by default until SDK determines actual state */\n[village-paths-availability="loading"] {\n  display: inline-flex !important;\n}\n\n/* SDK will explicitly override these with inline styles */'));
       document.head.appendChild(elementStyle);
     }
   } catch (e) {
     console.error("vite-plugin-css-injected-by-js", e);
   }
 })();
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 (function(exports) {
   "use strict";
   const VILLAGE_URL_DATA_ATTRIBUTE = "village-data-url";
@@ -2868,7 +2871,13 @@ text-align: center;
       }
     }
   }
-  class App {
+  const _App = class _App {
+    static getInstance(partnerKey, config) {
+      if (!_App.instance) {
+        _App.instance = new _App(partnerKey, config);
+      }
+      return _App.instance;
+    }
     constructor(partnerKey, config) {
       this.partnerKey = partnerKey;
       this.userReference = null;
@@ -2886,8 +2895,14 @@ text-align: center;
       this.elementRequests = /* @__PURE__ */ new Map();
       this.elementRequestIds = /* @__PURE__ */ new Map();
       this.globalRequestCounter = 0;
+      this.processedSignatures = /* @__PURE__ */ new Set();
+      this.initialized = false;
     }
     async init() {
+      if (this.initialized) {
+        return;
+      }
+      this.initialized = true;
       this.setupMessageHandlers();
       await this.getAuthToken();
       await this.getUser();
@@ -2954,6 +2969,11 @@ text-align: center;
       this.addListenerToElement(element);
     }
     async addListenerToElement(element) {
+      const signature = this.getElementSignature(element);
+      if (this.processedSignatures.has(signature)) {
+        return;
+      }
+      this.processedSignatures.add(signature);
       this.elementRequests.delete(element);
       this.elementRequestIds.delete(element);
       const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE);
@@ -3053,6 +3073,25 @@ text-align: center;
     saveExtensionToken(token) {
       const request = { type: "STORAGE_SET_TOKEN", source: "VillageSDK", token };
       window.postMessage(request, "*");
+    }
+    async validateToken(token) {
+      if (!this.isTokenValid(token)) {
+        return false;
+      }
+      try {
+        const { data: user } = await axios.get(`${this.apiUrl}/user`, {
+          headers: { "x-access-token": token, "app-public-key": this.partnerKey }
+        });
+        if (!(user == null ? void 0 : user.id)) {
+          return false;
+        }
+        const userId = `${user == null ? void 0 : user.id}`;
+        AnalyticsService.setUserId(userId);
+        return true;
+      } catch (error) {
+        console.warn("[Village] Token validation failed:", error.message);
+        return false;
+      }
     }
     async getUser() {
       const token = await this.getAuthToken();
@@ -3158,6 +3197,9 @@ text-align: center;
       const errorElement = element.querySelector(
         '[village-paths-availability="error"]'
       );
+      if (errorElement) {
+        errorElement.style.display = "none";
+      }
       const not_activated = element.querySelector(
         '[village-paths-availability="not-activated"]'
       );
@@ -3170,11 +3212,7 @@ text-align: center;
       };
     }
     initializeButtonState(element) {
-      if (!this.token) {
-        this._setElementState(element, "not-found");
-      } else {
-        this._setElementState(element, "loading");
-      }
+      this._setElementState(element, "loading");
     }
     async checkPathsAndUpdateButton(element, url) {
       const existingRequest = this.elementRequests.get(element);
@@ -3225,28 +3263,48 @@ text-align: center;
         errorElement,
         not_activated
       } = this.getButtonChildren(element);
-      [foundElement, notFoundElement, loadingElement, errorElement, not_activated].filter(Boolean).forEach((el) => el.style.display = "none");
+      [foundElement, notFoundElement, loadingElement, errorElement, not_activated].filter(Boolean).forEach((el) => {
+        el.style.cssText = "display: none !important";
+      });
+      let elementToShow = null;
       switch (state) {
         case "loading":
-          if (loadingElement) loadingElement.style.display = "inline-flex";
+          elementToShow = loadingElement;
           break;
         case "found":
-          if (foundElement) {
-            foundElement.style.display = "inline-flex";
-            if (relationship)
-              this.addFacePilesAndCount(foundElement, relationship);
+          elementToShow = foundElement;
+          if (elementToShow && relationship) {
+            this.addFacePilesAndCount(foundElement, relationship);
           }
           break;
         case "not-found":
-          if (notFoundElement) notFoundElement.style.display = "inline-flex";
+        case "error":
+          elementToShow = notFoundElement;
           break;
+        case "not-activated":
+          elementToShow = not_activated;
+          break;
+      }
+      if (elementToShow) {
+        elementToShow.style.cssText = "display: inline-flex !important";
       }
     }
     // Clear all requests (used during auth changes)
     _clearAllRequests() {
+      var _a;
       this.elementRequests.clear();
       this.elementRequestIds.clear();
       this.globalRequestCounter += 1e3;
+      (_a = this.processedSignatures) == null ? void 0 : _a.clear();
+    }
+    // Generate a unique signature for an element based on its attributes and content
+    getElementSignature(element) {
+      var _a;
+      const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || "";
+      const module = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE) || "";
+      const id = element.id || "";
+      const textContent = ((_a = element.textContent) == null ? void 0 : _a.trim().substring(0, 100)) || "";
+      return `${url}|${module}|${id}|${textContent}`;
     }
     addFacePilesAndCount(element, relationship) {
       const facePilesContainer = element.querySelector(
@@ -3322,6 +3380,7 @@ text-align: center;
     }
     destroy() {
       this._clearAllRequests();
+      this.processedSignatures.clear();
       if (this.observer) {
         this.observer.disconnect();
         this.observer = null;
@@ -3343,6 +3402,10 @@ text-align: center;
         this.iframe.spinner.parentNode.removeChild(this.iframe.spinner);
       }
       this.iframe = null;
+      if (_App.instance === this) {
+        _App.instance = null;
+      }
+      this.initialized = false;
     }
     // New method placeholder
     refreshSyncUrlElements() {
@@ -3371,7 +3434,9 @@ text-align: center;
       this.refreshSyncUrlElements();
       this._refreshInlineSearchIframes();
     }
-  }
+  };
+  __publicField(_App, "instance", null);
+  let App = _App;
   const VillageEvents = {
     /** Fired when a CTA (e.g. button) is clicked */
     pathCtaClicked: "village.path.cta.clicked",
@@ -3556,7 +3621,7 @@ text-align: center;
             var _a;
             try {
               if (!v._app) {
-                v._app = new App(v._partnerKey, v._config);
+                v._app = App.getInstance(v._partnerKey, v._config);
               }
               v._app.init();
               (_a = v.broadcast) == null ? void 0 : _a.call(v, VillageEvents.widgetReady, {
@@ -3602,7 +3667,65 @@ text-align: center;
           }
         }
       };
-      v.authorize = v.identify;
+      v.authorize = function(tokenOrUserRef, domainOrDetails, refreshCallback) {
+        if (!v._initialized) {
+          v.q.push(["authorize", tokenOrUserRef, domainOrDetails, refreshCallback]);
+          return Promise.resolve({ ok: false, status: "unauthorized", reason: "SDK not initialized" });
+        }
+        const isTokenAuth = typeof tokenOrUserRef === "string" && tokenOrUserRef.length > 20 && (tokenOrUserRef.includes(".") || tokenOrUserRef.includes("_"));
+        if (isTokenAuth) {
+          return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
+        } else {
+          return v.identify(tokenOrUserRef, domainOrDetails);
+        }
+      };
+      v._authorizeWithToken = async function(token, domain, refreshCallback) {
+        try {
+          v._authToken = token;
+          v._authDomain = domain;
+          v._refreshCallback = refreshCallback;
+          if (!v._app) {
+            await v._renderWidget();
+          }
+          v._app.token = token;
+          if (domain) {
+            v._app.authDomain = domain;
+          }
+          const isValid = await v._app.validateToken(token);
+          if (isValid) {
+            v._app.updateCookieToken(token);
+            return {
+              ok: true,
+              status: "authorized",
+              domain
+            };
+          } else {
+            if (refreshCallback && typeof refreshCallback === "function") {
+              try {
+                console.log("[Village] Token invalid, attempting refresh...");
+                const newToken = await refreshCallback();
+                if (newToken && typeof newToken === "string") {
+                  return v._authorizeWithToken(newToken, domain, null);
+                }
+              } catch (refreshError) {
+                console.warn("[Village] Token refresh failed:", refreshError);
+              }
+            }
+            return {
+              ok: false,
+              status: "unauthorized",
+              reason: "Invalid token"
+            };
+          }
+        } catch (error) {
+          console.error("[Village] Authorization error:", error);
+          return {
+            ok: false,
+            status: "unauthorized",
+            reason: error.message || "Authorization failed"
+          };
+        }
+      };
       return v;
     }
     const existingVillage = window2.Village;
