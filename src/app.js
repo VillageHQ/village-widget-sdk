@@ -16,7 +16,17 @@ import Cookies from "js-cookie";
 import { logWidgetError } from "./utils/errorLogger";
 
 export class App {
+  static instance = null;
+  
+  static getInstance(partnerKey, config) {
+    if (!App.instance) {
+      App.instance = new App(partnerKey, config);
+    }
+    return App.instance;
+  }
+  
   constructor(partnerKey, config) {
+    
     this.partnerKey = partnerKey;
     this.userReference = null;
     this.token = Cookies.get("village.token");
@@ -38,9 +48,22 @@ export class App {
     this.elementRequests = new Map(); // element -> Promise
     this.elementRequestIds = new Map(); // element -> latest request ID
     this.globalRequestCounter = 0; // Only for generating unique IDs
+    
+    // Signature-based tracking to prevent React re-render issues
+    this.processedSignatures = new Set();
+    
+    // Init guard to prevent double initialization
+    this.initialized = false;
+    
   }
 
   async init() {
+    // Guard against multiple init calls
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+    
     this.setupMessageHandlers();
     await this.getAuthToken();
     await this.getUser();
@@ -133,6 +156,13 @@ export class App {
   }
 
   async addListenerToElement(element) {
+    // Check signature to prevent reprocessing same element in React re-renders
+    const signature = this.getElementSignature(element);
+    if (this.processedSignatures.has(signature)) {
+      return; // Already processed this element
+    }
+    this.processedSignatures.add(signature);
+    
     // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
     this.elementRequestIds.delete(element);
@@ -403,6 +433,9 @@ export class App {
     const errorElement = element.querySelector(
       '[village-paths-availability="error"]'
     );
+    if (errorElement) {
+      errorElement.style.display = "none";
+    }
     const not_activated = element.querySelector(
       '[village-paths-availability="not-activated"]'
     );
@@ -417,7 +450,7 @@ export class App {
   }
 
   initializeButtonState(element) {
-    // Use atomic state management for consistency
+    // CSS already handles default states, just set the appropriate one
     if (!this.token) {
       this._setElementState(element, "not-found");
     } else {
@@ -488,26 +521,36 @@ export class App {
       not_activated,
     } = this.getButtonChildren(element);
 
-    // Hide all states atomically
+    // Hide all states first (CSS already hides most, but ensure all are hidden)
     [foundElement, notFoundElement, loadingElement, errorElement, not_activated]
       .filter(Boolean)
-      .forEach((el) => (el.style.display = "none"));
+      .forEach((el) => {
+        el.style.cssText = 'display: none !important';
+      });
 
-    // Show appropriate state
+    // Show only the appropriate state
+    let elementToShow = null;
     switch (state) {
       case "loading":
-        if (loadingElement) loadingElement.style.display = "inline-flex";
+        elementToShow = loadingElement;
         break;
       case "found":
-        if (foundElement) {
-          foundElement.style.display = "inline-flex";
-          if (relationship)
-            this.addFacePilesAndCount(foundElement, relationship);
+        elementToShow = foundElement;
+        if (elementToShow && relationship) {
+          this.addFacePilesAndCount(foundElement, relationship);
         }
         break;
       case "not-found":
-        if (notFoundElement) notFoundElement.style.display = "inline-flex";
+      case "error": // Error always shows not-found
+        elementToShow = notFoundElement;
         break;
+      case "not-activated":
+        elementToShow = not_activated;
+        break;
+    }
+
+    if (elementToShow) {
+      elementToShow.style.cssText = 'display: inline-flex !important';
     }
   }
 
@@ -516,6 +559,17 @@ export class App {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
     this.globalRequestCounter += 1000; // Invalidate old requests
+    // Clear processed signatures so elements can be reprocessed after auth errors
+    this.processedSignatures?.clear();
+  }
+  
+  // Generate a unique signature for an element based on its attributes and content
+  getElementSignature(element) {
+    const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || '';
+    const module = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE) || '';
+    const id = element.id || '';
+    const textContent = element.textContent?.trim().substring(0, 100) || '';
+    return `${url}|${module}|${id}|${textContent}`;
   }
 
   addFacePilesAndCount(element, relationship) {
@@ -611,6 +665,9 @@ export class App {
     // Clear all active requests
     this._clearAllRequests();
 
+    // Clear processed signatures
+    this.processedSignatures.clear();
+
     // Disconnect MutationObserver
     if (this.observer) {
       this.observer.disconnect();
@@ -641,7 +698,13 @@ export class App {
     }
     this.iframe = null;
 
-    // Clear any other potential references or intervals if added later
+    // Clear singleton instance reference
+    if (App.instance === this) {
+      App.instance = null;
+    }
+    
+    // Reset initialization flag
+    this.initialized = false;
   }
 
   // New method placeholder

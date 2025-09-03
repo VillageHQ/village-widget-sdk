@@ -151,7 +151,7 @@ import Cookies from "js-cookie";
         return new Promise((resolve, reject) => {
           try {
             if (!v._app) {
-              v._app = new App(v._partnerKey, v._config);
+              v._app = App.getInstance(v._partnerKey, v._config);
             }
             v._app.init();
 

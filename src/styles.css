@@ -68,3 +68,22 @@
 [village-paths-data="count"] {
   padding-right: 0.25rem;
 }
+
+/* Critical: Hide deprecated error state immediately on page load */
+[village-paths-availability="error"] {
+  display: none !important;
+}
+
+/* Hide all states except loading by default */
+[village-paths-availability="found"],
+[village-paths-availability="not-found"],
+[village-paths-availability="not-activated"] {
+  display: none !important;
+}
+
+/* Show loading state by default until SDK determines actual state */
+[village-paths-availability="loading"] {
+  display: inline-flex !important;
+}
+
+/* SDK will explicitly override these with inline styles */
