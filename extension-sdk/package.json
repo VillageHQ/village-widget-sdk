@@ -1,0 +1,39 @@
+{
+  "name": "@villagehq/extension-sdk",
+  "version": "0.1.23",
+  "description": "Village Chrome Extension SDK for Partner Integrations",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "build:staging": "vite build --mode staging",
+    "dev": "vite build --watch --mode development",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@floating-ui/dom": "^1.5.4",
+    "axios": "^1.7.5"
+  },
+  "devDependencies": {
+    "vite": "^4.5.0"
+  },
+  "keywords": [
+    "village",
+    "chrome-extension",
+    "sdk"
+  ],
+  "author": "Village",
+  "license": "UNLICENSED",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/villagehq/village.git"
+  }
+}
