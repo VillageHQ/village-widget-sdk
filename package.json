@@ -15,9 +15,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build",
-    "build:staging": "vite build --mode staging",
-    "dev": "vite build --watch --mode development",
+    "build": "vite build && npm run build:module",
+    "build:module": "vite build --config vite.module.config.js",
+    "build:iife": "vite build",
+    "build:staging": "vite build --mode staging && vite build --mode staging --config vite.module.config.js",
+    "dev": "vite build --watch --mode development & vite build --watch --mode development --config vite.module.config.js",
     "devStg": "vite build --watch --mode staging",
     "prepublishOnly": "npm run build",
     "deploy": "node scripts/deploy.js",

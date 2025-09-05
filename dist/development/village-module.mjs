@@ -1,0 +1,2709 @@
+(function(){"use strict";try{if(typeof document<"u"){var e=document.createElement("style");e.appendChild(document.createTextNode(".village-iframe{width:100%;height:100%;border:none;display:block;position:fixed;top:0;left:0;z-index:2147483647;background:#0000003d;color-scheme:light}.village-iframe.village-loading{display:flex;justify-content:center;align-items:center}.village-iframe>.village-spinner{width:1.5rem;height:1.5rem;border:2px solid #000;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;animation:spin .45s linear infinite}.village-iframe.village-hidden{display:none}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.village-hidden{display:none}[village-paths-data=facepiles]{display:flex;align-items:center;padding-right:.5rem}[village-paths-data=facepiles] img{width:1.5rem;height:1.5rem;border-radius:50%;margin-right:-.5rem}[village-paths-data=facepiles] img.village-facepiler-avatar-not-found{filter:blur(7px)}[village-paths-data=facepiles] img:last-child{margin-right:0}[village-paths-data=count]{padding-right:.25rem}[village-paths-availability=error],[village-paths-availability=found],[village-paths-availability=not-found],[village-paths-availability=not-activated]{display:none!important}[village-paths-availability=loading]{display:inline-flex!important}")),document.head.appendChild(e)}}catch(i){console.error("vite-plugin-css-injected-by-js",i)}})();
+var Et = Object.defineProperty;
+var wt = (t, e, n) => e in t ? Et(t, e, { enumerable: !0, configurable: !0, writable: !0, value: n }) : t[e] = n;
+var xe = (t, e, n) => wt(t, typeof e != "symbol" ? e + "" : e, n);
+const x = {
+  /** Fired when a CTA (e.g. button) is clicked */
+  pathCtaClicked: "village.path.cta.clicked",
+  /** Fired when the list of CTAs is updated */
+  pathsCtaUpdated: "village.paths_cta.updated",
+  /** Fired after user graph is successfully synced */
+  userSynced: "village.user.synced",
+  /** Fired when user graph sync fails */
+  userSyncFailed: "village.user.sync.failed",
+  /** Fired when OAuth popup is opened */
+  oauthStarted: "village.oauth.started",
+  /** Fired when OAuth login completes successfully */
+  oauthSuccess: "village.oauth.success",
+  /** Fired when OAuth login fails or is canceled */
+  oauthError: "village.oauth.error",
+  /** Fired when a general error occurs inside the widget */
+  widgetError: "village.widget.error",
+  /** Fired when the widget (App) is fully initialized and ready */
+  widgetReady: "village.widget.ready"
+}, F = "village-data-url", M = "village-module", H = {
+  SYNC: "sync",
+  SEARCH: "search",
+  PATHS: "paths"
+};
+function Te({
+  token: t,
+  partnerKey: e,
+  userReference: n,
+  url: r,
+  module: s,
+  config: o
+}) {
+  const i = new URLSearchParams();
+  t && i.append("token", t), r && i.append("url", encodeURIComponent(r)), e && i.append("partnerKey", e), n && i.append("userReference", n), s && i.append("module", s);
+  let a = "[]";
+  typeof o < "u" && typeof o.paths_cta < "u" && (a = JSON.stringify(o.paths_cta));
+  const u = encodeURIComponent(a);
+  return i.append("paths_cta", u), `https://localhost:3000/widget?${i.toString()}`;
+}
+function St(t, e) {
+  if (typeof window > "u" || typeof document > "u")
+    return null;
+  t.innerHTML = "";
+  const n = document.createElement("iframe");
+  return n.src = Te({ ...e, module: "search" }), n.style.width = "100%", n.style.height = "100%", n.style.border = "none", n.style.display = "block", t.appendChild(n), n;
+}
+class bt {
+  constructor() {
+    this.element = document.createElement("iframe"), this.element.className = "village-iframe village-hidden", this.spinner = document.createElement("div"), this.spinner.className = "village-iframe village-hidden village-loading", this.spinner.innerHTML = '<div class="village-spinner"></div>';
+  }
+  // Update method uses the utility function to set src, but keeps class logic
+  update(e) {
+    this.element.src = Te(e);
+    const n = e.url || e.module;
+    this.element.className = n ? "village-iframe" : "village-iframe village-hidden", this.spinner.className = n ? "village-iframe village-loading" : "village-iframe village-hidden village-loading";
+  }
+  // Keep original render method
+  render(e) {
+    this.element.parentNode || (e.appendChild(this.spinner), e.appendChild(this.element));
+  }
+  // Keep original hideSpinner method
+  hideSpinner() {
+    this.spinner.className = "village-iframe village-hidden village-loading";
+  }
+}
+/*! js-cookie v3.0.5 | MIT */
+function Q(t) {
+  for (var e = 1; e < arguments.length; e++) {
+    var n = arguments[e];
+    for (var r in n)
+      t[r] = n[r];
+  }
+  return t;
+}
+var Rt = {
+  read: function(t) {
+    return t[0] === '"' && (t = t.slice(1, -1)), t.replace(/(%[\dA-F]{2})+/gi, decodeURIComponent);
+  },
+  write: function(t) {
+    return encodeURIComponent(t).replace(
+      /%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g,
+      decodeURIComponent
+    );
+  }
+};
+function me(t, e) {
+  function n(s, o, i) {
+    if (!(typeof document > "u")) {
+      i = Q({}, e, i), typeof i.expires == "number" && (i.expires = new Date(Date.now() + i.expires * 864e5)), i.expires && (i.expires = i.expires.toUTCString()), s = encodeURIComponent(s).replace(/%(2[346B]|5E|60|7C)/g, decodeURIComponent).replace(/[()]/g, escape);
+      var a = "";
+      for (var u in i)
+        i[u] && (a += "; " + u, i[u] !== !0 && (a += "=" + i[u].split(";")[0]));
+      return document.cookie = s + "=" + t.write(o, s) + a;
+    }
+  }
+  function r(s) {
+    if (!(typeof document > "u" || arguments.length && !s)) {
+      for (var o = document.cookie ? document.cookie.split("; ") : [], i = {}, a = 0; a < o.length; a++) {
+        var u = o[a].split("="), c = u.slice(1).join("=");
+        try {
+          var d = decodeURIComponent(u[0]);
+          if (i[d] = t.read(c, d), s === d)
+            break;
+        } catch {
+        }
+      }
+      return s ? i[s] : i;
+    }
+  }
+  return Object.create(
+    {
+      set: n,
+      get: r,
+      remove: function(s, o) {
+        n(
+          s,
+          "",
+          Q({}, o, {
+            expires: -1
+          })
+        );
+      },
+      withAttributes: function(s) {
+        return me(this.converter, Q({}, this.attributes, s));
+      },
+      withConverter: function(s) {
+        return me(Q({}, this.converter, s), this.attributes);
+      }
+    },
+    {
+      attributes: { value: Object.freeze(e) },
+      converter: { value: Object.freeze(t) }
+    }
+  );
+}
+var L = me(Rt, { path: "/" });
+class At {
+  constructor(e) {
+    this.app = e, this.handlers = {
+      VILLAGE_OAUTH_REQUEST: this.handleOAuthRequest.bind(this),
+      VILLAGE_OAUTH_SUCCESS: this.handleOAuthSuccess.bind(this),
+      VILLAGE_OAUTH_ERROR: this.handleOAuthError.bind(this),
+      VILLAGE_REMOVE_IFRAME: this.handleRemoveIframe.bind(this),
+      VILLAGE_IFRAME_LOADED: this.handleIframeLoaded.bind(this),
+      VILLAGE_COPY_TO_CLIPBOARD: this.handleCopyToClipboard.bind(this)
+    }, this.app.oauthPopupRef = null;
+  }
+  handle(e) {
+    if (!e.data.type || !e.data.type.startsWith("VILLAGE_")) return;
+    const n = this.handlers[e.data.type];
+    if (n) {
+      if ((e.data.type === "VILLAGE_OAUTH_SUCCESS" || e.data.type === "VILLAGE_OAUTH_ERROR") && e.source !== this.app.oauthPopupRef) {
+        this.app.oauthPopupRef && this.app.oauthPopupRef.closed && (this.app.oauthPopupRef = null);
+        return;
+      }
+      n(e.data, e.source);
+    }
+  }
+  handleOAuthRequest(e) {
+    const { isAuthorizationFlow: n } = e, r = `https://localhost:3000/widget/${n ? "resolve-auth" : "oauth"}`, s = new URLSearchParams();
+    this.app.partnerKey && s.append("partnerKey", this.app.partnerKey), this.app.userReference && s.append("userReference", this.app.userReference);
+    const o = s.toString() ? `${r}?${s.toString()}` : r;
+    this.app.oauthPopupRef = window.open(
+      o,
+      "paas-oauth",
+      "popup=true,width=500,height=600"
+    );
+    const i = setInterval(() => {
+      this.app.oauthPopupRef && this.app.oauthPopupRef.closed ? (clearInterval(i), this.app.oauthPopupRef = null) : this.app.oauthPopupRef || clearInterval(i);
+    }, 1e3);
+  }
+  handleOAuthSuccess(e) {
+    L.set("village.token", e.token, { secure: !0, expires: 60 }), this.app.handleOAuthSuccess(e), this.app.oauthPopupRef && !this.app.oauthPopupRef.closed ? (this.app.oauthPopupRef.postMessage(
+      { type: "VILLAGE_OAUTH_ACKNOWLEDGED" },
+      "https://localhost:3000"
+    ), this.app.oauthPopupRef = null) : this.app.oauthPopupRef = null;
+  }
+  handleOAuthError(e) {
+    alert(
+      `Sorry, something went wrong during authentication: ${(e == null ? void 0 : e.error) || "Unknown error"}`
+    ), this.app.oauthPopupRef && (this.app.oauthPopupRef = null);
+  }
+  handleRemoveIframe() {
+    this.app.url = null, this.app.module = null, this.app.renderIframe();
+  }
+  handleIframeLoaded() {
+    this.app.iframe.hideSpinner();
+  }
+  handleCopyToClipboard(e) {
+    navigator.clipboard.writeText(e.text);
+  }
+}
+const Tt = `
+background: linear-gradient(90deg, rgba(255, 0, 0, 1) 0%, rgba(255, 165, 0, 1) 100%);
+color: white;
+font-weight: bold;
+padding: 8px 12px;
+font-size: 16px;
+border-radius: 4px;
+display: inline-block;
+`, ve = `
+font-size: 18px;
+color: #ff4500;
+margin: 8px 0;
+font-weight: bold;
+text-align: center;
+`;
+function We(t, e = {}) {
+  console.log("%cVILLAGE-PAAS ERROR", Tt), console.log("%c────────────────────────", ve);
+  const n = [
+    {
+      label: "ERROR MESSAGE",
+      value: t.message
+    },
+    {
+      label: "STACK TRACE",
+      value: t.stack
+    },
+    {
+      label: "CONTEXT",
+      value: JSON.stringify(e, null, 2)
+    }
+  ];
+  for (const { label: r, value: s } of n)
+    console.log("%c" + r, "padding: 4px; font-weight: bold;"), console.log("%c" + s, "padding: 4px;");
+  console.log("%c────────────────────────", ve);
+}
+const A = [];
+for (let t = 0; t < 256; ++t)
+  A.push((t + 256).toString(16).slice(1));
+function _t(t, e = 0) {
+  return (A[t[e + 0]] + A[t[e + 1]] + A[t[e + 2]] + A[t[e + 3]] + "-" + A[t[e + 4]] + A[t[e + 5]] + "-" + A[t[e + 6]] + A[t[e + 7]] + "-" + A[t[e + 8]] + A[t[e + 9]] + "-" + A[t[e + 10]] + A[t[e + 11]] + A[t[e + 12]] + A[t[e + 13]] + A[t[e + 14]] + A[t[e + 15]]).toLowerCase();
+}
+let ue;
+const kt = new Uint8Array(16);
+function Ct() {
+  if (!ue) {
+    if (typeof crypto > "u" || !crypto.getRandomValues)
+      throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+    ue = crypto.getRandomValues.bind(crypto);
+  }
+  return ue(kt);
+}
+const Ot = typeof crypto < "u" && crypto.randomUUID && crypto.randomUUID.bind(crypto), Le = { randomUUID: Ot };
+function xt(t, e, n) {
+  var s;
+  if (Le.randomUUID && !t)
+    return Le.randomUUID();
+  t = t || {};
+  const r = t.random ?? ((s = t.rng) == null ? void 0 : s.call(t)) ?? Ct();
+  if (r.length < 16)
+    throw new Error("Random bytes length must be >= 16");
+  return r[6] = r[6] & 15 | 64, r[8] = r[8] & 63 | 128, _t(r);
+}
+function Je(t, e) {
+  return function() {
+    return t.apply(e, arguments);
+  };
+}
+const { toString: vt } = Object.prototype, { getPrototypeOf: _e } = Object, se = /* @__PURE__ */ ((t) => (e) => {
+  const n = vt.call(e);
+  return t[n] || (t[n] = n.slice(8, -1).toLowerCase());
+})(/* @__PURE__ */ Object.create(null)), O = (t) => (t = t.toLowerCase(), (e) => se(e) === t), ie = (t) => (e) => typeof e === t, { isArray: j } = Array, W = ie("undefined");
+function Lt(t) {
+  return t !== null && !W(t) && t.constructor !== null && !W(t.constructor) && C(t.constructor.isBuffer) && t.constructor.isBuffer(t);
+}
+const Ge = O("ArrayBuffer");
+function Ut(t) {
+  let e;
+  return typeof ArrayBuffer < "u" && ArrayBuffer.isView ? e = ArrayBuffer.isView(t) : e = t && t.buffer && Ge(t.buffer), e;
+}
+const Pt = ie("string"), C = ie("function"), Xe = ie("number"), oe = (t) => t !== null && typeof t == "object", It = (t) => t === !0 || t === !1, Y = (t) => {
+  if (se(t) !== "object")
+    return !1;
+  const e = _e(t);
+  return (e === null || e === Object.prototype || Object.getPrototypeOf(e) === null) && !(Symbol.toStringTag in t) && !(Symbol.iterator in t);
+}, Nt = O("Date"), Dt = O("File"), qt = O("Blob"), Vt = O("FileList"), Bt = (t) => oe(t) && C(t.pipe), Ft = (t) => {
+  let e;
+  return t && (typeof FormData == "function" && t instanceof FormData || C(t.append) && ((e = se(t)) === "formdata" || // detect form-data instance
+  e === "object" && C(t.toString) && t.toString() === "[object FormData]"));
+}, Mt = O("URLSearchParams"), [Ht, jt, Kt, $t] = ["ReadableStream", "Request", "Response", "Headers"].map(O), zt = (t) => t.trim ? t.trim() : t.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
+function J(t, e, { allOwnKeys: n = !1 } = {}) {
+  if (t === null || typeof t > "u")
+    return;
+  let r, s;
+  if (typeof t != "object" && (t = [t]), j(t))
+    for (r = 0, s = t.length; r < s; r++)
+      e.call(null, t[r], r, t);
+  else {
+    const o = n ? Object.getOwnPropertyNames(t) : Object.keys(t), i = o.length;
+    let a;
+    for (r = 0; r < i; r++)
+      a = o[r], e.call(null, t[a], a, t);
+  }
+}
+function Qe(t, e) {
+  e = e.toLowerCase();
+  const n = Object.keys(t);
+  let r = n.length, s;
+  for (; r-- > 0; )
+    if (s = n[r], e === s.toLowerCase())
+      return s;
+  return null;
+}
+const q = typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : window, Ye = (t) => !W(t) && t !== q;
+function ge() {
+  const { caseless: t } = Ye(this) && this || {}, e = {}, n = (r, s) => {
+    const o = t && Qe(e, s) || s;
+    Y(e[o]) && Y(r) ? e[o] = ge(e[o], r) : Y(r) ? e[o] = ge({}, r) : j(r) ? e[o] = r.slice() : e[o] = r;
+  };
+  for (let r = 0, s = arguments.length; r < s; r++)
+    arguments[r] && J(arguments[r], n);
+  return e;
+}
+const Wt = (t, e, n, { allOwnKeys: r } = {}) => (J(e, (s, o) => {
+  n && C(s) ? t[o] = Je(s, n) : t[o] = s;
+}, { allOwnKeys: r }), t), Jt = (t) => (t.charCodeAt(0) === 65279 && (t = t.slice(1)), t), Gt = (t, e, n, r) => {
+  t.prototype = Object.create(e.prototype, r), t.prototype.constructor = t, Object.defineProperty(t, "super", {
+    value: e.prototype
+  }), n && Object.assign(t.prototype, n);
+}, Xt = (t, e, n, r) => {
+  let s, o, i;
+  const a = {};
+  if (e = e || {}, t == null) return e;
+  do {
+    for (s = Object.getOwnPropertyNames(t), o = s.length; o-- > 0; )
+      i = s[o], (!r || r(i, t, e)) && !a[i] && (e[i] = t[i], a[i] = !0);
+    t = n !== !1 && _e(t);
+  } while (t && (!n || n(t, e)) && t !== Object.prototype);
+  return e;
+}, Qt = (t, e, n) => {
+  t = String(t), (n === void 0 || n > t.length) && (n = t.length), n -= e.length;
+  const r = t.indexOf(e, n);
+  return r !== -1 && r === n;
+}, Yt = (t) => {
+  if (!t) return null;
+  if (j(t)) return t;
+  let e = t.length;
+  if (!Xe(e)) return null;
+  const n = new Array(e);
+  for (; e-- > 0; )
+    n[e] = t[e];
+  return n;
+}, Zt = /* @__PURE__ */ ((t) => (e) => t && e instanceof t)(typeof Uint8Array < "u" && _e(Uint8Array)), en = (t, e) => {
+  const r = (t && t[Symbol.iterator]).call(t);
+  let s;
+  for (; (s = r.next()) && !s.done; ) {
+    const o = s.value;
+    e.call(t, o[0], o[1]);
+  }
+}, tn = (t, e) => {
+  let n;
+  const r = [];
+  for (; (n = t.exec(e)) !== null; )
+    r.push(n);
+  return r;
+}, nn = O("HTMLFormElement"), rn = (t) => t.toLowerCase().replace(
+  /[-_\s]([a-z\d])(\w*)/g,
+  function(n, r, s) {
+    return r.toUpperCase() + s;
+  }
+), Ue = (({ hasOwnProperty: t }) => (e, n) => t.call(e, n))(Object.prototype), sn = O("RegExp"), Ze = (t, e) => {
+  const n = Object.getOwnPropertyDescriptors(t), r = {};
+  J(n, (s, o) => {
+    let i;
+    (i = e(s, o, t)) !== !1 && (r[o] = i || s);
+  }), Object.defineProperties(t, r);
+}, on = (t) => {
+  Ze(t, (e, n) => {
+    if (C(t) && ["arguments", "caller", "callee"].indexOf(n) !== -1)
+      return !1;
+    const r = t[n];
+    if (C(r)) {
+      if (e.enumerable = !1, "writable" in e) {
+        e.writable = !1;
+        return;
+      }
+      e.set || (e.set = () => {
+        throw Error("Can not rewrite read-only method '" + n + "'");
+      });
+    }
+  });
+}, an = (t, e) => {
+  const n = {}, r = (s) => {
+    s.forEach((o) => {
+      n[o] = !0;
+    });
+  };
+  return j(t) ? r(t) : r(String(t).split(e)), n;
+}, ln = () => {
+}, cn = (t, e) => t != null && Number.isFinite(t = +t) ? t : e;
+function un(t) {
+  return !!(t && C(t.append) && t[Symbol.toStringTag] === "FormData" && t[Symbol.iterator]);
+}
+const dn = (t) => {
+  const e = new Array(10), n = (r, s) => {
+    if (oe(r)) {
+      if (e.indexOf(r) >= 0)
+        return;
+      if (!("toJSON" in r)) {
+        e[s] = r;
+        const o = j(r) ? [] : {};
+        return J(r, (i, a) => {
+          const u = n(i, s + 1);
+          !W(u) && (o[a] = u);
+        }), e[s] = void 0, o;
+      }
+    }
+    return r;
+  };
+  return n(t, 0);
+}, hn = O("AsyncFunction"), fn = (t) => t && (oe(t) || C(t)) && C(t.then) && C(t.catch), et = ((t, e) => t ? setImmediate : e ? ((n, r) => (q.addEventListener("message", ({ source: s, data: o }) => {
+  s === q && o === n && r.length && r.shift()();
+}, !1), (s) => {
+  r.push(s), q.postMessage(n, "*");
+}))(`axios@${Math.random()}`, []) : (n) => setTimeout(n))(
+  typeof setImmediate == "function",
+  C(q.postMessage)
+), pn = typeof queueMicrotask < "u" ? queueMicrotask.bind(q) : typeof process < "u" && process.nextTick || et, l = {
+  isArray: j,
+  isArrayBuffer: Ge,
+  isBuffer: Lt,
+  isFormData: Ft,
+  isArrayBufferView: Ut,
+  isString: Pt,
+  isNumber: Xe,
+  isBoolean: It,
+  isObject: oe,
+  isPlainObject: Y,
+  isReadableStream: Ht,
+  isRequest: jt,
+  isResponse: Kt,
+  isHeaders: $t,
+  isUndefined: W,
+  isDate: Nt,
+  isFile: Dt,
+  isBlob: qt,
+  isRegExp: sn,
+  isFunction: C,
+  isStream: Bt,
+  isURLSearchParams: Mt,
+  isTypedArray: Zt,
+  isFileList: Vt,
+  forEach: J,
+  merge: ge,
+  extend: Wt,
+  trim: zt,
+  stripBOM: Jt,
+  inherits: Gt,
+  toFlatObject: Xt,
+  kindOf: se,
+  kindOfTest: O,
+  endsWith: Qt,
+  toArray: Yt,
+  forEachEntry: en,
+  matchAll: tn,
+  isHTMLForm: nn,
+  hasOwnProperty: Ue,
+  hasOwnProp: Ue,
+  // an alias to avoid ESLint no-prototype-builtins detection
+  reduceDescriptors: Ze,
+  freezeMethods: on,
+  toObjectSet: an,
+  toCamelCase: rn,
+  noop: ln,
+  toFiniteNumber: cn,
+  findKey: Qe,
+  global: q,
+  isContextDefined: Ye,
+  isSpecCompliantForm: un,
+  toJSONObject: dn,
+  isAsyncFn: hn,
+  isThenable: fn,
+  setImmediate: et,
+  asap: pn
+};
+function m(t, e, n, r, s) {
+  Error.call(this), Error.captureStackTrace ? Error.captureStackTrace(this, this.constructor) : this.stack = new Error().stack, this.message = t, this.name = "AxiosError", e && (this.code = e), n && (this.config = n), r && (this.request = r), s && (this.response = s, this.status = s.status ? s.status : null);
+}
+l.inherits(m, Error, {
+  toJSON: function() {
+    return {
+      // Standard
+      message: this.message,
+      name: this.name,
+      // Microsoft
+      description: this.description,
+      number: this.number,
+      // Mozilla
+      fileName: this.fileName,
+      lineNumber: this.lineNumber,
+      columnNumber: this.columnNumber,
+      stack: this.stack,
+      // Axios
+      config: l.toJSONObject(this.config),
+      code: this.code,
+      status: this.status
+    };
+  }
+});
+const tt = m.prototype, nt = {};
+[
+  "ERR_BAD_OPTION_VALUE",
+  "ERR_BAD_OPTION",
+  "ECONNABORTED",
+  "ETIMEDOUT",
+  "ERR_NETWORK",
+  "ERR_FR_TOO_MANY_REDIRECTS",
+  "ERR_DEPRECATED",
+  "ERR_BAD_RESPONSE",
+  "ERR_BAD_REQUEST",
+  "ERR_CANCELED",
+  "ERR_NOT_SUPPORT",
+  "ERR_INVALID_URL"
+  // eslint-disable-next-line func-names
+].forEach((t) => {
+  nt[t] = { value: t };
+});
+Object.defineProperties(m, nt);
+Object.defineProperty(tt, "isAxiosError", { value: !0 });
+m.from = (t, e, n, r, s, o) => {
+  const i = Object.create(tt);
+  return l.toFlatObject(t, i, function(u) {
+    return u !== Error.prototype;
+  }, (a) => a !== "isAxiosError"), m.call(i, t.message, e, n, r, s), i.cause = t, i.name = t.name, o && Object.assign(i, o), i;
+};
+const mn = null;
+function ye(t) {
+  return l.isPlainObject(t) || l.isArray(t);
+}
+function rt(t) {
+  return l.endsWith(t, "[]") ? t.slice(0, -2) : t;
+}
+function Pe(t, e, n) {
+  return t ? t.concat(e).map(function(s, o) {
+    return s = rt(s), !n && o ? "[" + s + "]" : s;
+  }).join(n ? "." : "") : e;
+}
+function gn(t) {
+  return l.isArray(t) && !t.some(ye);
+}
+const yn = l.toFlatObject(l, {}, null, function(e) {
+  return /^is[A-Z]/.test(e);
+});
+function ae(t, e, n) {
+  if (!l.isObject(t))
+    throw new TypeError("target must be an object");
+  e = e || new FormData(), n = l.toFlatObject(n, {
+    metaTokens: !0,
+    dots: !1,
+    indexes: !1
+  }, !1, function(g, p) {
+    return !l.isUndefined(p[g]);
+  });
+  const r = n.metaTokens, s = n.visitor || d, o = n.dots, i = n.indexes, u = (n.Blob || typeof Blob < "u" && Blob) && l.isSpecCompliantForm(e);
+  if (!l.isFunction(s))
+    throw new TypeError("visitor must be a function");
+  function c(f) {
+    if (f === null) return "";
+    if (l.isDate(f))
+      return f.toISOString();
+    if (!u && l.isBlob(f))
+      throw new m("Blob is not supported. Use a Buffer instead.");
+    return l.isArrayBuffer(f) || l.isTypedArray(f) ? u && typeof Blob == "function" ? new Blob([f]) : Buffer.from(f) : f;
+  }
+  function d(f, g, p) {
+    let w = f;
+    if (f && !p && typeof f == "object") {
+      if (l.endsWith(g, "{}"))
+        g = r ? g : g.slice(0, -2), f = JSON.stringify(f);
+      else if (l.isArray(f) && gn(f) || (l.isFileList(f) || l.endsWith(g, "[]")) && (w = l.toArray(f)))
+        return g = rt(g), w.forEach(function(R, U) {
+          !(l.isUndefined(R) || R === null) && e.append(
+            // eslint-disable-next-line no-nested-ternary
+            i === !0 ? Pe([g], U, o) : i === null ? g : g + "[]",
+            c(R)
+          );
+        }), !1;
+    }
+    return ye(f) ? !0 : (e.append(Pe(p, g, o), c(f)), !1);
+  }
+  const h = [], y = Object.assign(yn, {
+    defaultVisitor: d,
+    convertValue: c,
+    isVisitable: ye
+  });
+  function S(f, g) {
+    if (!l.isUndefined(f)) {
+      if (h.indexOf(f) !== -1)
+        throw Error("Circular reference detected in " + g.join("."));
+      h.push(f), l.forEach(f, function(w, b) {
+        (!(l.isUndefined(w) || w === null) && s.call(
+          e,
+          w,
+          l.isString(b) ? b.trim() : b,
+          g,
+          y
+        )) === !0 && S(w, g ? g.concat(b) : [b]);
+      }), h.pop();
+    }
+  }
+  if (!l.isObject(t))
+    throw new TypeError("data must be an object");
+  return S(t), e;
+}
+function Ie(t) {
+  const e = {
+    "!": "%21",
+    "'": "%27",
+    "(": "%28",
+    ")": "%29",
+    "~": "%7E",
+    "%20": "+",
+    "%00": "\0"
+  };
+  return encodeURIComponent(t).replace(/[!'()~]|%20|%00/g, function(r) {
+    return e[r];
+  });
+}
+function ke(t, e) {
+  this._pairs = [], t && ae(t, this, e);
+}
+const st = ke.prototype;
+st.append = function(e, n) {
+  this._pairs.push([e, n]);
+};
+st.toString = function(e) {
+  const n = e ? function(r) {
+    return e.call(this, r, Ie);
+  } : Ie;
+  return this._pairs.map(function(s) {
+    return n(s[0]) + "=" + n(s[1]);
+  }, "").join("&");
+};
+function En(t) {
+  return encodeURIComponent(t).replace(/%3A/gi, ":").replace(/%24/g, "$").replace(/%2C/gi, ",").replace(/%20/g, "+").replace(/%5B/gi, "[").replace(/%5D/gi, "]");
+}
+function it(t, e, n) {
+  if (!e)
+    return t;
+  const r = n && n.encode || En;
+  l.isFunction(n) && (n = {
+    serialize: n
+  });
+  const s = n && n.serialize;
+  let o;
+  if (s ? o = s(e, n) : o = l.isURLSearchParams(e) ? e.toString() : new ke(e, n).toString(r), o) {
+    const i = t.indexOf("#");
+    i !== -1 && (t = t.slice(0, i)), t += (t.indexOf("?") === -1 ? "?" : "&") + o;
+  }
+  return t;
+}
+class Ne {
+  constructor() {
+    this.handlers = [];
+  }
+  /**
+   * Add a new interceptor to the stack
+   *
+   * @param {Function} fulfilled The function to handle `then` for a `Promise`
+   * @param {Function} rejected The function to handle `reject` for a `Promise`
+   *
+   * @return {Number} An ID used to remove interceptor later
+   */
+  use(e, n, r) {
+    return this.handlers.push({
+      fulfilled: e,
+      rejected: n,
+      synchronous: r ? r.synchronous : !1,
+      runWhen: r ? r.runWhen : null
+    }), this.handlers.length - 1;
+  }
+  /**
+   * Remove an interceptor from the stack
+   *
+   * @param {Number} id The ID that was returned by `use`
+   *
+   * @returns {Boolean} `true` if the interceptor was removed, `false` otherwise
+   */
+  eject(e) {
+    this.handlers[e] && (this.handlers[e] = null);
+  }
+  /**
+   * Clear all interceptors from the stack
+   *
+   * @returns {void}
+   */
+  clear() {
+    this.handlers && (this.handlers = []);
+  }
+  /**
+   * Iterate over all the registered interceptors
+   *
+   * This method is particularly useful for skipping over any
+   * interceptors that may have become `null` calling `eject`.
+   *
+   * @param {Function} fn The function to call for each interceptor
+   *
+   * @returns {void}
+   */
+  forEach(e) {
+    l.forEach(this.handlers, function(r) {
+      r !== null && e(r);
+    });
+  }
+}
+const ot = {
+  silentJSONParsing: !0,
+  forcedJSONParsing: !0,
+  clarifyTimeoutError: !1
+}, wn = typeof URLSearchParams < "u" ? URLSearchParams : ke, Sn = typeof FormData < "u" ? FormData : null, bn = typeof Blob < "u" ? Blob : null, Rn = {
+  isBrowser: !0,
+  classes: {
+    URLSearchParams: wn,
+    FormData: Sn,
+    Blob: bn
+  },
+  protocols: ["http", "https", "file", "blob", "url", "data"]
+}, Ce = typeof window < "u" && typeof document < "u", Ee = typeof navigator == "object" && navigator || void 0, An = Ce && (!Ee || ["ReactNative", "NativeScript", "NS"].indexOf(Ee.product) < 0), Tn = typeof WorkerGlobalScope < "u" && // eslint-disable-next-line no-undef
+self instanceof WorkerGlobalScope && typeof self.importScripts == "function", _n = Ce && window.location.href || "http://localhost", kn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  hasBrowserEnv: Ce,
+  hasStandardBrowserEnv: An,
+  hasStandardBrowserWebWorkerEnv: Tn,
+  navigator: Ee,
+  origin: _n
+}, Symbol.toStringTag, { value: "Module" })), T = {
+  ...kn,
+  ...Rn
+};
+function Cn(t, e) {
+  return ae(t, new T.classes.URLSearchParams(), Object.assign({
+    visitor: function(n, r, s, o) {
+      return T.isNode && l.isBuffer(n) ? (this.append(r, n.toString("base64")), !1) : o.defaultVisitor.apply(this, arguments);
+    }
+  }, e));
+}
+function On(t) {
+  return l.matchAll(/\w+|\[(\w*)]/g, t).map((e) => e[0] === "[]" ? "" : e[1] || e[0]);
+}
+function xn(t) {
+  const e = {}, n = Object.keys(t);
+  let r;
+  const s = n.length;
+  let o;
+  for (r = 0; r < s; r++)
+    o = n[r], e[o] = t[o];
+  return e;
+}
+function at(t) {
+  function e(n, r, s, o) {
+    let i = n[o++];
+    if (i === "__proto__") return !0;
+    const a = Number.isFinite(+i), u = o >= n.length;
+    return i = !i && l.isArray(s) ? s.length : i, u ? (l.hasOwnProp(s, i) ? s[i] = [s[i], r] : s[i] = r, !a) : ((!s[i] || !l.isObject(s[i])) && (s[i] = []), e(n, r, s[i], o) && l.isArray(s[i]) && (s[i] = xn(s[i])), !a);
+  }
+  if (l.isFormData(t) && l.isFunction(t.entries)) {
+    const n = {};
+    return l.forEachEntry(t, (r, s) => {
+      e(On(r), s, n, 0);
+    }), n;
+  }
+  return null;
+}
+function vn(t, e, n) {
+  if (l.isString(t))
+    try {
+      return (e || JSON.parse)(t), l.trim(t);
+    } catch (r) {
+      if (r.name !== "SyntaxError")
+        throw r;
+    }
+  return (n || JSON.stringify)(t);
+}
+const G = {
+  transitional: ot,
+  adapter: ["xhr", "http", "fetch"],
+  transformRequest: [function(e, n) {
+    const r = n.getContentType() || "", s = r.indexOf("application/json") > -1, o = l.isObject(e);
+    if (o && l.isHTMLForm(e) && (e = new FormData(e)), l.isFormData(e))
+      return s ? JSON.stringify(at(e)) : e;
+    if (l.isArrayBuffer(e) || l.isBuffer(e) || l.isStream(e) || l.isFile(e) || l.isBlob(e) || l.isReadableStream(e))
+      return e;
+    if (l.isArrayBufferView(e))
+      return e.buffer;
+    if (l.isURLSearchParams(e))
+      return n.setContentType("application/x-www-form-urlencoded;charset=utf-8", !1), e.toString();
+    let a;
+    if (o) {
+      if (r.indexOf("application/x-www-form-urlencoded") > -1)
+        return Cn(e, this.formSerializer).toString();
+      if ((a = l.isFileList(e)) || r.indexOf("multipart/form-data") > -1) {
+        const u = this.env && this.env.FormData;
+        return ae(
+          a ? { "files[]": e } : e,
+          u && new u(),
+          this.formSerializer
+        );
+      }
+    }
+    return o || s ? (n.setContentType("application/json", !1), vn(e)) : e;
+  }],
+  transformResponse: [function(e) {
+    const n = this.transitional || G.transitional, r = n && n.forcedJSONParsing, s = this.responseType === "json";
+    if (l.isResponse(e) || l.isReadableStream(e))
+      return e;
+    if (e && l.isString(e) && (r && !this.responseType || s)) {
+      const i = !(n && n.silentJSONParsing) && s;
+      try {
+        return JSON.parse(e);
+      } catch (a) {
+        if (i)
+          throw a.name === "SyntaxError" ? m.from(a, m.ERR_BAD_RESPONSE, this, null, this.response) : a;
+      }
+    }
+    return e;
+  }],
+  /**
+   * A timeout in milliseconds to abort a request. If set to 0 (default) a
+   * timeout is not created.
+   */
+  timeout: 0,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
+  maxContentLength: -1,
+  maxBodyLength: -1,
+  env: {
+    FormData: T.classes.FormData,
+    Blob: T.classes.Blob
+  },
+  validateStatus: function(e) {
+    return e >= 200 && e < 300;
+  },
+  headers: {
+    common: {
+      Accept: "application/json, text/plain, */*",
+      "Content-Type": void 0
+    }
+  }
+};
+l.forEach(["delete", "get", "head", "post", "put", "patch"], (t) => {
+  G.headers[t] = {};
+});
+const Ln = l.toObjectSet([
+  "age",
+  "authorization",
+  "content-length",
+  "content-type",
+  "etag",
+  "expires",
+  "from",
+  "host",
+  "if-modified-since",
+  "if-unmodified-since",
+  "last-modified",
+  "location",
+  "max-forwards",
+  "proxy-authorization",
+  "referer",
+  "retry-after",
+  "user-agent"
+]), Un = (t) => {
+  const e = {};
+  let n, r, s;
+  return t && t.split(`
+`).forEach(function(i) {
+    s = i.indexOf(":"), n = i.substring(0, s).trim().toLowerCase(), r = i.substring(s + 1).trim(), !(!n || e[n] && Ln[n]) && (n === "set-cookie" ? e[n] ? e[n].push(r) : e[n] = [r] : e[n] = e[n] ? e[n] + ", " + r : r);
+  }), e;
+}, De = Symbol("internals");
+function $(t) {
+  return t && String(t).trim().toLowerCase();
+}
+function Z(t) {
+  return t === !1 || t == null ? t : l.isArray(t) ? t.map(Z) : String(t);
+}
+function Pn(t) {
+  const e = /* @__PURE__ */ Object.create(null), n = /([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g;
+  let r;
+  for (; r = n.exec(t); )
+    e[r[1]] = r[2];
+  return e;
+}
+const In = (t) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(t.trim());
+function de(t, e, n, r, s) {
+  if (l.isFunction(r))
+    return r.call(this, e, n);
+  if (s && (e = n), !!l.isString(e)) {
+    if (l.isString(r))
+      return e.indexOf(r) !== -1;
+    if (l.isRegExp(r))
+      return r.test(e);
+  }
+}
+function Nn(t) {
+  return t.trim().toLowerCase().replace(/([a-z\d])(\w*)/g, (e, n, r) => n.toUpperCase() + r);
+}
+function Dn(t, e) {
+  const n = l.toCamelCase(" " + e);
+  ["get", "set", "has"].forEach((r) => {
+    Object.defineProperty(t, r + n, {
+      value: function(s, o, i) {
+        return this[r].call(this, e, s, o, i);
+      },
+      configurable: !0
+    });
+  });
+}
+let k = class {
+  constructor(e) {
+    e && this.set(e);
+  }
+  set(e, n, r) {
+    const s = this;
+    function o(a, u, c) {
+      const d = $(u);
+      if (!d)
+        throw new Error("header name must be a non-empty string");
+      const h = l.findKey(s, d);
+      (!h || s[h] === void 0 || c === !0 || c === void 0 && s[h] !== !1) && (s[h || u] = Z(a));
+    }
+    const i = (a, u) => l.forEach(a, (c, d) => o(c, d, u));
+    if (l.isPlainObject(e) || e instanceof this.constructor)
+      i(e, n);
+    else if (l.isString(e) && (e = e.trim()) && !In(e))
+      i(Un(e), n);
+    else if (l.isHeaders(e))
+      for (const [a, u] of e.entries())
+        o(u, a, r);
+    else
+      e != null && o(n, e, r);
+    return this;
+  }
+  get(e, n) {
+    if (e = $(e), e) {
+      const r = l.findKey(this, e);
+      if (r) {
+        const s = this[r];
+        if (!n)
+          return s;
+        if (n === !0)
+          return Pn(s);
+        if (l.isFunction(n))
+          return n.call(this, s, r);
+        if (l.isRegExp(n))
+          return n.exec(s);
+        throw new TypeError("parser must be boolean|regexp|function");
+      }
+    }
+  }
+  has(e, n) {
+    if (e = $(e), e) {
+      const r = l.findKey(this, e);
+      return !!(r && this[r] !== void 0 && (!n || de(this, this[r], r, n)));
+    }
+    return !1;
+  }
+  delete(e, n) {
+    const r = this;
+    let s = !1;
+    function o(i) {
+      if (i = $(i), i) {
+        const a = l.findKey(r, i);
+        a && (!n || de(r, r[a], a, n)) && (delete r[a], s = !0);
+      }
+    }
+    return l.isArray(e) ? e.forEach(o) : o(e), s;
+  }
+  clear(e) {
+    const n = Object.keys(this);
+    let r = n.length, s = !1;
+    for (; r--; ) {
+      const o = n[r];
+      (!e || de(this, this[o], o, e, !0)) && (delete this[o], s = !0);
+    }
+    return s;
+  }
+  normalize(e) {
+    const n = this, r = {};
+    return l.forEach(this, (s, o) => {
+      const i = l.findKey(r, o);
+      if (i) {
+        n[i] = Z(s), delete n[o];
+        return;
+      }
+      const a = e ? Nn(o) : String(o).trim();
+      a !== o && delete n[o], n[a] = Z(s), r[a] = !0;
+    }), this;
+  }
+  concat(...e) {
+    return this.constructor.concat(this, ...e);
+  }
+  toJSON(e) {
+    const n = /* @__PURE__ */ Object.create(null);
+    return l.forEach(this, (r, s) => {
+      r != null && r !== !1 && (n[s] = e && l.isArray(r) ? r.join(", ") : r);
+    }), n;
+  }
+  [Symbol.iterator]() {
+    return Object.entries(this.toJSON())[Symbol.iterator]();
+  }
+  toString() {
+    return Object.entries(this.toJSON()).map(([e, n]) => e + ": " + n).join(`
+`);
+  }
+  get [Symbol.toStringTag]() {
+    return "AxiosHeaders";
+  }
+  static from(e) {
+    return e instanceof this ? e : new this(e);
+  }
+  static concat(e, ...n) {
+    const r = new this(e);
+    return n.forEach((s) => r.set(s)), r;
+  }
+  static accessor(e) {
+    const r = (this[De] = this[De] = {
+      accessors: {}
+    }).accessors, s = this.prototype;
+    function o(i) {
+      const a = $(i);
+      r[a] || (Dn(s, i), r[a] = !0);
+    }
+    return l.isArray(e) ? e.forEach(o) : o(e), this;
+  }
+};
+k.accessor(["Content-Type", "Content-Length", "Accept", "Accept-Encoding", "User-Agent", "Authorization"]);
+l.reduceDescriptors(k.prototype, ({ value: t }, e) => {
+  let n = e[0].toUpperCase() + e.slice(1);
+  return {
+    get: () => t,
+    set(r) {
+      this[n] = r;
+    }
+  };
+});
+l.freezeMethods(k);
+function he(t, e) {
+  const n = this || G, r = e || n, s = k.from(r.headers);
+  let o = r.data;
+  return l.forEach(t, function(a) {
+    o = a.call(n, o, s.normalize(), e ? e.status : void 0);
+  }), s.normalize(), o;
+}
+function lt(t) {
+  return !!(t && t.__CANCEL__);
+}
+function K(t, e, n) {
+  m.call(this, t ?? "canceled", m.ERR_CANCELED, e, n), this.name = "CanceledError";
+}
+l.inherits(K, m, {
+  __CANCEL__: !0
+});
+function ct(t, e, n) {
+  const r = n.config.validateStatus;
+  !n.status || !r || r(n.status) ? t(n) : e(new m(
+    "Request failed with status code " + n.status,
+    [m.ERR_BAD_REQUEST, m.ERR_BAD_RESPONSE][Math.floor(n.status / 100) - 4],
+    n.config,
+    n.request,
+    n
+  ));
+}
+function qn(t) {
+  const e = /^([-+\w]{1,25})(:?\/\/|:)/.exec(t);
+  return e && e[1] || "";
+}
+function Vn(t, e) {
+  t = t || 10;
+  const n = new Array(t), r = new Array(t);
+  let s = 0, o = 0, i;
+  return e = e !== void 0 ? e : 1e3, function(u) {
+    const c = Date.now(), d = r[o];
+    i || (i = c), n[s] = u, r[s] = c;
+    let h = o, y = 0;
+    for (; h !== s; )
+      y += n[h++], h = h % t;
+    if (s = (s + 1) % t, s === o && (o = (o + 1) % t), c - i < e)
+      return;
+    const S = d && c - d;
+    return S ? Math.round(y * 1e3 / S) : void 0;
+  };
+}
+function Bn(t, e) {
+  let n = 0, r = 1e3 / e, s, o;
+  const i = (c, d = Date.now()) => {
+    n = d, s = null, o && (clearTimeout(o), o = null), t.apply(null, c);
+  };
+  return [(...c) => {
+    const d = Date.now(), h = d - n;
+    h >= r ? i(c, d) : (s = c, o || (o = setTimeout(() => {
+      o = null, i(s);
+    }, r - h)));
+  }, () => s && i(s)];
+}
+const ne = (t, e, n = 3) => {
+  let r = 0;
+  const s = Vn(50, 250);
+  return Bn((o) => {
+    const i = o.loaded, a = o.lengthComputable ? o.total : void 0, u = i - r, c = s(u), d = i <= a;
+    r = i;
+    const h = {
+      loaded: i,
+      total: a,
+      progress: a ? i / a : void 0,
+      bytes: u,
+      rate: c || void 0,
+      estimated: c && a && d ? (a - i) / c : void 0,
+      event: o,
+      lengthComputable: a != null,
+      [e ? "download" : "upload"]: !0
+    };
+    t(h);
+  }, n);
+}, qe = (t, e) => {
+  const n = t != null;
+  return [(r) => e[0]({
+    lengthComputable: n,
+    total: t,
+    loaded: r
+  }), e[1]];
+}, Ve = (t) => (...e) => l.asap(() => t(...e)), Fn = T.hasStandardBrowserEnv ? /* @__PURE__ */ ((t, e) => (n) => (n = new URL(n, T.origin), t.protocol === n.protocol && t.host === n.host && (e || t.port === n.port)))(
+  new URL(T.origin),
+  T.navigator && /(msie|trident)/i.test(T.navigator.userAgent)
+) : () => !0, Mn = T.hasStandardBrowserEnv ? (
+  // Standard browser envs support document.cookie
+  {
+    write(t, e, n, r, s, o) {
+      const i = [t + "=" + encodeURIComponent(e)];
+      l.isNumber(n) && i.push("expires=" + new Date(n).toGMTString()), l.isString(r) && i.push("path=" + r), l.isString(s) && i.push("domain=" + s), o === !0 && i.push("secure"), document.cookie = i.join("; ");
+    },
+    read(t) {
+      const e = document.cookie.match(new RegExp("(^|;\\s*)(" + t + ")=([^;]*)"));
+      return e ? decodeURIComponent(e[3]) : null;
+    },
+    remove(t) {
+      this.write(t, "", Date.now() - 864e5);
+    }
+  }
+) : (
+  // Non-standard browser env (web workers, react-native) lack needed support.
+  {
+    write() {
+    },
+    read() {
+      return null;
+    },
+    remove() {
+    }
+  }
+);
+function Hn(t) {
+  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(t);
+}
+function jn(t, e) {
+  return e ? t.replace(/\/?\/$/, "") + "/" + e.replace(/^\/+/, "") : t;
+}
+function ut(t, e, n) {
+  let r = !Hn(e);
+  return t && (r || n == !1) ? jn(t, e) : e;
+}
+const Be = (t) => t instanceof k ? { ...t } : t;
+function B(t, e) {
+  e = e || {};
+  const n = {};
+  function r(c, d, h, y) {
+    return l.isPlainObject(c) && l.isPlainObject(d) ? l.merge.call({ caseless: y }, c, d) : l.isPlainObject(d) ? l.merge({}, d) : l.isArray(d) ? d.slice() : d;
+  }
+  function s(c, d, h, y) {
+    if (l.isUndefined(d)) {
+      if (!l.isUndefined(c))
+        return r(void 0, c, h, y);
+    } else return r(c, d, h, y);
+  }
+  function o(c, d) {
+    if (!l.isUndefined(d))
+      return r(void 0, d);
+  }
+  function i(c, d) {
+    if (l.isUndefined(d)) {
+      if (!l.isUndefined(c))
+        return r(void 0, c);
+    } else return r(void 0, d);
+  }
+  function a(c, d, h) {
+    if (h in e)
+      return r(c, d);
+    if (h in t)
+      return r(void 0, c);
+  }
+  const u = {
+    url: o,
+    method: o,
+    data: o,
+    baseURL: i,
+    transformRequest: i,
+    transformResponse: i,
+    paramsSerializer: i,
+    timeout: i,
+    timeoutMessage: i,
+    withCredentials: i,
+    withXSRFToken: i,
+    adapter: i,
+    responseType: i,
+    xsrfCookieName: i,
+    xsrfHeaderName: i,
+    onUploadProgress: i,
+    onDownloadProgress: i,
+    decompress: i,
+    maxContentLength: i,
+    maxBodyLength: i,
+    beforeRedirect: i,
+    transport: i,
+    httpAgent: i,
+    httpsAgent: i,
+    cancelToken: i,
+    socketPath: i,
+    responseEncoding: i,
+    validateStatus: a,
+    headers: (c, d, h) => s(Be(c), Be(d), h, !0)
+  };
+  return l.forEach(Object.keys(Object.assign({}, t, e)), function(d) {
+    const h = u[d] || s, y = h(t[d], e[d], d);
+    l.isUndefined(y) && h !== a || (n[d] = y);
+  }), n;
+}
+const dt = (t) => {
+  const e = B({}, t);
+  let { data: n, withXSRFToken: r, xsrfHeaderName: s, xsrfCookieName: o, headers: i, auth: a } = e;
+  e.headers = i = k.from(i), e.url = it(ut(e.baseURL, e.url, e.allowAbsoluteUrls), t.params, t.paramsSerializer), a && i.set(
+    "Authorization",
+    "Basic " + btoa((a.username || "") + ":" + (a.password ? unescape(encodeURIComponent(a.password)) : ""))
+  );
+  let u;
+  if (l.isFormData(n)) {
+    if (T.hasStandardBrowserEnv || T.hasStandardBrowserWebWorkerEnv)
+      i.setContentType(void 0);
+    else if ((u = i.getContentType()) !== !1) {
+      const [c, ...d] = u ? u.split(";").map((h) => h.trim()).filter(Boolean) : [];
+      i.setContentType([c || "multipart/form-data", ...d].join("; "));
+    }
+  }
+  if (T.hasStandardBrowserEnv && (r && l.isFunction(r) && (r = r(e)), r || r !== !1 && Fn(e.url))) {
+    const c = s && o && Mn.read(o);
+    c && i.set(s, c);
+  }
+  return e;
+}, Kn = typeof XMLHttpRequest < "u", $n = Kn && function(t) {
+  return new Promise(function(n, r) {
+    const s = dt(t);
+    let o = s.data;
+    const i = k.from(s.headers).normalize();
+    let { responseType: a, onUploadProgress: u, onDownloadProgress: c } = s, d, h, y, S, f;
+    function g() {
+      S && S(), f && f(), s.cancelToken && s.cancelToken.unsubscribe(d), s.signal && s.signal.removeEventListener("abort", d);
+    }
+    let p = new XMLHttpRequest();
+    p.open(s.method.toUpperCase(), s.url, !0), p.timeout = s.timeout;
+    function w() {
+      if (!p)
+        return;
+      const R = k.from(
+        "getAllResponseHeaders" in p && p.getAllResponseHeaders()
+      ), _ = {
+        data: !a || a === "text" || a === "json" ? p.responseText : p.response,
+        status: p.status,
+        statusText: p.statusText,
+        headers: R,
+        config: t,
+        request: p
+      };
+      ct(function(N) {
+        n(N), g();
+      }, function(N) {
+        r(N), g();
+      }, _), p = null;
+    }
+    "onloadend" in p ? p.onloadend = w : p.onreadystatechange = function() {
+      !p || p.readyState !== 4 || p.status === 0 && !(p.responseURL && p.responseURL.indexOf("file:") === 0) || setTimeout(w);
+    }, p.onabort = function() {
+      p && (r(new m("Request aborted", m.ECONNABORTED, t, p)), p = null);
+    }, p.onerror = function() {
+      r(new m("Network Error", m.ERR_NETWORK, t, p)), p = null;
+    }, p.ontimeout = function() {
+      let U = s.timeout ? "timeout of " + s.timeout + "ms exceeded" : "timeout exceeded";
+      const _ = s.transitional || ot;
+      s.timeoutErrorMessage && (U = s.timeoutErrorMessage), r(new m(
+        U,
+        _.clarifyTimeoutError ? m.ETIMEDOUT : m.ECONNABORTED,
+        t,
+        p
+      )), p = null;
+    }, o === void 0 && i.setContentType(null), "setRequestHeader" in p && l.forEach(i.toJSON(), function(U, _) {
+      p.setRequestHeader(_, U);
+    }), l.isUndefined(s.withCredentials) || (p.withCredentials = !!s.withCredentials), a && a !== "json" && (p.responseType = s.responseType), c && ([y, f] = ne(c, !0), p.addEventListener("progress", y)), u && p.upload && ([h, S] = ne(u), p.upload.addEventListener("progress", h), p.upload.addEventListener("loadend", S)), (s.cancelToken || s.signal) && (d = (R) => {
+      p && (r(!R || R.type ? new K(null, t, p) : R), p.abort(), p = null);
+    }, s.cancelToken && s.cancelToken.subscribe(d), s.signal && (s.signal.aborted ? d() : s.signal.addEventListener("abort", d)));
+    const b = qn(s.url);
+    if (b && T.protocols.indexOf(b) === -1) {
+      r(new m("Unsupported protocol " + b + ":", m.ERR_BAD_REQUEST, t));
+      return;
+    }
+    p.send(o || null);
+  });
+}, zn = (t, e) => {
+  const { length: n } = t = t ? t.filter(Boolean) : [];
+  if (e || n) {
+    let r = new AbortController(), s;
+    const o = function(c) {
+      if (!s) {
+        s = !0, a();
+        const d = c instanceof Error ? c : this.reason;
+        r.abort(d instanceof m ? d : new K(d instanceof Error ? d.message : d));
+      }
+    };
+    let i = e && setTimeout(() => {
+      i = null, o(new m(`timeout ${e} of ms exceeded`, m.ETIMEDOUT));
+    }, e);
+    const a = () => {
+      t && (i && clearTimeout(i), i = null, t.forEach((c) => {
+        c.unsubscribe ? c.unsubscribe(o) : c.removeEventListener("abort", o);
+      }), t = null);
+    };
+    t.forEach((c) => c.addEventListener("abort", o));
+    const { signal: u } = r;
+    return u.unsubscribe = () => l.asap(a), u;
+  }
+}, Wn = function* (t, e) {
+  let n = t.byteLength;
+  if (n < e) {
+    yield t;
+    return;
+  }
+  let r = 0, s;
+  for (; r < n; )
+    s = r + e, yield t.slice(r, s), r = s;
+}, Jn = async function* (t, e) {
+  for await (const n of Gn(t))
+    yield* Wn(n, e);
+}, Gn = async function* (t) {
+  if (t[Symbol.asyncIterator]) {
+    yield* t;
+    return;
+  }
+  const e = t.getReader();
+  try {
+    for (; ; ) {
+      const { done: n, value: r } = await e.read();
+      if (n)
+        break;
+      yield r;
+    }
+  } finally {
+    await e.cancel();
+  }
+}, Fe = (t, e, n, r) => {
+  const s = Jn(t, e);
+  let o = 0, i, a = (u) => {
+    i || (i = !0, r && r(u));
+  };
+  return new ReadableStream({
+    async pull(u) {
+      try {
+        const { done: c, value: d } = await s.next();
+        if (c) {
+          a(), u.close();
+          return;
+        }
+        let h = d.byteLength;
+        if (n) {
+          let y = o += h;
+          n(y);
+        }
+        u.enqueue(new Uint8Array(d));
+      } catch (c) {
+        throw a(c), c;
+      }
+    },
+    cancel(u) {
+      return a(u), s.return();
+    }
+  }, {
+    highWaterMark: 2
+  });
+}, le = typeof fetch == "function" && typeof Request == "function" && typeof Response == "function", ht = le && typeof ReadableStream == "function", Xn = le && (typeof TextEncoder == "function" ? /* @__PURE__ */ ((t) => (e) => t.encode(e))(new TextEncoder()) : async (t) => new Uint8Array(await new Response(t).arrayBuffer())), ft = (t, ...e) => {
+  try {
+    return !!t(...e);
+  } catch {
+    return !1;
+  }
+}, Qn = ht && ft(() => {
+  let t = !1;
+  const e = new Request(T.origin, {
+    body: new ReadableStream(),
+    method: "POST",
+    get duplex() {
+      return t = !0, "half";
+    }
+  }).headers.has("Content-Type");
+  return t && !e;
+}), Me = 64 * 1024, we = ht && ft(() => l.isReadableStream(new Response("").body)), re = {
+  stream: we && ((t) => t.body)
+};
+le && ((t) => {
+  ["text", "arrayBuffer", "blob", "formData", "stream"].forEach((e) => {
+    !re[e] && (re[e] = l.isFunction(t[e]) ? (n) => n[e]() : (n, r) => {
+      throw new m(`Response type '${e}' is not supported`, m.ERR_NOT_SUPPORT, r);
+    });
+  });
+})(new Response());
+const Yn = async (t) => {
+  if (t == null)
+    return 0;
+  if (l.isBlob(t))
+    return t.size;
+  if (l.isSpecCompliantForm(t))
+    return (await new Request(T.origin, {
+      method: "POST",
+      body: t
+    }).arrayBuffer()).byteLength;
+  if (l.isArrayBufferView(t) || l.isArrayBuffer(t))
+    return t.byteLength;
+  if (l.isURLSearchParams(t) && (t = t + ""), l.isString(t))
+    return (await Xn(t)).byteLength;
+}, Zn = async (t, e) => {
+  const n = l.toFiniteNumber(t.getContentLength());
+  return n ?? Yn(e);
+}, er = le && (async (t) => {
+  let {
+    url: e,
+    method: n,
+    data: r,
+    signal: s,
+    cancelToken: o,
+    timeout: i,
+    onDownloadProgress: a,
+    onUploadProgress: u,
+    responseType: c,
+    headers: d,
+    withCredentials: h = "same-origin",
+    fetchOptions: y
+  } = dt(t);
+  c = c ? (c + "").toLowerCase() : "text";
+  let S = zn([s, o && o.toAbortSignal()], i), f;
+  const g = S && S.unsubscribe && (() => {
+    S.unsubscribe();
+  });
+  let p;
+  try {
+    if (u && Qn && n !== "get" && n !== "head" && (p = await Zn(d, r)) !== 0) {
+      let _ = new Request(e, {
+        method: "POST",
+        body: r,
+        duplex: "half"
+      }), I;
+      if (l.isFormData(r) && (I = _.headers.get("content-type")) && d.setContentType(I), _.body) {
+        const [N, X] = qe(
+          p,
+          ne(Ve(u))
+        );
+        r = Fe(_.body, Me, N, X);
+      }
+    }
+    l.isString(h) || (h = h ? "include" : "omit");
+    const w = "credentials" in Request.prototype;
+    f = new Request(e, {
+      ...y,
+      signal: S,
+      method: n.toUpperCase(),
+      headers: d.normalize().toJSON(),
+      body: r,
+      duplex: "half",
+      credentials: w ? h : void 0
+    });
+    let b = await fetch(f);
+    const R = we && (c === "stream" || c === "response");
+    if (we && (a || R && g)) {
+      const _ = {};
+      ["status", "statusText", "headers"].forEach((Oe) => {
+        _[Oe] = b[Oe];
+      });
+      const I = l.toFiniteNumber(b.headers.get("content-length")), [N, X] = a && qe(
+        I,
+        ne(Ve(a), !0)
+      ) || [];
+      b = new Response(
+        Fe(b.body, Me, N, () => {
+          X && X(), g && g();
+        }),
+        _
+      );
+    }
+    c = c || "text";
+    let U = await re[l.findKey(re, c) || "text"](b, t);
+    return !R && g && g(), await new Promise((_, I) => {
+      ct(_, I, {
+        data: U,
+        headers: k.from(b.headers),
+        status: b.status,
+        statusText: b.statusText,
+        config: t,
+        request: f
+      });
+    });
+  } catch (w) {
+    throw g && g(), w && w.name === "TypeError" && /fetch/i.test(w.message) ? Object.assign(
+      new m("Network Error", m.ERR_NETWORK, t, f),
+      {
+        cause: w.cause || w
+      }
+    ) : m.from(w, w && w.code, t, f);
+  }
+}), Se = {
+  http: mn,
+  xhr: $n,
+  fetch: er
+};
+l.forEach(Se, (t, e) => {
+  if (t) {
+    try {
+      Object.defineProperty(t, "name", { value: e });
+    } catch {
+    }
+    Object.defineProperty(t, "adapterName", { value: e });
+  }
+});
+const He = (t) => `- ${t}`, tr = (t) => l.isFunction(t) || t === null || t === !1, pt = {
+  getAdapter: (t) => {
+    t = l.isArray(t) ? t : [t];
+    const { length: e } = t;
+    let n, r;
+    const s = {};
+    for (let o = 0; o < e; o++) {
+      n = t[o];
+      let i;
+      if (r = n, !tr(n) && (r = Se[(i = String(n)).toLowerCase()], r === void 0))
+        throw new m(`Unknown adapter '${i}'`);
+      if (r)
+        break;
+      s[i || "#" + o] = r;
+    }
+    if (!r) {
+      const o = Object.entries(s).map(
+        ([a, u]) => `adapter ${a} ` + (u === !1 ? "is not supported by the environment" : "is not available in the build")
+      );
+      let i = e ? o.length > 1 ? `since :
+` + o.map(He).join(`
+`) : " " + He(o[0]) : "as no adapter specified";
+      throw new m(
+        "There is no suitable adapter to dispatch the request " + i,
+        "ERR_NOT_SUPPORT"
+      );
+    }
+    return r;
+  },
+  adapters: Se
+};
+function fe(t) {
+  if (t.cancelToken && t.cancelToken.throwIfRequested(), t.signal && t.signal.aborted)
+    throw new K(null, t);
+}
+function je(t) {
+  return fe(t), t.headers = k.from(t.headers), t.data = he.call(
+    t,
+    t.transformRequest
+  ), ["post", "put", "patch"].indexOf(t.method) !== -1 && t.headers.setContentType("application/x-www-form-urlencoded", !1), pt.getAdapter(t.adapter || G.adapter)(t).then(function(r) {
+    return fe(t), r.data = he.call(
+      t,
+      t.transformResponse,
+      r
+    ), r.headers = k.from(r.headers), r;
+  }, function(r) {
+    return lt(r) || (fe(t), r && r.response && (r.response.data = he.call(
+      t,
+      t.transformResponse,
+      r.response
+    ), r.response.headers = k.from(r.response.headers))), Promise.reject(r);
+  });
+}
+const mt = "1.8.4", ce = {};
+["object", "boolean", "number", "function", "string", "symbol"].forEach((t, e) => {
+  ce[t] = function(r) {
+    return typeof r === t || "a" + (e < 1 ? "n " : " ") + t;
+  };
+});
+const Ke = {};
+ce.transitional = function(e, n, r) {
+  function s(o, i) {
+    return "[Axios v" + mt + "] Transitional option '" + o + "'" + i + (r ? ". " + r : "");
+  }
+  return (o, i, a) => {
+    if (e === !1)
+      throw new m(
+        s(i, " has been removed" + (n ? " in " + n : "")),
+        m.ERR_DEPRECATED
+      );
+    return n && !Ke[i] && (Ke[i] = !0, console.warn(
+      s(
+        i,
+        " has been deprecated since v" + n + " and will be removed in the near future"
+      )
+    )), e ? e(o, i, a) : !0;
+  };
+};
+ce.spelling = function(e) {
+  return (n, r) => (console.warn(`${r} is likely a misspelling of ${e}`), !0);
+};
+function nr(t, e, n) {
+  if (typeof t != "object")
+    throw new m("options must be an object", m.ERR_BAD_OPTION_VALUE);
+  const r = Object.keys(t);
+  let s = r.length;
+  for (; s-- > 0; ) {
+    const o = r[s], i = e[o];
+    if (i) {
+      const a = t[o], u = a === void 0 || i(a, o, t);
+      if (u !== !0)
+        throw new m("option " + o + " must be " + u, m.ERR_BAD_OPTION_VALUE);
+      continue;
+    }
+    if (n !== !0)
+      throw new m("Unknown option " + o, m.ERR_BAD_OPTION);
+  }
+}
+const ee = {
+  assertOptions: nr,
+  validators: ce
+}, v = ee.validators;
+let V = class {
+  constructor(e) {
+    this.defaults = e, this.interceptors = {
+      request: new Ne(),
+      response: new Ne()
+    };
+  }
+  /**
+   * Dispatch a request
+   *
+   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
+   * @param {?Object} config
+   *
+   * @returns {Promise} The Promise to be fulfilled
+   */
+  async request(e, n) {
+    try {
+      return await this._request(e, n);
+    } catch (r) {
+      if (r instanceof Error) {
+        let s = {};
+        Error.captureStackTrace ? Error.captureStackTrace(s) : s = new Error();
+        const o = s.stack ? s.stack.replace(/^.+\n/, "") : "";
+        try {
+          r.stack ? o && !String(r.stack).endsWith(o.replace(/^.+\n.+\n/, "")) && (r.stack += `
+` + o) : r.stack = o;
+        } catch {
+        }
+      }
+      throw r;
+    }
+  }
+  _request(e, n) {
+    typeof e == "string" ? (n = n || {}, n.url = e) : n = e || {}, n = B(this.defaults, n);
+    const { transitional: r, paramsSerializer: s, headers: o } = n;
+    r !== void 0 && ee.assertOptions(r, {
+      silentJSONParsing: v.transitional(v.boolean),
+      forcedJSONParsing: v.transitional(v.boolean),
+      clarifyTimeoutError: v.transitional(v.boolean)
+    }, !1), s != null && (l.isFunction(s) ? n.paramsSerializer = {
+      serialize: s
+    } : ee.assertOptions(s, {
+      encode: v.function,
+      serialize: v.function
+    }, !0)), n.allowAbsoluteUrls !== void 0 || (this.defaults.allowAbsoluteUrls !== void 0 ? n.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls : n.allowAbsoluteUrls = !0), ee.assertOptions(n, {
+      baseUrl: v.spelling("baseURL"),
+      withXsrfToken: v.spelling("withXSRFToken")
+    }, !0), n.method = (n.method || this.defaults.method || "get").toLowerCase();
+    let i = o && l.merge(
+      o.common,
+      o[n.method]
+    );
+    o && l.forEach(
+      ["delete", "get", "head", "post", "put", "patch", "common"],
+      (f) => {
+        delete o[f];
+      }
+    ), n.headers = k.concat(i, o);
+    const a = [];
+    let u = !0;
+    this.interceptors.request.forEach(function(g) {
+      typeof g.runWhen == "function" && g.runWhen(n) === !1 || (u = u && g.synchronous, a.unshift(g.fulfilled, g.rejected));
+    });
+    const c = [];
+    this.interceptors.response.forEach(function(g) {
+      c.push(g.fulfilled, g.rejected);
+    });
+    let d, h = 0, y;
+    if (!u) {
+      const f = [je.bind(this), void 0];
+      for (f.unshift.apply(f, a), f.push.apply(f, c), y = f.length, d = Promise.resolve(n); h < y; )
+        d = d.then(f[h++], f[h++]);
+      return d;
+    }
+    y = a.length;
+    let S = n;
+    for (h = 0; h < y; ) {
+      const f = a[h++], g = a[h++];
+      try {
+        S = f(S);
+      } catch (p) {
+        g.call(this, p);
+        break;
+      }
+    }
+    try {
+      d = je.call(this, S);
+    } catch (f) {
+      return Promise.reject(f);
+    }
+    for (h = 0, y = c.length; h < y; )
+      d = d.then(c[h++], c[h++]);
+    return d;
+  }
+  getUri(e) {
+    e = B(this.defaults, e);
+    const n = ut(e.baseURL, e.url, e.allowAbsoluteUrls);
+    return it(n, e.params, e.paramsSerializer);
+  }
+};
+l.forEach(["delete", "get", "head", "options"], function(e) {
+  V.prototype[e] = function(n, r) {
+    return this.request(B(r || {}, {
+      method: e,
+      url: n,
+      data: (r || {}).data
+    }));
+  };
+});
+l.forEach(["post", "put", "patch"], function(e) {
+  function n(r) {
+    return function(o, i, a) {
+      return this.request(B(a || {}, {
+        method: e,
+        headers: r ? {
+          "Content-Type": "multipart/form-data"
+        } : {},
+        url: o,
+        data: i
+      }));
+    };
+  }
+  V.prototype[e] = n(), V.prototype[e + "Form"] = n(!0);
+});
+let rr = class gt {
+  constructor(e) {
+    if (typeof e != "function")
+      throw new TypeError("executor must be a function.");
+    let n;
+    this.promise = new Promise(function(o) {
+      n = o;
+    });
+    const r = this;
+    this.promise.then((s) => {
+      if (!r._listeners) return;
+      let o = r._listeners.length;
+      for (; o-- > 0; )
+        r._listeners[o](s);
+      r._listeners = null;
+    }), this.promise.then = (s) => {
+      let o;
+      const i = new Promise((a) => {
+        r.subscribe(a), o = a;
+      }).then(s);
+      return i.cancel = function() {
+        r.unsubscribe(o);
+      }, i;
+    }, e(function(o, i, a) {
+      r.reason || (r.reason = new K(o, i, a), n(r.reason));
+    });
+  }
+  /**
+   * Throws a `CanceledError` if cancellation has been requested.
+   */
+  throwIfRequested() {
+    if (this.reason)
+      throw this.reason;
+  }
+  /**
+   * Subscribe to the cancel signal
+   */
+  subscribe(e) {
+    if (this.reason) {
+      e(this.reason);
+      return;
+    }
+    this._listeners ? this._listeners.push(e) : this._listeners = [e];
+  }
+  /**
+   * Unsubscribe from the cancel signal
+   */
+  unsubscribe(e) {
+    if (!this._listeners)
+      return;
+    const n = this._listeners.indexOf(e);
+    n !== -1 && this._listeners.splice(n, 1);
+  }
+  toAbortSignal() {
+    const e = new AbortController(), n = (r) => {
+      e.abort(r);
+    };
+    return this.subscribe(n), e.signal.unsubscribe = () => this.unsubscribe(n), e.signal;
+  }
+  /**
+   * Returns an object that contains a new `CancelToken` and a function that, when called,
+   * cancels the `CancelToken`.
+   */
+  static source() {
+    let e;
+    return {
+      token: new gt(function(s) {
+        e = s;
+      }),
+      cancel: e
+    };
+  }
+};
+function sr(t) {
+  return function(n) {
+    return t.apply(null, n);
+  };
+}
+function ir(t) {
+  return l.isObject(t) && t.isAxiosError === !0;
+}
+const be = {
+  Continue: 100,
+  SwitchingProtocols: 101,
+  Processing: 102,
+  EarlyHints: 103,
+  Ok: 200,
+  Created: 201,
+  Accepted: 202,
+  NonAuthoritativeInformation: 203,
+  NoContent: 204,
+  ResetContent: 205,
+  PartialContent: 206,
+  MultiStatus: 207,
+  AlreadyReported: 208,
+  ImUsed: 226,
+  MultipleChoices: 300,
+  MovedPermanently: 301,
+  Found: 302,
+  SeeOther: 303,
+  NotModified: 304,
+  UseProxy: 305,
+  Unused: 306,
+  TemporaryRedirect: 307,
+  PermanentRedirect: 308,
+  BadRequest: 400,
+  Unauthorized: 401,
+  PaymentRequired: 402,
+  Forbidden: 403,
+  NotFound: 404,
+  MethodNotAllowed: 405,
+  NotAcceptable: 406,
+  ProxyAuthenticationRequired: 407,
+  RequestTimeout: 408,
+  Conflict: 409,
+  Gone: 410,
+  LengthRequired: 411,
+  PreconditionFailed: 412,
+  PayloadTooLarge: 413,
+  UriTooLong: 414,
+  UnsupportedMediaType: 415,
+  RangeNotSatisfiable: 416,
+  ExpectationFailed: 417,
+  ImATeapot: 418,
+  MisdirectedRequest: 421,
+  UnprocessableEntity: 422,
+  Locked: 423,
+  FailedDependency: 424,
+  TooEarly: 425,
+  UpgradeRequired: 426,
+  PreconditionRequired: 428,
+  TooManyRequests: 429,
+  RequestHeaderFieldsTooLarge: 431,
+  UnavailableForLegalReasons: 451,
+  InternalServerError: 500,
+  NotImplemented: 501,
+  BadGateway: 502,
+  ServiceUnavailable: 503,
+  GatewayTimeout: 504,
+  HttpVersionNotSupported: 505,
+  VariantAlsoNegotiates: 506,
+  InsufficientStorage: 507,
+  LoopDetected: 508,
+  NotExtended: 510,
+  NetworkAuthenticationRequired: 511
+};
+Object.entries(be).forEach(([t, e]) => {
+  be[e] = t;
+});
+function yt(t) {
+  const e = new V(t), n = Je(V.prototype.request, e);
+  return l.extend(n, V.prototype, e, { allOwnKeys: !0 }), l.extend(n, e, null, { allOwnKeys: !0 }), n.create = function(s) {
+    return yt(B(t, s));
+  }, n;
+}
+const E = yt(G);
+E.Axios = V;
+E.CanceledError = K;
+E.CancelToken = rr;
+E.isCancel = lt;
+E.VERSION = mt;
+E.toFormData = ae;
+E.AxiosError = m;
+E.Cancel = E.CanceledError;
+E.all = function(e) {
+  return Promise.all(e);
+};
+E.spread = sr;
+E.isAxiosError = ir;
+E.mergeConfig = B;
+E.AxiosHeaders = k;
+E.formToJSON = (t) => at(l.isHTMLForm(t) ? new FormData(t) : t);
+E.getAdapter = pt.getAdapter;
+E.HttpStatusCode = be;
+E.default = E;
+const {
+  Axios: dr,
+  AxiosError: hr,
+  CanceledError: fr,
+  isCancel: pr,
+  CancelToken: mr,
+  VERSION: gr,
+  all: yr,
+  Cancel: Er,
+  isAxiosError: wr,
+  spread: Sr,
+  toFormData: br,
+  AxiosHeaders: Rr,
+  HttpStatusCode: Ar,
+  formToJSON: Tr,
+  getAdapter: _r,
+  mergeConfig: kr
+} = E, Re = E.create({
+  baseURL: "https://app.posthog.com"
+});
+Re.interceptors.request.use((t) => (t.data = {
+  ...t.data,
+  api_key: "phc_cWZiUS6cHGvUDyCMDRK8Cvoayv5m6x6YOT02RW91vOX"
+}, t));
+const pe = {
+  capture: (t, e) => Re.post("/capture", {
+    event: t,
+    properties: e
+  }),
+  merge: (t, e) => Re.post("/capture", {
+    event: "$merge_dangerously",
+    distinct_id: e,
+    properties: {
+      alias: t
+    }
+  })
+}, z = "village.distinct_id";
+class D {
+  static getDistinctId() {
+    let e = localStorage.getItem(z);
+    if (e) return e;
+    const n = xt();
+    return localStorage.setItem(z, n), n;
+  }
+  static setUserId(e) {
+    const n = localStorage.getItem(z);
+    n && n !== e && pe.merge(n, e), localStorage.setItem(z, e);
+  }
+  static removeUserId() {
+    localStorage.removeItem(z);
+  }
+  static trackButtonClick({ type: e, module: n, url: r, partnerKey: s }) {
+    pe.capture("PaaS Button Clicked", {
+      type: e,
+      module: n,
+      url: r,
+      partnerKey: s,
+      distinct_id: this.getDistinctId(),
+      $current_url: window.location.href
+    });
+  }
+  static trackButtonRender({ partnerKey: e }) {
+    pe.capture("PaaS Button Rendered", {
+      partnerKey: e,
+      distinct_id: this.getDistinctId(),
+      $current_url: window.location.href
+    });
+  }
+}
+class or {
+  constructor(e) {
+    this.app = e, this.listenerMap = /* @__PURE__ */ new WeakMap(), this.syncUrlElements = /* @__PURE__ */ new Map(), this.elementsWithListeners = /* @__PURE__ */ new Set();
+  }
+  // Restored original handleDataUrl
+  handleDataUrl(e, n) {
+    const r = this.isValidUrl(n) ? n : "http://invalidURL.com";
+    this.app.elementRequests.delete(e), this.removeListener(e), this.syncUrlElements.set(e, r);
+    const s = () => {
+      D.trackButtonClick({
+        type: "paths",
+        validURL: r,
+        partnerKey: this.app.partnerKey
+      }), this.app.url = r, this.app.module = null, this.app.renderIframe();
+    };
+    this.listenerMap.set(e, s), e.addEventListener("click", s), this.elementsWithListeners.add(e), n !== "" && this.app.initializeButtonState(e), this.app.token && this.app.checkPathsAndUpdateButton(e, r);
+  }
+  // Restored original handleModule (primarily for SYNC onboarding click)
+  handleModule(e, n) {
+    if (this.app.elementRequests.delete(e), this.syncUrlElements.delete(e), !Object.values(H).includes(n)) {
+      console.warn(`Invalid module type: ${n}`);
+      return;
+    }
+    this.removeListener(e);
+    const r = () => {
+      try {
+        D.trackButtonClick({
+          type: "onboarding",
+          // Assuming non-url module is onboarding
+          module: n,
+          partnerKey: this.app.partnerKey
+        }), this.app.url = null, this.app.module = n, this.app.renderIframe();
+      } catch (s) {
+        We(s, {
+          additionalInfo: {
+            function: "handleModule (click)",
+            moduleValue: n,
+            element: e
+          }
+        });
+      }
+    };
+    this.listenerMap.set(e, r), e.addEventListener("click", r), this.elementsWithListeners.add(e);
+  }
+  removeListener(e) {
+    const n = this.listenerMap.get(e);
+    n && e.removeEventListener("click", n), this.app.elementRequests.delete(e), this.syncUrlElements.delete(e), this.elementsWithListeners.delete(e);
+  }
+  // Method to get tracked elements for refresh
+  getSyncUrlElements() {
+    return this.syncUrlElements;
+  }
+  // Method to get all tracked elements for destroy cleanup
+  getAllElementsWithListeners() {
+    return this.elementsWithListeners;
+  }
+  isValidUrl(e) {
+    if (!e || typeof e != "string" || e.trim() === "")
+      return !1;
+    const n = e.trim();
+    if (!/^https?:\/\//i.test(n))
+      return !1;
+    try {
+      return new URL(n), !0;
+    } catch {
+      return !1;
+    }
+  }
+}
+const P = class P {
+  static getInstance(e, n) {
+    return P.instance || (P.instance = new P(e, n)), P.instance;
+  }
+  constructor(e, n) {
+    this.partnerKey = e, this.userReference = null, this.token = L.get("village.token"), this.config = n, this.url = null, this.module = null, this.iframe = null, this.observer = null, this.inlineSearchIframes = /* @__PURE__ */ new Map(), this.messageHandlers = new At(this), this.moduleHandlers = new or(this), this.apiUrl = "https://localhost:8000", this.hasRenderedButton = !1, this.elementRequests = /* @__PURE__ */ new Map(), this.elementRequestIds = /* @__PURE__ */ new Map(), this.globalRequestCounter = 0, this.processedSignatures = /* @__PURE__ */ new Set(), this.initialized = !1;
+  }
+  async init() {
+    this.initialized || (this.initialized = !0, this.setupMessageHandlers(), await this.getAuthToken(), await this.getUser(), this.delayedInitialize());
+  }
+  delayedInitialize() {
+    requestAnimationFrame(() => {
+      this.setupMutationObserver(), this.scanExistingElements();
+    });
+  }
+  setupMessageHandlers() {
+    window.addEventListener("message", (e) => {
+      this.messageHandlers.handle(e);
+    });
+  }
+  setupMutationObserver() {
+    this.observer = new MutationObserver(this.handleMutations.bind(this)), this.observer.observe(document.body, {
+      childList: !0,
+      subtree: !0,
+      attributes: !0,
+      characterData: !0,
+      characterDataOldValue: !0
+    });
+  }
+  handleMutations(e) {
+    e.forEach((n) => {
+      n.type === "attributes" ? this.handleAttributeChange(n) : n.type === "childList" && this.handleNewElements(n);
+    });
+  }
+  // Handle attribute changes on existing elements
+  handleAttributeChange(e) {
+    const n = e.target, r = e.attributeName;
+    (r === F || r === M) && this.checkAndAddListenerIfValid(n);
+  }
+  // Handle new elements added to the DOM
+  handleNewElements(e) {
+    e.addedNodes.forEach((n) => {
+      if (n.nodeType !== Node.ELEMENT_NODE) return;
+      if (this.hasVillageAttributes(n)) {
+        this.checkAndAddListenerIfValid(n);
+        return;
+      }
+      const r = `[${F}], [${M}]`;
+      n.querySelectorAll(r).forEach((s) => {
+        this.checkAndAddListenerIfValid(s);
+      });
+    });
+  }
+  // Check if an element has any village attributes
+  hasVillageAttributes(e) {
+    return e.hasAttribute(F) || e.hasAttribute(M);
+  }
+  checkAndAddListenerIfValid(e) {
+    this.addListenerToElement(e);
+  }
+  async addListenerToElement(e) {
+    const n = this.getElementSignature(e);
+    if (this.processedSignatures.has(n))
+      return;
+    this.processedSignatures.add(n), this.elementRequests.delete(e), this.elementRequestIds.delete(e);
+    const r = e.getAttribute(F), s = e.getAttribute(M);
+    if (s === H.SEARCH) {
+      const o = {
+        partnerKey: this.partnerKey,
+        userReference: this.userReference,
+        token: this.token
+      }, i = St(e, o);
+      i && this.inlineSearchIframes.set(e, i);
+    } else
+      this.inlineSearchIframes.delete(e), r && s != H.SYNC && s != H.SEARCH ? this.moduleHandlers.handleDataUrl(e, r) : this.moduleHandlers.handleModule(
+        e,
+        s || H.SYNC
+      ), this.hasRenderedButton || (this.hasRenderedButton = !0, D.trackButtonRender({ partnerKey: this.partnerKey }));
+  }
+  extractTokenFromQueryParams() {
+    const e = new URL(window.location.href), n = e.searchParams.get("villageToken");
+    if (n) {
+      e.searchParams.delete("villageToken");
+      const r = e.pathname + e.search + e.hash;
+      return window.history.replaceState({}, document.title, r), n;
+    }
+    return null;
+  }
+  updateCookieToken(e) {
+    if (this._clearAllRequests(), this.isTokenValid(e)) {
+      this.saveExtensionToken(e);
+      const n = {
+        secure: location.protocol === "https:",
+        expires: 60,
+        path: "/"
+      };
+      L.set("village.token", e, n), this.token != e && (this.token = e, this._refreshInlineSearchIframes());
+    }
+  }
+  isTokenValid(e) {
+    return typeof e == "string" && e.length > 10 && e !== "not_found";
+  }
+  async getAuthToken(e = 1e3) {
+    let n = L.get("village.token");
+    if (this.isTokenValid(n) || (n = this.extractTokenFromQueryParams()), !this.isTokenValid(n))
+      try {
+        n = await this.requestExtensionToken(e);
+      } catch {
+      }
+    return this.isTokenValid(n) && this.updateCookieToken(n), n;
+  }
+  requestExtensionToken(e) {
+    const n = { type: "STORAGE_GET_TOKEN", source: "VillageSDK" };
+    return new Promise((r, s) => {
+      const o = (a) => {
+        if (a.source !== window) return;
+        const { source: u, message: c } = a.data || {};
+        (u === "VillageExtension" || u === "VillageSDK") && (c != null && c.token) && (window.removeEventListener("message", o), clearTimeout(i), r(c.token));
+      }, i = setTimeout(() => {
+        window.removeEventListener("message", o), s(new Error(`Extension did not respond in time ${e}`));
+      }, e);
+      window.addEventListener("message", o), window.postMessage(n, "*");
+    });
+  }
+  saveExtensionToken(e) {
+    const n = { type: "STORAGE_SET_TOKEN", source: "VillageSDK", token: e };
+    window.postMessage(n, "*");
+  }
+  async validateToken(e) {
+    if (!this.isTokenValid(e))
+      return !1;
+    try {
+      const { data: n } = await E.get(`${this.apiUrl}/user`, {
+        headers: { "x-access-token": e, "app-public-key": this.partnerKey }
+      });
+      if (!(n != null && n.id))
+        return !1;
+      const r = `${n == null ? void 0 : n.id}`;
+      return D.setUserId(r), !0;
+    } catch (n) {
+      return console.warn("[Village] Token validation failed:", n.message), !1;
+    }
+  }
+  async getUser() {
+    const e = await this.getAuthToken();
+    if (e)
+      try {
+        const { data: n } = await E.get(`${this.apiUrl}/user`, {
+          headers: { "x-access-token": e, "app-public-key": this.partnerKey }
+        });
+        if (!(n != null && n.id)) throw new Error("No user ID");
+        const r = `${n == null ? void 0 : n.id}`;
+        D.setUserId(r);
+      } catch {
+        this._clearAllRequests(), this.token = null, L.remove("village.token"), D.removeUserId();
+      }
+  }
+  handleOAuthRequest() {
+    const e = "https://village.do/widget/oauth", n = new URLSearchParams();
+    this.partnerKey && n.append("partnerKey", this.partnerKey), this.userReference && n.append("userReference", this.userReference);
+    const r = n.toString() ? `${e}?${n.toString()}` : e;
+    window.open(r, "paas-oauth", "popup=true,width=500,height=600");
+  }
+  handleOAuthSuccess(e) {
+    this.updateCookieToken(e.token), this._refreshInlineSearchIframes(), this.refreshSyncUrlElements(), this.renderIframe();
+  }
+  _refreshInlineSearchIframes() {
+    this.inlineSearchIframes.forEach((e) => {
+      if (e && e.contentWindow) {
+        const n = {
+          partnerKey: this.partnerKey,
+          userReference: this.userReference,
+          token: this.token,
+          module: H.SEARCH
+        };
+        e.src = Te(n);
+      }
+    });
+  }
+  handleOAuthError() {
+    alert("Sorry, something went wrong with your login");
+  }
+  handleRemoveIframe() {
+    this.url = null, this.module = null, this.renderIframe();
+  }
+  handleIframeLoaded() {
+    this.iframe && this.iframe.hideSpinner();
+  }
+  scanExistingElements() {
+    const e = `[${F}], [${M}]`;
+    document.querySelectorAll(e).forEach((r) => {
+      this.checkAndAddListenerIfValid(r);
+    });
+  }
+  async checkPaths(e) {
+    var n, r;
+    if (this.token || (this.token = await this.getAuthToken()), !this.token) return null;
+    try {
+      const { data: s } = await E.post(
+        `${this.apiUrl}/paths-check`,
+        { url: e },
+        {
+          headers: {
+            "x-access-token": this.token,
+            "app-public-key": this.partnerKey
+          }
+        }
+      );
+      return s;
+    } catch (s) {
+      return ((r = (n = s == null ? void 0 : s.response) == null ? void 0 : n.data) == null ? void 0 : r.auth) === !1 && (this._clearAllRequests(), L.remove("village.token"), this.token = null), null;
+    }
+  }
+  getButtonChildren(e) {
+    const n = e.querySelector(
+      '[village-paths-availability="found"]'
+    ), r = e.querySelector(
+      '[village-paths-availability="not-found"]'
+    ), s = e.querySelector(
+      '[village-paths-availability="loading"]'
+    ), o = e.querySelector(
+      '[village-paths-availability="error"]'
+    );
+    o && (o.style.display = "none");
+    const i = e.querySelector(
+      '[village-paths-availability="not-activated"]'
+    );
+    return {
+      foundElement: n,
+      notFoundElement: r,
+      loadingElement: s,
+      errorElement: o,
+      not_activated: i
+    };
+  }
+  initializeButtonState(e) {
+    this._setElementState(e, "loading");
+  }
+  async checkPathsAndUpdateButton(e, n) {
+    const r = this.elementRequests.get(e);
+    if (r)
+      return r;
+    const s = ++this.globalRequestCounter, o = this._executePathCheck(e, n, s);
+    this.elementRequests.set(e, o), this.elementRequestIds.set(e, s);
+    try {
+      await o;
+    } finally {
+      this.elementRequests.delete(e), this.elementRequestIds.delete(e);
+    }
+  }
+  async _executePathCheck(e, n, r) {
+    this._setElementState(e, "loading");
+    try {
+      const s = await this.checkPaths(n);
+      r === this.elementRequestIds.get(e) && this._setElementState(
+        e,
+        s != null && s.relationship ? "found" : "not-found",
+        s == null ? void 0 : s.relationship
+      );
+    } catch (s) {
+      We(s, {
+        additionalInfo: {
+          function: "_executePathCheck",
+          url: n,
+          element: e
+        }
+      }), r === this.elementRequestIds.get(e) && this._setElementState(e, "not-found");
+    }
+  }
+  // ✅ ATOMIC: Centralized state management prevents race conditions
+  _setElementState(e, n, r = null) {
+    const {
+      foundElement: s,
+      notFoundElement: o,
+      loadingElement: i,
+      errorElement: a,
+      not_activated: u
+    } = this.getButtonChildren(e);
+    [s, o, i, a, u].filter(Boolean).forEach((d) => {
+      d.style.cssText = "display: none !important";
+    });
+    let c = null;
+    switch (n) {
+      case "loading":
+        c = i;
+        break;
+      case "found":
+        c = s, c && r && this.addFacePilesAndCount(s, r);
+        break;
+      case "not-found":
+      case "error":
+        c = o;
+        break;
+      case "not-activated":
+        c = u;
+        break;
+    }
+    c && (c.style.cssText = "display: inline-flex !important");
+  }
+  // Clear all requests (used during auth changes)
+  _clearAllRequests() {
+    var e;
+    this.elementRequests.clear(), this.elementRequestIds.clear(), this.globalRequestCounter += 1e3, (e = this.processedSignatures) == null || e.clear();
+  }
+  // Generate a unique signature for an element based on its attributes and content
+  getElementSignature(e) {
+    var i;
+    const n = e.getAttribute(F) || "", r = e.getAttribute(M) || "", s = e.id || "", o = ((i = e.textContent) == null ? void 0 : i.trim().substring(0, 100)) || "";
+    return `${n}|${r}|${s}|${o}`;
+  }
+  addFacePilesAndCount(e, n) {
+    const r = e.querySelector(
+      '[village-paths-data="facepiles"]'
+    );
+    r && (r.innerHTML = `${n.paths.avatars.slice(0, 3).map(
+      (o) => `<img src="${o}" onerror="this.src='https://randomuser.me/api/portraits/thumb/women/75.jpg';this.classList.add('village-facepiler-avatar-not-found')" />`
+    ).join("")}`);
+    const s = e.querySelector(
+      '[village-paths-data="count"]'
+    );
+    s && (s.innerHTML = n.paths.count);
+  }
+  updateButtonContent(e, n) {
+    this._setElementState(
+      e,
+      n ? "found" : "not-found",
+      n
+    );
+  }
+  async renderIframe() {
+    this.iframe || (this.iframe = new bt()), this.token || (this.token = await this.getAuthToken()), this.iframe.update({
+      partnerKey: this.partnerKey,
+      userReference: this.userReference,
+      token: this.token,
+      url: this.url,
+      module: this.module,
+      config: this.config
+    }), this.iframe.render(document.body);
+  }
+  setUserReference(e, n = null) {
+    return new Promise((r, s) => {
+      try {
+        this.userReference = e, this.renderIframe(), n != null && n.team && this.upsertTeam(n.team), r();
+      } catch (o) {
+        s(o);
+      }
+    });
+  }
+  async upsertTeam(e) {
+    if (!(!this.token || !e))
+      try {
+        await E.post(
+          `${this.apiUrl}/v1/teams/upsert`,
+          { teamId: e.id, teamName: e.name },
+          {
+            params: { partnerKey: this.partnerKey },
+            headers: { "x-access-token": this.token }
+          }
+        );
+      } catch (n) {
+        console.error(
+          "[VILLAGE-PAAS] Failed to link user to team:",
+          n.message
+        );
+      }
+  }
+  destroy() {
+    this._clearAllRequests(), this.processedSignatures.clear(), this.observer && (this.observer.disconnect(), this.observer = null), this.inlineSearchIframes.forEach((n, r) => {
+      n.parentNode === r && r.removeChild(n);
+    }), this.inlineSearchIframes.clear(), this.moduleHandlers.getAllElementsWithListeners().forEach((n) => {
+      this.moduleHandlers.removeListener(n);
+    }), this.iframe && this.iframe.element && this.iframe.element.parentNode && this.iframe.element.parentNode.removeChild(this.iframe.element), this.iframe && this.iframe.spinner && this.iframe.spinner.parentNode && this.iframe.spinner.parentNode.removeChild(this.iframe.spinner), this.iframe = null, P.instance === this && (P.instance = null), this.initialized = !1;
+  }
+  // New method placeholder
+  refreshSyncUrlElements() {
+    this.moduleHandlers.getSyncUrlElements().forEach((n, r) => {
+      this.initializeButtonState(r), this.checkPathsAndUpdateButton(r, n);
+    });
+  }
+  async logout() {
+    this._clearAllRequests();
+    try {
+      this.token && await E.get(`${this.apiUrl}/logout`, {
+        headers: {
+          "x-access-token": this.token,
+          "app-public-key": this.partnerKey
+        }
+      });
+    } catch {
+    }
+    L.remove("village.token"), this.token = null, D.removeUserId(), this.refreshSyncUrlElements(), this._refreshInlineSearchIframes();
+  }
+};
+xe(P, "instance", null);
+let Ae = P;
+const te = {};
+function $e(t, e) {
+  (te[t] ?? (te[t] = [])).push(e);
+}
+function ze(t, e) {
+  if (typeof t != "string") {
+    console.warn(
+      `[Village] Event name must be a string. Received: ${typeof t}`
+    );
+    return;
+  }
+  const n = te[t];
+  n && n.forEach((s) => {
+    try {
+      s(e);
+    } catch (o) {
+      console.error(
+        `[Village] Error in listener for "${t}":`,
+        o
+      );
+    }
+  });
+  const r = { source: "VillageSDK", type: t, payload: e };
+  try {
+    window.postMessage(r, "*");
+  } catch {
+  }
+  if (window.parent && window.parent !== window)
+    try {
+      window.parent.postMessage(r, "*");
+    } catch (s) {
+      console.warn(
+        `[Village] Failed to postMessage to parent for event "${t}":`,
+        s
+      );
+    }
+}
+(function(t) {
+  if (typeof t > "u" || typeof document > "u")
+    return;
+  function e() {
+    const o = {}, i = {
+      q: [],
+      _config: {
+        paths_cta: []
+      },
+      _partnerKey: null,
+      _userReference: null,
+      _app: null,
+      _initialized: !1,
+      /** Replace the entire CTA list */
+      updatePathsCTA(a = []) {
+        var u;
+        return i._config.paths_cta = Array.isArray(a) ? a : [], (u = i.broadcast) == null || u.call(i, x.pathsCtaUpdated, i._config.paths_cta), i;
+      },
+      /** Add a single CTA object on the fly */
+      addPathCTA(a) {
+        var u;
+        return a && typeof a.label == "string" && a.callback ? (i._config.paths_cta.push(a), (u = i.broadcast) == null || u.call(i, x.pathsCtaUpdated, i._config.paths_cta)) : console.warn("[Village] Invalid CTA object:", a), i;
+      },
+      sendStorageGetToken() {
+        t.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_GET_TOKEN"
+        }, "*");
+      },
+      sendStorageSetToken(a) {
+        if (typeof a != "string") {
+          console.warn("Token must be a string.");
+          return;
+        }
+        t.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_SET_TOKEN",
+          token: a
+        }, "*");
+      },
+      sendStorageDeleteToken() {
+        t.postMessage({
+          source: "VillageSDK",
+          type: "STORAGE_DELETE_TOKEN"
+        }, "*");
+      },
+      off(a, u) {
+        o[a] && (o[a] = o[a].filter((c) => c !== u));
+      },
+      on: $e,
+      emit: ze,
+      dispatch(a, u) {
+        try {
+          t.dispatchEvent(new CustomEvent(a, { detail: u }));
+        } catch (c) {
+          console.warn(`[Village] Failed to dispatch CustomEvent in current window for "${a}":`, c);
+        }
+      },
+      broadcast(a, u) {
+        var c, d;
+        (c = i.emit) == null || c.call(i, a, u), (d = i.dispatch) == null || d.call(i, a, u);
+      },
+      _processQueue: function() {
+        for (; i.q.length > 0; ) {
+          var a = i.q.shift(), u = a[0], c = a.slice(1);
+          typeof i[u] == "function" && i[u].apply(i, ...c);
+        }
+      },
+      init(a, u) {
+        if (i._initialized) return i;
+        if (!a) throw new Error("Village: Partner key is required");
+        return i._partnerKey = a, i._config = {
+          ...u,
+          paths_cta: []
+          // placeholder, will be filled below (if any)
+        }, i._initialized = !0, i._renderWidget(), Array.isArray(u == null ? void 0 : u.paths_cta) && u.paths_cta.length && i.updatePathsCTA(u.paths_cta), i;
+      },
+      identify: function(a, u) {
+        return i._initialized ? new Promise((c, d) => {
+          i._userReference = a, i._app.setUserReference(a, u).then(() => c()).catch((h) => d(h));
+        }) : (i.q.push(["identify", a, u]), Promise.resolve());
+      },
+      logout: function() {
+        if (!i._initialized) {
+          i.q.push(["logout"]);
+          return;
+        }
+        i._app && i._app.logout();
+      },
+      _renderWidget: function() {
+        return new Promise((a, u) => {
+          var c;
+          try {
+            i._app || (i._app = Ae.getInstance(i._partnerKey, i._config)), i._app.init(), (c = i.broadcast) == null || c.call(i, x.widgetReady, {
+              partnerKey: i._partnerKey,
+              userReference: i._userReference
+            }), a();
+          } catch (d) {
+            u(d);
+          }
+        });
+      },
+      // ✅ Expor CTAs
+      getPathsCTA() {
+        var u;
+        const a = Array.isArray((u = i == null ? void 0 : i._config) == null ? void 0 : u.paths_cta) && i._config.paths_cta.length > 0 ? i._config.paths_cta : [];
+        if (!Array.isArray(a) || a.length === 0) {
+          const c = new URLSearchParams(t.location.search).get("paths_cta");
+          try {
+            const d = JSON.parse(decodeURIComponent(c));
+            Array.isArray(d) ? a = d : a = [];
+          } catch {
+            a = [];
+          }
+        }
+        return a || [];
+      },
+      executeCallback(a) {
+        const u = i.getPathsCTA();
+        for (let c = 0; c < u.length; c++) {
+          const d = u[c];
+          if (d.callback && a.index == c)
+            return d.callback(a), !0;
+        }
+        t !== t.parent && t.parent.postMessage(a, "*");
+      }
+    };
+    return i.authorize = function(a, u, c) {
+      return i._initialized ? typeof a == "string" && a.length > 20 && (a.includes(".") || a.includes("_")) ? i._authorizeWithToken(a, u, c) : i.identify(a, u) : (i.q.push(["authorize", a, u, c]), Promise.resolve({ ok: !1, status: "unauthorized", reason: "SDK not initialized" }));
+    }, i._authorizeWithToken = async function(a, u, c) {
+      try {
+        if (i._authToken = a, i._authDomain = u, i._refreshCallback = c, i._app || await i._renderWidget(), i._app.token = a, u && (i._app.authDomain = u), await i._app.validateToken(a))
+          return i._app.updateCookieToken(a), {
+            ok: !0,
+            status: "authorized",
+            domain: u
+          };
+        if (c && typeof c == "function")
+          try {
+            console.log("[Village] Token invalid, attempting refresh...");
+            const h = await c();
+            if (h && typeof h == "string")
+              return i._authorizeWithToken(h, u, null);
+          } catch (h) {
+            console.warn("[Village] Token refresh failed:", h);
+          }
+        return {
+          ok: !1,
+          status: "unauthorized",
+          reason: "Invalid token"
+        };
+      } catch (d) {
+        return console.error("[Village] Authorization error:", d), {
+          ok: !1,
+          status: "unauthorized",
+          reason: d.message || "Authorization failed"
+        };
+      }
+    }, i;
+  }
+  const n = t.Village, r = (n == null ? void 0 : n.q) || [];
+  t.Village = e(), t.Village.on = $e, t.Village.emit = ze, t.Village.q = r.concat(t.Village.q);
+  function s() {
+    t.Village._processQueue();
+  }
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", s) : setTimeout(s, 0), t.Village.on(x.widgetReady, () => {
+  }), t.Village.on(x.pathCtaClicked, (o) => {
+    t.Village.executeCallback(o);
+  }), t.Village.on(x.oauthSuccess, (o) => {
+    console.log("✅ Village OAuth success", o);
+  }), t.__village_message_listener_attached__ || (t.addEventListener("message", async (o) => {
+    const { origin: i, data: a } = o, u = new URL(i).hostname, c = new URL("https://village.do").hostname;
+    if (u === c && (a == null ? void 0 : a.type) === "VillageSDK") {
+      console.log("[SDK cookie] message from iframe:", a);
+      const d = a.token ?? null;
+      if (!d && document.requestStorageAccess) {
+        try {
+          await document.requestStorageAccess();
+          const h = L.get("village.token"), y = sessionStorage.getItem("village.token");
+          console.warn("[VillageSDK] Storage Access ", h, y), h && (sessionStorage.setItem("village.token", h), t.Village.broadcast(x.oauthSuccess, { token: h }));
+        } catch (h) {
+          console.warn("[VillageSDK] Storage Access denied or failed", h);
+        }
+        return;
+      }
+      d ? (L.set("village.token", d, {
+        secure: !0,
+        sameSite: "None",
+        expires: 60
+      }), sessionStorage.setItem("village.token", d), t.Village.broadcast(x.oauthSuccess, { token: d })) : (L.remove("village.token"), sessionStorage.removeItem("village.token"), t.Village.broadcast(x.userLoggedOut, {}));
+      return;
+    }
+    !a || a.source !== "VillageSDK" || a.type === x.pathCtaClicked && t.Village.executeCallback(a.payload || a);
+  }), t.__village_message_listener_attached__ = !0);
+})(window);
+function ar() {
+  return typeof window < "u" && window.Village ? window.Village : new Proxy({}, {
+    get(t, e) {
+      return typeof window < "u" && window.Village && window.Village[e] ? typeof window.Village[e] == "function" ? window.Village[e].bind(window.Village) : window.Village[e] : function(...n) {
+        console.warn(`[Village] ${e} called before Village SDK is ready. Make sure to call Village.init() first.`);
+      };
+    }
+  });
+}
+const Cr = ar();
+export {
+  x as VillageEvents,
+  Cr as default
+};

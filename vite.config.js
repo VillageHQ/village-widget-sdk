@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs";
 import { defineConfig } from "vitest/config";
-import { loadEnv } from "vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";   // npm i -D vite-plugin-css-injected-by-js
 
 // ──────────────────────────────
@@ -87,6 +86,8 @@ export default defineConfig(({ mode }) => {
 
       fs.writeFileSync(namedOutputPath, finalCode);
       console.log(`✅ Copied build to dist/${mode}/village-widget.js`);
+      
+      // Module version is built separately via npm run build:module
     },
   };
 
