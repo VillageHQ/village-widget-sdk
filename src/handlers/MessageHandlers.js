@@ -94,7 +94,9 @@ export class MessageHandlers {
   }
 
   handleIframeLoaded() {
-    this.app.iframe.hideSpinner();
+    if (this.app.iframe) {
+      this.app.iframe.hideSpinner();
+    }
   }
 
   handleCopyToClipboard(data) {
