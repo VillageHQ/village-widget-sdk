@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
         entry: path.resolve(__dirname, "src/village-module.js"),
         name: "VillageModule",
         formats: ["es"],
-        fileName: () => parsedEnv.VITE_WIDGET_DEV_PATH ? "village-sdk.mjs" : "village-module.mjs",
+        fileName: () => parsedEnv.VITE_WIDGET_DEV_PATH ? "village-module" : "village-module",
       },
 
       rollupOptions: {
