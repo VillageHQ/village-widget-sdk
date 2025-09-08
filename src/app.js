@@ -49,9 +49,6 @@ export class App {
     this.elementRequestIds = new Map(); // element -> latest request ID
     this.globalRequestCounter = 0; // Only for generating unique IDs
     
-    // Signature-based tracking to prevent React re-render issues
-    this.processedSignatures = new Set();
-    
     // Init guard to prevent double initialization
     this.initialized = false;
     
@@ -156,13 +153,7 @@ export class App {
   }
 
   async addListenerToElement(element) {
-    // Check signature to prevent reprocessing same element in React re-renders
-    const signature = this.getElementSignature(element);
-    if (this.processedSignatures.has(signature)) {
-      return; // Already processed this element
-    }
-    this.processedSignatures.add(signature);
-    
+    // Allow elements to re-render by removing signature-based blocking
     // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
     this.elementRequestIds.delete(element);
@@ -559,18 +550,8 @@ export class App {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
     this.globalRequestCounter += 1000; // Invalidate old requests
-    // Clear processed signatures so elements can be reprocessed after auth errors
-    this.processedSignatures?.clear();
   }
   
-  // Generate a unique signature for an element based on its attributes and content
-  getElementSignature(element) {
-    const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || '';
-    const module = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE) || '';
-    const id = element.id || '';
-    const textContent = element.textContent?.trim().substring(0, 100) || '';
-    return `${url}|${module}|${id}|${textContent}`;
-  }
 
   addFacePilesAndCount(element, relationship) {
     const facePilesContainer = element.querySelector(
@@ -664,9 +645,6 @@ export class App {
   destroy() {
     // Clear all active requests
     this._clearAllRequests();
-
-    // Clear processed signatures
-    this.processedSignatures.clear();
 
     // Disconnect MutationObserver
     if (this.observer) {
