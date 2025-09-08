@@ -207,7 +207,7 @@ import Cookies from "js-cookie";
         }
       },
 
-      authorize: function(tokenOrUserRef, domainOrDetails, refreshCallback) {
+      authorize: async function(tokenOrUserRef, domainOrDetails, refreshCallback) {
         if (!v._initialized) {
           // Queue and resolve after init (consistent with identify)
           return new Promise((resolve) => {
@@ -221,11 +221,54 @@ import Cookies from "js-cookie";
                            (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
         
         if (isTokenAuth) {
-          // New token-based authorization
+          // For token-based auth, domain is REQUIRED
+          if (!domainOrDetails) {
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Domain is required for token-based authorization'
+            };
+          }
+          // New token-based authorization with required domain
           return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
-        } else {
+        } else if (tokenOrUserRef) {
           // Legacy identify behavior for backward compatibility
           return v.identify(tokenOrUserRef, domainOrDetails);
+        } else if (domainOrDetails) {
+          // No token but domain provided - try to fetch from extension
+          try {
+            // Ensure app is initialized
+            if (!v._app) {
+              await v._renderWidget();
+            }
+            
+            // Try to get token from extension for the specific domain
+            const fetchedToken = await v._app.getAuthToken(2000, domainOrDetails);
+            if (fetchedToken && v._app.isTokenValid(fetchedToken)) {
+              // Use the fetched token with the provided domain
+              return v._authorizeWithToken(fetchedToken, domainOrDetails, refreshCallback);
+            }
+            
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'No token found for domain: ' + domainOrDetails
+            };
+          } catch (error) {
+            console.warn('[Village] Failed to fetch token from extension:', error);
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Failed to fetch token: ' + error.message
+            };
+          }
+        } else {
+          // No arguments provided - return error
+          return {
+            ok: false,
+            status: 'unauthorized',
+            reason: 'Token and domain are required for authorization'
+          };
         }
       },
       
@@ -251,8 +294,8 @@ import Cookies from "js-cookie";
           const isValid = await v._app.validateToken(token);
           
           if (isValid) {
-            // Store token in cookies and extension
-            v._app.updateCookieToken(token);
+            // Store token in cookies and extension with domain (using new method)
+            v._app.updateCookieTokenWithDomain(token, domain);
             
             return {
               ok: true,

@@ -235,13 +235,40 @@ export class App {
     }
   }
 
+  // New method for domain-based token updates (used by authorize)
+  updateCookieTokenWithDomain(token, domain) {
+      // Clear all requests before setting new token
+      this._clearAllRequests();
+    if (this.isTokenValid(token)) {
+      // Save with domain for extension
+      this.saveExtensionTokenWithDomain(token, domain);
+
+      const cookieOptions = {
+        secure: location.protocol === 'https:',
+        expires: 60,
+        path: "/"
+      };
+
+      Cookies.set('village.token', token, cookieOptions);
+
+      if (this.token != token) {
+        this.token = token;
+        this.authDomain = domain; // Store the domain
+        this._refreshInlineSearchIframes();
+      }
+    } else {
+      // console.log('[Village SDK] Invalid token provided to updateCookieTokenWithDomain:', token);
+    }
+  }
+
   isTokenValid(token) {
     return typeof token === 'string' && token.length > 10 && token !== 'not_found';
   }
 
-  async getAuthToken(timeout = 1000) {
+  async getAuthToken(timeout = 1000, domain) {
 
     let token = Cookies.get('village.token');
+    let tokenDomain = null;
 
     if (!this.isTokenValid(token)) {
       token = this.extractTokenFromQueryParams();
@@ -249,14 +276,36 @@ export class App {
 
     if (!this.isTokenValid(token)) {
       try {
-        token = await this.requestExtensionToken(timeout);
+        // Request token from extension with optional domain
+        const response = await this.requestExtensionToken(timeout, domain);
+        
+        // Handle response based on format
+        if (typeof response === 'object' && response.token) {
+          token = response.token;
+          tokenDomain = response.domain;
+          
+          // If we requested a specific domain, verify it matches
+          if (domain && tokenDomain && domain !== tokenDomain) {
+            console.warn(`[Village SDK] Domain mismatch: requested ${domain}, got ${tokenDomain}`);
+            // Don't use token if domain doesn't match
+            token = null;
+          }
+        } else if (typeof response === 'string') {
+          // Backward compatibility - response is just the token
+          token = response;
+        }
       } catch (err) {
         // console.log('[Village SDK] Extension fallback failed:', err.message);
       }
     }
 
     if (this.isTokenValid(token)) {
-      this.updateCookieToken(token);
+      // Use domain-based update if we have a domain
+      if (domain || tokenDomain) {
+        this.updateCookieTokenWithDomain(token, domain || tokenDomain);
+      } else {
+        this.updateCookieToken(token);
+      }
     } else {
       // console.log('[Village SDK] No valid token available');
     }
@@ -264,8 +313,17 @@ export class App {
   }
 
 
-  requestExtensionToken(timeout) {
-    const request = { type: 'STORAGE_GET_TOKEN', source: 'VillageSDK' };
+  requestExtensionToken(timeout, domain) {
+    // Build request with domain only if provided
+    const request = { 
+      type: 'STORAGE_GET_TOKEN', 
+      source: 'VillageSDK'
+    };
+    
+    // Add domain only if provided (for backward compatibility)
+    if (domain) {
+      request.domain = domain;
+    }
 
     return new Promise((resolve, reject) => {
       const listener = (event) => {
@@ -275,7 +333,20 @@ export class App {
         if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
           window.removeEventListener('message', listener);
           clearTimeout(timer);
-          resolve(message.token);
+          
+          // Return both token and domain if available
+          if (message.token) {
+            resolve({
+              token: message.token,
+              domain: message.domain || null
+            });
+          } else {
+            // Backward compatibility - if message is just a string token
+            resolve({
+              token: message,
+              domain: null
+            });
+          }
         }
       };
 
@@ -289,8 +360,24 @@ export class App {
     });
   }
 
+  // Old method for backward compatibility (no domain)
   saveExtensionToken(token) {
-    const request = { type: 'STORAGE_SET_TOKEN', source: 'VillageSDK', token: token };
+    const request = { 
+      type: 'STORAGE_SET_TOKEN', 
+      source: 'VillageSDK', 
+      token: token
+    };
+    window.postMessage(request, '*');
+  }
+
+  // New method with domain support
+  saveExtensionTokenWithDomain(token, domain) {
+    const request = { 
+      type: 'STORAGE_SET_TOKEN', 
+      source: 'VillageSDK', 
+      token: token,
+      domain: domain
+    };
     window.postMessage(request, '*');
   }
 
