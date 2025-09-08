@@ -575,8 +575,6 @@ export class App {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
     this.globalRequestCounter += 1000; // Invalidate old requests
-    // Clear processed signatures so elements can be reprocessed after auth errors
-    this.processedSignatures?.clear();
   }
 
   // Generate a unique signature for an element based on its attributes and content
@@ -681,9 +679,6 @@ export class App {
   destroy() {
     // Clear all active requests
     this._clearAllRequests();
-
-    // Clear processed signatures
-    this.processedSignatures.clear();
 
     // Disconnect MutationObserver
     if (this.observer) {
