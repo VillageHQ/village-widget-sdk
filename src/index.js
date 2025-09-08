@@ -209,19 +209,16 @@ import Cookies from "js-cookie";
 
       authorize: async function(tokenOrUserRef, domainOrDetails, refreshCallback) {
         if (!v._initialized) {
-          // Queue and resolve after init (consistent with identify)
           return new Promise((resolve) => {
             v.q.push(["__deferred_authorize__", tokenOrUserRef, domainOrDetails, refreshCallback, resolve]);
           });
         }
         
-        // Check if this is token-based auth (token is long string with dots or underscores)
         const isTokenAuth = typeof tokenOrUserRef === 'string' && 
                            tokenOrUserRef.length > 20 && 
                            (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
         
         if (isTokenAuth) {
-          // For token-based auth, domain is REQUIRED
           if (!domainOrDetails) {
             return {
               ok: false,
@@ -229,23 +226,17 @@ import Cookies from "js-cookie";
               reason: 'Domain is required for token-based authorization'
             };
           }
-          // New token-based authorization with required domain
           return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
         } else if (tokenOrUserRef) {
-          // Legacy identify behavior for backward compatibility
           return v.identify(tokenOrUserRef, domainOrDetails);
         } else if (domainOrDetails) {
-          // No token but domain provided - try to fetch from extension
           try {
-            // Ensure app is initialized
             if (!v._app) {
               await v._renderWidget();
             }
             
-            // Try to get token from extension for the specific domain
             const fetchedToken = await v._app.getAuthToken(2000, domainOrDetails);
             if (fetchedToken && v._app.isTokenValid(fetchedToken)) {
-              // Use the fetched token with the provided domain
               return v._authorizeWithToken(fetchedToken, domainOrDetails, refreshCallback);
             }
             
@@ -263,7 +254,6 @@ import Cookies from "js-cookie";
             };
           }
         } else {
-          // No arguments provided - return error
           return {
             ok: false,
             status: 'unauthorized',
@@ -274,27 +264,22 @@ import Cookies from "js-cookie";
       
       _authorizeWithToken: async function(token, domain, refreshCallback) {
         try {
-          // Store auth configuration
           v._authToken = token;
           v._authDomain = domain;
           v._refreshCallback = refreshCallback;
           
-          // Ensure app is initialized
           if (!v._app) {
             await v._renderWidget();
           }
           
-          // Set the token directly in the app
           v._app.token = token;
           if (domain) {
             v._app.authDomain = domain;
           }
           
-          // Validate token with backend
           const isValid = await v._app.validateToken(token);
           
           if (isValid) {
-            // Store token in cookies and extension with domain (using new method)
             v._app.updateCookieTokenWithDomain(token, domain);
             
             return {
@@ -303,14 +288,12 @@ import Cookies from "js-cookie";
               domain: domain
             };
           } else {
-            // Token validation failed - try refresh if callback provided
             if (refreshCallback && typeof refreshCallback === 'function') {
               try {
                 console.log('[Village] Token invalid, attempting refresh...');
                 const newToken = await refreshCallback();
                 
                 if (newToken && typeof newToken === 'string') {
-                  // Recursively try with new token (without refresh callback to prevent infinite loop)
                   return v._authorizeWithToken(newToken, domain, null);
                 }
               } catch (refreshError) {
@@ -351,8 +334,6 @@ import Cookies from "js-cookie";
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
   
-  // Delay processing queue and initialization until after DOM is ready
-  // This prevents hydration issues in SSR environments
   function initializeVillage() {
     window.Village._processQueue();
   }
@@ -360,7 +341,6 @@ import Cookies from "js-cookie";
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeVillage);
   } else {
-    // DOM is already ready, initialize immediately
     setTimeout(initializeVillage, 0);
   }
 
