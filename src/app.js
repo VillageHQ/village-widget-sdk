@@ -656,13 +656,17 @@ export class App {
     );
 
     if (facePilesContainer) {
-      facePilesContainer.innerHTML = `${relationship.paths.avatars
-        .slice(0, 3)
-        .map(
-          (avatar) =>
-            `<img src="${avatar}" onerror="this.src='https://randomuser.me/api/portraits/thumb/women/75.jpg';this.classList.add('village-facepiler-avatar-not-found')" />`
-        )
-        .join("")}`;
+      facePilesContainer.innerHTML = '';
+      relationship.paths.avatars.slice(0, 3).forEach((avatar, index) => {
+        const img = document.createElement('img');
+        img.src = avatar;
+        img.addEventListener('error', function() {
+          console.log(`[Village SDK] Facepile image ${index + 1} failed to load, using fallback`);
+          this.src = 'https://randomuser.me/api/portraits/thumb/women/75.jpg';
+          this.classList.add('village-facepiler-avatar-not-found');
+        }, { once: true });
+        facePilesContainer.appendChild(img);
+      });
     }
 
     const countContainer = element.querySelector(
