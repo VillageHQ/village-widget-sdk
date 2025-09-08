@@ -17,16 +17,16 @@ import { logWidgetError } from "./utils/errorLogger";
 
 export class App {
   static instance = null;
-  
+
   static getInstance(partnerKey, config) {
     if (!App.instance) {
       App.instance = new App(partnerKey, config);
     }
     return App.instance;
   }
-  
+
   constructor(partnerKey, config) {
-    
+
     this.partnerKey = partnerKey;
     this.userReference = null;
     this.token = Cookies.get("village.token");
@@ -48,13 +48,10 @@ export class App {
     this.elementRequests = new Map(); // element -> Promise
     this.elementRequestIds = new Map(); // element -> latest request ID
     this.globalRequestCounter = 0; // Only for generating unique IDs
-    
-    // Signature-based tracking to prevent React re-render issues
-    this.processedSignatures = new Set();
-    
+
     // Init guard to prevent double initialization
     this.initialized = false;
-    
+
   }
 
   async init() {
@@ -63,7 +60,7 @@ export class App {
       return;
     }
     this.initialized = true;
-    
+
     this.setupMessageHandlers();
     await this.getAuthToken();
     await this.getUser();
@@ -156,13 +153,6 @@ export class App {
   }
 
   async addListenerToElement(element) {
-    // Check signature to prevent reprocessing same element in React re-renders
-    const signature = this.getElementSignature(element);
-    if (this.processedSignatures.has(signature)) {
-      return; // Already processed this element
-    }
-    this.processedSignatures.add(signature);
-    
     // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
     this.elementRequestIds.delete(element);
@@ -227,15 +217,15 @@ export class App {
       this._clearAllRequests();
     if (this.isTokenValid(token)) {
       this.saveExtensionToken(token);
-      
-      const cookieOptions = { 
-        secure: location.protocol === 'https:', 
-        expires: 60, 
-        path: "/" 
+
+      const cookieOptions = {
+        secure: location.protocol === 'https:',
+        expires: 60,
+        path: "/"
       };
-      
+
       Cookies.set('village.token', token, cookieOptions);
-      
+
       if (this.token != token) {
         this.token = token;
         this._refreshInlineSearchIframes();
@@ -250,13 +240,13 @@ export class App {
   }
 
   async getAuthToken(timeout = 1000) {
-    
+
     let token = Cookies.get('village.token');
-    
+
     if (!this.isTokenValid(token)) {
       token = this.extractTokenFromQueryParams();
     }
-    
+
     if (!this.isTokenValid(token)) {
       try {
         token = await this.requestExtensionToken(timeout);
@@ -281,7 +271,7 @@ export class App {
       const listener = (event) => {
         if (event.source !== window) return;
         const { source, message } = event.data || {};
-        
+
         if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
           window.removeEventListener('message', listener);
           clearTimeout(timer);
@@ -308,16 +298,16 @@ export class App {
     if (!this.isTokenValid(token)) {
       return false;
     }
-    
+
     try {
       const { data: user } = await axios.get(`${this.apiUrl}/user`, {
         headers: { "x-access-token": token, "app-public-key": this.partnerKey },
       });
-      
+
       if (!user?.id) {
         return false;
       }
-      
+
       const userId = `${user?.id}`;
       AnalyticsService.setUserId(userId);
       return true;
@@ -473,8 +463,12 @@ export class App {
   }
 
   initializeButtonState(element) {
-    // Always start with loading state - we'll check for token during path check
-    this._setElementState(element, "loading");
+    // CSS already handles default states, just set the appropriate one
+    if (!this.token) {
+      this._setElementState(element, "not-found");
+    } else {
+      this._setElementState(element, "loading");
+    }
   }
 
   async checkPathsAndUpdateButton(element, url) {
@@ -584,7 +578,7 @@ export class App {
     // Clear processed signatures so elements can be reprocessed after auth errors
     this.processedSignatures?.clear();
   }
-  
+
   // Generate a unique signature for an element based on its attributes and content
   getElementSignature(element) {
     const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || '';
@@ -593,6 +587,7 @@ export class App {
     const textContent = element.textContent?.trim().substring(0, 100) || '';
     return `${url}|${module}|${id}|${textContent}`;
   }
+
 
   addFacePilesAndCount(element, relationship) {
     const facePilesContainer = element.querySelector(
@@ -724,7 +719,7 @@ export class App {
     if (App.instance === this) {
       App.instance = null;
     }
-    
+
     // Reset initialization flag
     this.initialized = false;
   }
