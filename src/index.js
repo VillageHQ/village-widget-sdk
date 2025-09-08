@@ -95,7 +95,7 @@ import Cookies from "js-cookie";
           var method = item[0];
           var args = item.slice(1);
           if (typeof v[method] === "function") {
-            v[method].apply(v, args);
+            v[method].apply(v, ...args);
           }
         }
       },
