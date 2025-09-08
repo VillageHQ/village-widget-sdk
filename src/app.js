@@ -640,16 +640,6 @@ export class App {
     this.globalRequestCounter += 1000; // Invalidate old requests
   }
 
-  // Generate a unique signature for an element based on its attributes and content
-  getElementSignature(element) {
-    const url = element.getAttribute(VILLAGE_URL_DATA_ATTRIBUTE) || '';
-    const module = element.getAttribute(VILLAGE_MODULE_ATTRIBUTE) || '';
-    const id = element.id || '';
-    const textContent = element.textContent?.trim().substring(0, 100) || '';
-    return `${url}|${module}|${id}|${textContent}`;
-  }
-
-
   addFacePilesAndCount(element, relationship) {
     const facePilesContainer = element.querySelector(
       '[village-paths-data="facepiles"]'
