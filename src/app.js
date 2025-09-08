@@ -213,7 +213,6 @@ export class App {
   }
 
   updateCookieToken(token) {
-      // Clear all requests before setting new token
       this._clearAllRequests();
     if (this.isTokenValid(token)) {
       this.saveExtensionToken(token);
@@ -230,17 +229,12 @@ export class App {
         this.token = token;
         this._refreshInlineSearchIframes();
       }
-    } else {
-      // console.log('[Village SDK] Invalid token provided to updateCookieToken:', token);
     }
   }
 
-  // New method for domain-based token updates (used by authorize)
   updateCookieTokenWithDomain(token, domain) {
-      // Clear all requests before setting new token
       this._clearAllRequests();
     if (this.isTokenValid(token)) {
-      // Save with domain for extension
       this.saveExtensionTokenWithDomain(token, domain);
 
       const cookieOptions = {
@@ -253,11 +247,9 @@ export class App {
 
       if (this.token != token) {
         this.token = token;
-        this.authDomain = domain; // Store the domain
+        this.authDomain = domain;
         this._refreshInlineSearchIframes();
       }
-    } else {
-      // console.log('[Village SDK] Invalid token provided to updateCookieTokenWithDomain:', token);
     }
   }
 
@@ -276,51 +268,40 @@ export class App {
 
     if (!this.isTokenValid(token)) {
       try {
-        // Request token from extension with optional domain
         const response = await this.requestExtensionToken(timeout, domain);
         
-        // Handle response based on format
         if (typeof response === 'object' && response.token) {
           token = response.token;
           tokenDomain = response.domain;
           
-          // If we requested a specific domain, verify it matches
           if (domain && tokenDomain && domain !== tokenDomain) {
             console.warn(`[Village SDK] Domain mismatch: requested ${domain}, got ${tokenDomain}`);
-            // Don't use token if domain doesn't match
             token = null;
           }
         } else if (typeof response === 'string') {
-          // Backward compatibility - response is just the token
           token = response;
         }
       } catch (err) {
-        // console.log('[Village SDK] Extension fallback failed:', err.message);
       }
     }
 
     if (this.isTokenValid(token)) {
-      // Use domain-based update if we have a domain
       if (domain || tokenDomain) {
         this.updateCookieTokenWithDomain(token, domain || tokenDomain);
       } else {
         this.updateCookieToken(token);
       }
-    } else {
-      // console.log('[Village SDK] No valid token available');
     }
     return token;
   }
 
 
   requestExtensionToken(timeout, domain) {
-    // Build request with domain only if provided
     const request = { 
       type: 'STORAGE_GET_TOKEN', 
       source: 'VillageSDK'
     };
     
-    // Add domain only if provided (for backward compatibility)
     if (domain) {
       request.domain = domain;
     }
@@ -334,14 +315,12 @@ export class App {
           window.removeEventListener('message', listener);
           clearTimeout(timer);
           
-          // Return both token and domain if available
           if (message.token) {
             resolve({
               token: message.token,
               domain: message.domain || null
             });
           } else {
-            // Backward compatibility - if message is just a string token
             resolve({
               token: message,
               domain: null
@@ -360,7 +339,6 @@ export class App {
     });
   }
 
-  // Old method for backward compatibility (no domain)
   saveExtensionToken(token) {
     const request = { 
       type: 'STORAGE_SET_TOKEN', 
@@ -370,7 +348,6 @@ export class App {
     window.postMessage(request, '*');
   }
 
-  // New method with domain support
   saveExtensionTokenWithDomain(token, domain) {
     const request = { 
       type: 'STORAGE_SET_TOKEN', 
@@ -657,7 +634,6 @@ export class App {
     }
   }
 
-  // Clear all requests (used during auth changes)
   _clearAllRequests() {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
