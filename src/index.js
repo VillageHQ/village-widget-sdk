@@ -95,7 +95,7 @@ import Cookies from "js-cookie";
           var method = item[0];
           var args = item.slice(1);
           if (typeof v[method] === "function") {
-            v[method].apply(v, ...args);
+            v[method].apply(v, args);
           }
         }
       },
@@ -205,89 +205,96 @@ import Cookies from "js-cookie";
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }
-      }
-    };
+      },
 
-    // Enhanced authorize method that supports both legacy and token-based auth
-    v.authorize = function(tokenOrUserRef, domainOrDetails, refreshCallback) {
-      if (!v._initialized) {
-        v.q.push(["authorize", tokenOrUserRef, domainOrDetails, refreshCallback]);
-        return Promise.resolve({ ok: false, status: 'unauthorized', reason: 'SDK not initialized' });
-      }
-      
-      // Check if this is token-based auth (token is long string with dots or underscores)
-      const isTokenAuth = typeof tokenOrUserRef === 'string' && 
-                         tokenOrUserRef.length > 20 && 
-                         (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
-      
-      if (isTokenAuth) {
-        // New token-based authorization
-        return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
-      } else {
-        // Legacy identify behavior for backward compatibility
-        return v.identify(tokenOrUserRef, domainOrDetails);
-      }
-    };
-    
-    v._authorizeWithToken = async function(token, domain, refreshCallback) {
-      try {
-        // Store auth configuration
-        v._authToken = token;
-        v._authDomain = domain;
-        v._refreshCallback = refreshCallback;
-        
-        // Ensure app is initialized
-        if (!v._app) {
-          await v._renderWidget();
+      authorize: function(tokenOrUserRef, domainOrDetails, refreshCallback) {
+        if (!v._initialized) {
+          // Queue and resolve after init (consistent with identify)
+          return new Promise((resolve) => {
+            v.q.push(["__deferred_authorize__", tokenOrUserRef, domainOrDetails, refreshCallback, resolve]);
+          });
         }
         
-        // Set the token directly in the app
-        v._app.token = token;
-        if (domain) {
-          v._app.authDomain = domain;
-        }
+        // Check if this is token-based auth (token is long string with dots or underscores)
+        const isTokenAuth = typeof tokenOrUserRef === 'string' && 
+                           tokenOrUserRef.length > 20 && 
+                           (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
         
-        // Validate token with backend
-        const isValid = await v._app.validateToken(token);
-        
-        if (isValid) {
-          // Store token in cookies and extension
-          v._app.updateCookieToken(token);
-          
-          return {
-            ok: true,
-            status: 'authorized',
-            domain: domain
-          };
+        if (isTokenAuth) {
+          // New token-based authorization
+          return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
         } else {
-          // Token validation failed - try refresh if callback provided
-          if (refreshCallback && typeof refreshCallback === 'function') {
-            try {
-              console.log('[Village] Token invalid, attempting refresh...');
-              const newToken = await refreshCallback();
-              
-              if (newToken && typeof newToken === 'string') {
-                // Recursively try with new token (without refresh callback to prevent infinite loop)
-                return v._authorizeWithToken(newToken, domain, null);
-              }
-            } catch (refreshError) {
-              console.warn('[Village] Token refresh failed:', refreshError);
-            }
+          // Legacy identify behavior for backward compatibility
+          return v.identify(tokenOrUserRef, domainOrDetails);
+        }
+      },
+      
+      _authorizeWithToken: async function(token, domain, refreshCallback) {
+        try {
+          // Store auth configuration
+          v._authToken = token;
+          v._authDomain = domain;
+          v._refreshCallback = refreshCallback;
+          
+          // Ensure app is initialized
+          if (!v._app) {
+            await v._renderWidget();
           }
           
+          // Set the token directly in the app
+          v._app.token = token;
+          if (domain) {
+            v._app.authDomain = domain;
+          }
+          
+          // Validate token with backend
+          const isValid = await v._app.validateToken(token);
+          
+          if (isValid) {
+            // Store token in cookies and extension
+            v._app.updateCookieToken(token);
+            
+            return {
+              ok: true,
+              status: 'authorized',
+              domain: domain
+            };
+          } else {
+            // Token validation failed - try refresh if callback provided
+            if (refreshCallback && typeof refreshCallback === 'function') {
+              try {
+                console.log('[Village] Token invalid, attempting refresh...');
+                const newToken = await refreshCallback();
+                
+                if (newToken && typeof newToken === 'string') {
+                  // Recursively try with new token (without refresh callback to prevent infinite loop)
+                  return v._authorizeWithToken(newToken, domain, null);
+                }
+              } catch (refreshError) {
+                console.warn('[Village] Token refresh failed:', refreshError);
+              }
+            }
+            
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Invalid token'
+            };
+          }
+        } catch (error) {
+          console.error('[Village] Authorization error:', error);
           return {
             ok: false,
             status: 'unauthorized',
-            reason: 'Invalid token'
+            reason: error.message || 'Authorization failed'
           };
         }
-      } catch (error) {
-        console.error('[Village] Authorization error:', error);
-        return {
-          ok: false,
-          status: 'unauthorized',
-          reason: error.message || 'Authorization failed'
-        };
+      },
+
+      __deferred_authorize__: async function(tokenOrUserRef, domainOrDetails, refreshCallback, resolve) {
+        const result = await v.authorize(tokenOrUserRef, domainOrDetails, refreshCallback);
+        resolve?.(result);
+        return result;
       }
     };
     return v;
