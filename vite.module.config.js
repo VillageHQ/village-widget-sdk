@@ -1,10 +1,10 @@
-import path from "path";
+import { defineConfig } from "vite";
+import { resolve } from "path";
 import fs from "fs";
-import { defineConfig } from "vitest/config";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 
 export default defineConfig(({ mode }) => {
-  const envFile = path.resolve(process.cwd(), `.env.${mode}`);
+  const envFile = resolve(process.cwd(), `.env.${mode}`);
 
   const parsedEnv = fs.existsSync(envFile)
     ? Object.fromEntries(
@@ -21,33 +21,38 @@ export default defineConfig(({ mode }) => {
 
   return {
     build: {
-      cssCodeSplit: false,
-      assetsInlineLimit: Infinity,
-
       lib: {
-        entry: path.resolve(__dirname, "src/village-module.js"),
-        name: "VillageModule",
-        formats: ["es"],
-        fileName: () => parsedEnv.VITE_WIDGET_DEV_PATH ? "village-module" : "village-module",
+        entry: resolve(__dirname, "src/village-module.js"),
+        name: "VillageWidget",
+        fileName: (format) => `index.${format === "es" ? "mjs" : "js"}`,
+        formats: ["es", "umd"],
       },
-
       rollupOptions: {
         output: {
           exports: "named",
           inlineDynamicImports: true,
         },
       },
-
-      outDir: parsedEnv.VITE_WIDGET_DEV_PATH ? 
-        path.resolve(parsedEnv.VITE_WIDGET_DEV_PATH, "..") : 
-        path.resolve(__dirname, `dist/${mode}`),
+      outDir: "dist",
       emptyOutDir: false,
     },
-
     plugins: [
       cssInjectedByJsPlugin(),
+      {
+        name: "copy-d-ts",
+        closeBundle() {
+          // Copy TypeScript declaration file to dist folder after build
+          if (fs.existsSync(resolve(__dirname, "dist/index.d.ts"))) {
+            // Already exists, don't overwrite
+            return;
+          }
+          fs.copyFileSync(
+            resolve(__dirname, "src/index.d.ts"),
+            resolve(__dirname, "dist/index.d.ts")
+          );
+        },
+      },
     ],
-
     define: {
       global: "window",
       ...Object.fromEntries(
@@ -57,7 +62,6 @@ export default defineConfig(({ mode }) => {
         ])
       ),
     },
-
-    resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+    resolve: { alias: { "@": resolve(__dirname, "src") } },
   };
 });

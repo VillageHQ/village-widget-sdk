@@ -1,10 +1,10 @@
 {
-  "name": "village-widget-sdk",
+  "name": "@villagehq/widget-sdk",
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.47",
+  "version": "0.0.1",
   "main": "dist/village-widget.js",
   "module": "dist/village-widget.js",
   "exports": {
@@ -44,5 +44,14 @@
     "vite": "^6.3.2",
     "vite-plugin-css-injected-by-js": "^3.5.2",
     "vitest": "^3.1.2"
-  }
+  },
+  "keywords": [
+    "village",
+    "widget",
+    "sdk",
+    "authentication",
+    "browser-extension"
+  ],
+  "author": "Village",
+  "license": "MIT"
 }
