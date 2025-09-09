@@ -41,15 +41,15 @@ export default defineConfig(({ mode }) => {
       {
         name: "copy-d-ts",
         closeBundle() {
-          // Copy TypeScript declaration file to dist folder after build
-          if (fs.existsSync(resolve(__dirname, "dist/index.d.ts"))) {
-            // Already exists, don't overwrite
-            return;
-          }
-          fs.copyFileSync(
-            resolve(__dirname, "src/index.d.ts"),
-            resolve(__dirname, "dist/index.d.ts")
-          );
+          // Ensure up-to-date types in dist
+          const src = resolve(__dirname, "src/index.d.ts");
+          const destDir = resolve(__dirname, "dist");
+          const dest = resolve(destDir, "index.d.ts");
+          
+          if (!fs.existsSync(src)) return; // nothing to copy
+          
+          fs.mkdirSync(destDir, { recursive: true });
+          fs.copyFileSync(src, dest); // always overwrite to prevent stale d.ts
         },
       },
     ],

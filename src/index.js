@@ -200,7 +200,7 @@ import Cookies from "js-cookie";
           if (cta.callback && payload.index == index) {
             cta.callback(payload);
             return true;
-          } 
+          }
         }
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
@@ -213,11 +213,11 @@ import Cookies from "js-cookie";
             v.q.push(["__deferred_authorize__", tokenOrUserRef, domainOrDetails, refreshCallback, resolve]);
           });
         }
-        
-        const isTokenAuth = typeof tokenOrUserRef === 'string' && 
-                           tokenOrUserRef.length > 20 && 
+
+        const isTokenAuth = typeof tokenOrUserRef === 'string' &&
+                           tokenOrUserRef.length > 20 &&
                            (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
-        
+
         if (isTokenAuth) {
           if (!domainOrDetails) {
             return {
@@ -234,12 +234,12 @@ import Cookies from "js-cookie";
             if (!v._app) {
               await v._renderWidget();
             }
-            
+
             const fetchedToken = await v._app.getAuthToken(2000, domainOrDetails);
             if (fetchedToken && v._app.isTokenValid(fetchedToken)) {
               return v._authorizeWithToken(fetchedToken, domainOrDetails, refreshCallback);
             }
-            
+
             return {
               ok: false,
               status: 'unauthorized',
@@ -261,27 +261,27 @@ import Cookies from "js-cookie";
           };
         }
       },
-      
+
       _authorizeWithToken: async function(token, domain, refreshCallback) {
         try {
           v._authToken = token;
           v._authDomain = domain;
           v._refreshCallback = refreshCallback;
-          
+
           if (!v._app) {
             await v._renderWidget();
           }
-          
+
           v._app.token = token;
           if (domain) {
             v._app.authDomain = domain;
           }
-          
+
           const isValid = await v._app.validateToken(token);
-          
+
           if (isValid) {
             v._app.updateCookieTokenWithDomain(token, domain);
-            
+
             return {
               ok: true,
               status: 'authorized',
@@ -291,7 +291,7 @@ import Cookies from "js-cookie";
             if (refreshCallback && typeof refreshCallback === 'function') {
               try {
                 const newToken = await refreshCallback();
-                
+
                 if (newToken && typeof newToken === 'string') {
                   return v._authorizeWithToken(newToken, domain, null);
                 }
@@ -299,7 +299,7 @@ import Cookies from "js-cookie";
                 console.warn('[Village] Token refresh failed:', refreshError);
               }
             }
-            
+
             return {
               ok: false,
               status: 'unauthorized',
@@ -332,11 +332,13 @@ import Cookies from "js-cookie";
   window.Village.on = on;
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
-  
+
+  // Delay processing queue and initialization until after DOM is ready
+  // This prevents hydration issues in SSR environments
   function initializeVillage() {
     window.Village._processQueue();
   }
-  
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeVillage);
   } else {
