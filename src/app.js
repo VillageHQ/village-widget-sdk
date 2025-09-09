@@ -651,7 +651,6 @@ export class App {
         const img = document.createElement('img');
         img.src = avatar;
         img.addEventListener('error', function() {
-          console.log(`[Village SDK] Facepile image ${index + 1} failed to load, using fallback`);
           this.src = 'https://randomuser.me/api/portraits/thumb/women/75.jpg';
           this.classList.add('village-facepiler-avatar-not-found');
         }, { once: true });

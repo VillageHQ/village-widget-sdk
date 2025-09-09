@@ -290,7 +290,6 @@ import Cookies from "js-cookie";
           } else {
             if (refreshCallback && typeof refreshCallback === 'function') {
               try {
-                console.log('[Village] Token invalid, attempting refresh...');
                 const newToken = await refreshCallback();
                 
                 if (newToken && typeof newToken === 'string') {
@@ -352,7 +351,7 @@ import Cookies from "js-cookie";
   });
 
   window.Village.on(VillageEvents.oauthSuccess, (payload) => {
-    console.log("✅ Village OAuth success", payload);
+    // console.log("✅ Village OAuth success", payload);
   });
   if (!window.__village_message_listener_attached__) {
     //console.log("✅ __village_message_listener_attached__");
@@ -362,7 +361,7 @@ import Cookies from "js-cookie";
       const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
 
       if (domainA === domainB && data?.type === "VillageSDK") {
-        console.log("[SDK cookie] message from iframe:", data);
+        // console.log("[SDK cookie] message from iframe:", data);
         const token = data.token ?? null;
 
         if (!token && document.requestStorageAccess) {
