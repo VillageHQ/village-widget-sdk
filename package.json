@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.0.1",
+  "version": "0.0.5",
   "main": "dist/village-widget.js",
   "module": "dist/village-widget.js",
   "exports": {
@@ -21,7 +21,7 @@
     "build:staging": "vite build --mode staging && vite build --mode staging --config vite.module.config.js",
     "dev": "vite build --watch --mode development & vite build --watch --mode development --config vite.module.config.js",
     "devStg": "vite build --watch --mode staging",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build:module",
     "deploy": "node scripts/deploy.js",
     "test": "vitest run",
     "test:watch": "vitest",
