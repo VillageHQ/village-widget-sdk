@@ -1,0 +1,59 @@
+# Development and build folders - ALWAYS EXCLUDE
+dist/development/
+dist/production/
+dist/staging/
+dist/dev/
+production/
+development/
+staging/
+
+# Old build files - ALWAYS EXCLUDE (keep only index.* files)
+dist/village-sdk.js
+dist/village-widget.js
+dist/village-*.js
+dist/village-*.mjs
+village-sdk.js
+village-widget.js
+
+# Source files (not needed in published package)
+src/
+scripts/
+examples/
+
+# Config files
+.env*
+*.config.js
+vite.config.js
+vite.module.config.js
+vitest.config.js
+.eslintrc*
+.prettierrc*
+
+# Documentation source
+docs/
+
+# Git and IDE
+.git/
+.github/
+.idea/
+.vscode/
+*.log
+
+# Tests
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+coverage/
+
+# Build artifacts
+*.map
+
+# Keep only:
+# - dist/index.js (CommonJS)
+# - dist/index.mjs (ES Module)
+# - dist/index.d.ts (TypeScript definitions)
+# - README.md
+# - package.json
+# - LICENSE (if exists)

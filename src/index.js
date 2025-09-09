@@ -200,15 +200,128 @@ import Cookies from "js-cookie";
           if (cta.callback && payload.index == index) {
             cta.callback(payload);
             return true;
-          } 
+          }
         }
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }
+      },
+
+      authorize: async function(tokenOrUserRef, domainOrDetails, refreshCallback) {
+        if (!v._initialized) {
+          return new Promise((resolve) => {
+            v.q.push(["__deferred_authorize__", tokenOrUserRef, domainOrDetails, refreshCallback, resolve]);
+          });
+        }
+
+        const isTokenAuth = typeof tokenOrUserRef === 'string' &&
+                           tokenOrUserRef.length > 20 &&
+                           (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
+
+        if (isTokenAuth) {
+          if (!domainOrDetails) {
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Domain is required for token-based authorization'
+            };
+          }
+          return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
+        } else if (tokenOrUserRef) {
+          return v.identify(tokenOrUserRef, domainOrDetails);
+        } else if (domainOrDetails) {
+          try {
+            if (!v._app) {
+              await v._renderWidget();
+            }
+
+            const fetchedToken = await v._app.getAuthToken(2000, domainOrDetails);
+            if (fetchedToken && v._app.isTokenValid(fetchedToken)) {
+              return v._authorizeWithToken(fetchedToken, domainOrDetails, refreshCallback);
+            }
+
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'No token found for domain: ' + domainOrDetails
+            };
+          } catch (error) {
+            console.warn('[Village] Failed to fetch token from extension:', error);
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Failed to fetch token: ' + error.message
+            };
+          }
+        } else {
+          return {
+            ok: false,
+            status: 'unauthorized',
+            reason: 'Token and domain are required for authorization'
+          };
+        }
+      },
+
+      _authorizeWithToken: async function(token, domain, refreshCallback) {
+        try {
+          v._authToken = token;
+          v._authDomain = domain;
+          v._refreshCallback = refreshCallback;
+
+          if (!v._app) {
+            await v._renderWidget();
+          }
+
+          v._app.token = token;
+          if (domain) {
+            v._app.authDomain = domain;
+          }
+
+          const isValid = await v._app.validateToken(token);
+
+          if (isValid) {
+            v._app.updateCookieTokenWithDomain(token, domain);
+
+            return {
+              ok: true,
+              status: 'authorized',
+              domain: domain
+            };
+          } else {
+            if (refreshCallback && typeof refreshCallback === 'function') {
+              try {
+                const newToken = await refreshCallback();
+
+                if (newToken && typeof newToken === 'string') {
+                  return v._authorizeWithToken(newToken, domain, null);
+                }
+              } catch (refreshError) {
+                console.warn('[Village] Token refresh failed:', refreshError);
+              }
+            }
+
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Invalid token'
+            };
+          }
+        } catch (error) {
+          console.error('[Village] Authorization error:', error);
+          return {
+            ok: false,
+            status: 'unauthorized',
+            reason: error.message || 'Authorization failed'
+          };
+        }
+      },
+
+      __deferred_authorize__: async function(tokenOrUserRef, domainOrDetails, refreshCallback, resolve) {
+        const result = await v.authorize(tokenOrUserRef, domainOrDetails, refreshCallback);
+        resolve?.(result);
+        return result;
       }
     };
-
-    v.authorize = v.identify;
     return v;
   }
 
@@ -219,17 +332,16 @@ import Cookies from "js-cookie";
   window.Village.on = on;
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
-  
+
   // Delay processing queue and initialization until after DOM is ready
   // This prevents hydration issues in SSR environments
   function initializeVillage() {
     window.Village._processQueue();
   }
-  
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeVillage);
   } else {
-    // DOM is already ready, initialize immediately
     setTimeout(initializeVillage, 0);
   }
 
@@ -241,7 +353,7 @@ import Cookies from "js-cookie";
   });
 
   window.Village.on(VillageEvents.oauthSuccess, (payload) => {
-    console.log("✅ Village OAuth success", payload);
+    // console.log("✅ Village OAuth success", payload);
   });
   if (!window.__village_message_listener_attached__) {
     //console.log("✅ __village_message_listener_attached__");
@@ -251,7 +363,7 @@ import Cookies from "js-cookie";
       const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
 
       if (domainA === domainB && data?.type === "VillageSDK") {
-        console.log("[SDK cookie] message from iframe:", data);
+        // console.log("[SDK cookie] message from iframe:", data);
         const token = data.token ?? null;
 
         if (!token && document.requestStorageAccess) {
