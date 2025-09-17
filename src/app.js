@@ -813,4 +813,15 @@ export class App {
     // Reload inline search iframes without token
     this._refreshInlineSearchIframes();
   }
+
+  openPaths(url) {
+    // Validate URL
+    if (!url || typeof url !== 'string') {
+      console.warn('[Village] openPaths requires a valid URL string');
+      return;
+    }
+
+    // Use the extracted logic from ModuleHandlers
+    this.moduleHandlers.triggerPathsOpen(url);
+  }
 }

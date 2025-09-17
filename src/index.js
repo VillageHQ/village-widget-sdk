@@ -320,6 +320,20 @@ import Cookies from "js-cookie";
         const result = await v.authorize(tokenOrUserRef, domainOrDetails, refreshCallback);
         resolve?.(result);
         return result;
+      },
+
+      openPaths: function(url) {
+        if (!v._initialized) {
+          v.q.push(["openPaths", url]);
+          return;
+        }
+        if (!url || typeof url !== 'string') {
+          console.warn('[Village] openPaths requires a valid URL string');
+          return;
+        }
+        if (v._app) {
+          v._app.openPaths(url);
+        }
       }
     };
     return v;

@@ -10,6 +10,21 @@ export class ModuleHandlers {
     this.elementsWithListeners = new Set(); // Track all elements with active listeners attached by this handler
   }
 
+  // Core logic for opening paths - extracted for reusability
+  triggerPathsOpen(url) {
+    const validURL = this.isValidUrl(url) ? url : "http://invalidURL.com";
+
+    AnalyticsService.trackButtonClick({
+      type: "paths",
+      validURL,
+      partnerKey: this.app.partnerKey,
+    });
+
+    this.app.url = validURL;
+    this.app.module = null; // Explicitly null for data-url
+    this.app.renderIframe();
+  }
+
   // Restored original handleDataUrl
   handleDataUrl(element, url) {
     const validURL = this.isValidUrl(url) ? url : "http://invalidURL.com";
@@ -21,15 +36,7 @@ export class ModuleHandlers {
     this.syncUrlElements.set(element, validURL); // Track this element and its URL
 
     const clickHandler = () => {
-      AnalyticsService.trackButtonClick({
-        type: "paths",
-        validURL,
-        partnerKey: this.app.partnerKey,
-      });
-
-      this.app.url = validURL;
-      this.app.module = null; // Explicitly null for data-url
-      this.app.renderIframe();
+      this.triggerPathsOpen(url);
     };
     this.listenerMap.set(element, clickHandler);
     element.addEventListener("click", clickHandler);

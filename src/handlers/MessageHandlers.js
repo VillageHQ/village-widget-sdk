@@ -10,6 +10,7 @@ export class MessageHandlers {
       VILLAGE_REMOVE_IFRAME: this.handleRemoveIframe.bind(this),
       VILLAGE_IFRAME_LOADED: this.handleIframeLoaded.bind(this),
       VILLAGE_COPY_TO_CLIPBOARD: this.handleCopyToClipboard.bind(this),
+      VILLAGE_OPEN_PATHS: this.handleOpenPaths.bind(this),
     };
     this.app.oauthPopupRef = null;
   }
@@ -101,5 +102,13 @@ export class MessageHandlers {
 
   handleCopyToClipboard(data) {
     navigator.clipboard.writeText(data.text);
+  }
+
+  handleOpenPaths(data) {
+    if (data.url && typeof data.url === 'string') {
+      this.app.openPaths(data.url);
+    } else {
+      console.warn('[Village] VILLAGE_OPEN_PATHS message requires a url property');
+    }
   }
 }
