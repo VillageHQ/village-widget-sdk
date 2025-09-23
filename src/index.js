@@ -170,7 +170,7 @@ import Cookies from "js-cookie";
       // ✅ Expor CTAs
       getPathsCTA() {
         // Try to get from internal config
-        const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
+        let pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
           ? v._config.paths_cta
           : [];
 
