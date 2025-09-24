@@ -10,41 +10,59 @@ export class ModuleHandlers {
     this.elementsWithListeners = new Set(); // Track all elements with active listeners attached by this handler
   }
 
-  // Restored original handleDataUrl
+  triggerPathsOpen(url) {
+    if (!url || !this.isValidUrl(url)) {
+      console.warn('[Village] Invalid URL provided to triggerPathsOpen:', url);
+      return;
+    }
+
+    AnalyticsService.trackButtonClick({
+      type: "paths",
+      validURL: url,
+      partnerKey: this.app.partnerKey,
+    });
+
+    this.app.url = url;
+    this.app.module = null;
+    this.app.renderIframe();
+  }
+
+  triggerSyncOpen() {
+    AnalyticsService.trackButtonClick({
+      type: "sync",
+      partnerKey: this.app.partnerKey,
+    });
+
+    this.app.module = ModuleTypes.SYNC;
+    this.app.url = null;
+    this.app.renderIframe();
+  }
+
   handleDataUrl(element, url) {
-    const validURL = this.isValidUrl(url) ? url : "http://invalidURL.com";
+    if (!url || !this.isValidUrl(url)) {
+      console.warn('[Village] Invalid URL in village-data-url attribute:', url);
+      return;
+    }
 
-    // ✅ ENHANCED: Clear any existing requests for this element
     this.app.elementRequests.delete(element);
-
-    this.removeListener(element); // Remove previous general listeners
-    this.syncUrlElements.set(element, validURL); // Track this element and its URL
+    this.removeListener(element);
+    this.syncUrlElements.set(element, url);
 
     const clickHandler = () => {
-      AnalyticsService.trackButtonClick({
-        type: "paths",
-        validURL,
-        partnerKey: this.app.partnerKey,
-      });
-
-      this.app.url = validURL;
-      this.app.module = null; // Explicitly null for data-url
-      this.app.renderIframe();
+      this.triggerPathsOpen(url);
     };
     this.listenerMap.set(element, clickHandler);
     element.addEventListener("click", clickHandler);
-    this.elementsWithListeners.add(element); // Track element
+    this.elementsWithListeners.add(element);
     if (url !== "") {
       this.app.initializeButtonState(element);
     }
     if (this.app.token) {
-      this.app.checkPathsAndUpdateButton(element, validURL);
+      this.app.checkPathsAndUpdateButton(element, url);
     }
   }
 
-  // Restored original handleModule (primarily for SYNC onboarding click)
   handleModule(element, moduleValue) {
-    // ✅ ENHANCED: Clear any existing requests for this element
     this.app.elementRequests.delete(element);
 
     // If an element switches from data-url to module="sync", stop tracking it here
@@ -79,7 +97,7 @@ export class ModuleHandlers {
     };
     this.listenerMap.set(element, clickHandler);
     element.addEventListener("click", clickHandler);
-    this.elementsWithListeners.add(element); // Track element
+    this.elementsWithListeners.add(element);
     // No initial button state/path check needed for non-url modules here
   }
 

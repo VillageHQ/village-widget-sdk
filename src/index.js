@@ -320,6 +320,74 @@ import Cookies from "js-cookie";
         const result = await v.authorize(tokenOrUserRef, domainOrDetails, refreshCallback);
         resolve?.(result);
         return result;
+      },
+
+      /**
+       * Opens the Village referral modal for the specified URL.
+       * Works in Shadow DOM and all modern frameworks.
+       * @param {string} url - The URL of the job or page to get referrals for
+       * @param {Object} options - Optional configuration
+       * @param {boolean} options.returnElement - If true, returns the iframe element
+       * @returns {HTMLElement|void} - Returns iframe element if returnElement is true
+       */
+      openPaths: function(url, options = {}) {
+        if (!v._initialized) {
+          v.q.push(["openPaths", url, options]);
+          return;
+        }
+        if (!url || typeof url !== 'string') {
+          console.warn('[Village] openPaths requires a valid URL string');
+          return;
+        }
+        if (v._app) {
+          return v._app.openPaths(url, options);
+        }
+      },
+
+      /**
+       * Checks if the user has connections at the specified company.
+       * Returns a promise with connection data.
+       * @param {string} url - The URL to check for connections
+       * @returns {Promise<{found: boolean, count: number, avatars: string[], relationship?: any}>}
+       */
+      checkPaths: function(url) {
+        if (!v._initialized) {
+          return new Promise((resolve) => {
+            v.q.push(["__deferred_checkPaths__", url, resolve]);
+          });
+        }
+        if (!url || typeof url !== 'string') {
+          console.warn('[Village] checkPaths requires a valid URL string');
+          return Promise.resolve({
+            found: false,
+            count: 0,
+            avatars: []
+          });
+        }
+        return v._app.checkPathsAPI(url);
+      },
+
+      __deferred_checkPaths__: async function(url, resolve) {
+        const result = await v.checkPaths(url);
+        resolve?.(result);
+        return result;
+      },
+
+      /**
+       * Opens the Village authentication/onboarding modal.
+       * Allows users to sign in or sync their account.
+       * @param {Object} options - Optional configuration
+       * @param {boolean} options.returnElement - If true, returns the iframe element
+       * @returns {HTMLElement|void} - Returns iframe element if returnElement is true
+       */
+      openSync: function(options = {}) {
+        if (!v._initialized) {
+          v.q.push(["openSync", options]);
+          return;
+        }
+        if (v._app) {
+          return v._app.openSync(options);
+        }
       }
     };
     return v;

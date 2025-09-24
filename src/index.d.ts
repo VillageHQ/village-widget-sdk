@@ -21,6 +21,18 @@ export interface UserDetails {
   [key: string]: any;
 }
 
+export interface PathCheckResult {
+  found: boolean;
+  count: number;
+  avatars: string[];
+  relationship?: any;
+  error?: string;
+}
+
+export interface OpenOptions {
+  returnElement?: boolean;
+}
+
 export interface VillageSDK {
   init(partnerKey: string, config?: VillageConfig): VillageSDK;
   
@@ -55,6 +67,31 @@ export interface VillageSDK {
   
   dispatch(event: string, data?: any): void;
   broadcast(event: string, data?: any): void;
+
+  /**
+   * Opens the Village referral modal for the specified URL.
+   * Works in Shadow DOM and all modern frameworks.
+   * @param url - The URL of the job or page to get referrals for
+   * @param options - Optional configuration
+   * @returns void or iframe element if returnElement option is true
+   */
+  openPaths(url: string, options?: OpenOptions): void | HTMLIFrameElement;
+
+  /**
+   * Checks if the user has connections at the specified company.
+   * Returns a promise with connection data.
+   * @param url - The URL to check for connections
+   * @returns Promise with found status, count, and avatars
+   */
+  checkPaths(url: string): Promise<PathCheckResult>;
+
+  /**
+   * Opens the Village authentication/onboarding modal.
+   * Allows users to sign in or sync their account.
+   * @param options - Optional configuration
+   * @returns void or iframe element if returnElement option is true
+   */
+  openSync(options?: OpenOptions): void | HTMLIFrameElement;
 }
 
 export const VillageEvents: {
