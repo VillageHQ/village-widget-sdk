@@ -807,37 +807,6 @@ export class App {
     }
   }
 
-  async checkPathsAPI(url) {
-    try {
-      const data = await this.checkPaths(url);
-
-      // Return formatted data for developers
-      if (data && data.relationship) {
-        return {
-          found: true,
-          count: data.relationship.paths?.count || 0,
-          avatars: data.relationship.paths?.avatars || [],
-          relationship: data.relationship
-        };
-      }
-
-      // No paths found
-      return {
-        found: false,
-        count: 0,
-        avatars: [],
-        relationship: null
-      };
-    } catch (error) {
-      console.error('[Village] Error checking paths:', error);
-      return {
-        found: false,
-        count: 0,
-        avatars: [],
-        error: error.message
-      };
-    }
-  }
 
   async logout() {
     // Clear all requests before logout

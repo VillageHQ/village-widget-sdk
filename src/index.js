@@ -364,7 +364,7 @@ import Cookies from "js-cookie";
             avatars: []
           });
         }
-        return v._app.checkPathsAPI(url);
+        return v._app.checkPaths(url);
       },
 
       __deferred_checkPaths__: async function(url, resolve) {
