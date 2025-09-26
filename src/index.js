@@ -170,7 +170,7 @@ import Cookies from "js-cookie";
       // ✅ Expor CTAs
       getPathsCTA() {
         // Try to get from internal config
-        const pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
+        let pathsCTA = Array.isArray(v?._config?.paths_cta) && v._config.paths_cta.length > 0
           ? v._config.paths_cta
           : [];
 
@@ -200,15 +200,196 @@ import Cookies from "js-cookie";
           if (cta.callback && payload.index == index) {
             cta.callback(payload);
             return true;
-          } 
+          }
         }
         if (window !== window.parent) {
           window.parent.postMessage(payload, "*");
         }
+      },
+
+      authorize: async function(tokenOrUserRef, domainOrDetails, refreshCallback) {
+        if (!v._initialized) {
+          return new Promise((resolve) => {
+            v.q.push(["__deferred_authorize__", tokenOrUserRef, domainOrDetails, refreshCallback, resolve]);
+          });
+        }
+
+        const isTokenAuth = typeof tokenOrUserRef === 'string' &&
+                           tokenOrUserRef.length > 20 &&
+                           (tokenOrUserRef.includes('.') || tokenOrUserRef.includes('_'));
+
+        if (isTokenAuth) {
+          if (!domainOrDetails) {
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Domain is required for token-based authorization'
+            };
+          }
+          return v._authorizeWithToken(tokenOrUserRef, domainOrDetails, refreshCallback);
+        } else if (tokenOrUserRef) {
+          return v.identify(tokenOrUserRef, domainOrDetails);
+        } else if (domainOrDetails) {
+          try {
+            if (!v._app) {
+              await v._renderWidget();
+            }
+
+            const fetchedToken = await v._app.getAuthToken(2000, domainOrDetails);
+            if (fetchedToken && v._app.isTokenValid(fetchedToken)) {
+              return v._authorizeWithToken(fetchedToken, domainOrDetails, refreshCallback);
+            }
+
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'No token found for domain: ' + domainOrDetails
+            };
+          } catch (error) {
+            console.warn('[Village] Failed to fetch token from extension:', error);
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Failed to fetch token: ' + error.message
+            };
+          }
+        } else {
+          return {
+            ok: false,
+            status: 'unauthorized',
+            reason: 'Token and domain are required for authorization'
+          };
+        }
+      },
+
+      _authorizeWithToken: async function(token, domain, refreshCallback) {
+        try {
+          v._authToken = token;
+          v._authDomain = domain;
+          v._refreshCallback = refreshCallback;
+
+          if (!v._app) {
+            await v._renderWidget();
+          }
+
+          v._app.token = token;
+          if (domain) {
+            v._app.authDomain = domain;
+          }
+
+          const isValid = await v._app.validateToken(token);
+
+          if (isValid) {
+            v._app.updateCookieTokenWithDomain(token, domain);
+
+            return {
+              ok: true,
+              status: 'authorized',
+              domain: domain
+            };
+          } else {
+            if (refreshCallback && typeof refreshCallback === 'function') {
+              try {
+                const newToken = await refreshCallback();
+
+                if (newToken && typeof newToken === 'string') {
+                  return v._authorizeWithToken(newToken, domain, null);
+                }
+              } catch (refreshError) {
+                console.warn('[Village] Token refresh failed:', refreshError);
+              }
+            }
+
+            return {
+              ok: false,
+              status: 'unauthorized',
+              reason: 'Invalid token'
+            };
+          }
+        } catch (error) {
+          console.error('[Village] Authorization error:', error);
+          return {
+            ok: false,
+            status: 'unauthorized',
+            reason: error.message || 'Authorization failed'
+          };
+        }
+      },
+
+      __deferred_authorize__: async function(tokenOrUserRef, domainOrDetails, refreshCallback, resolve) {
+        const result = await v.authorize(tokenOrUserRef, domainOrDetails, refreshCallback);
+        resolve?.(result);
+        return result;
+      },
+
+      /**
+       * Opens the Village referral modal for the specified URL.
+       * Works in Shadow DOM and all modern frameworks.
+       * @param {string} url - The URL of the job or page to get referrals for
+       * @param {Object} options - Optional configuration
+       * @param {boolean} options.returnElement - If true, returns the iframe element
+       * @returns {HTMLElement|void} - Returns iframe element if returnElement is true
+       */
+      openPathsModal: function(url, options = {}) {
+        if (!v._initialized) {
+          v.q.push(["openPathsModal", url, options]);
+          return;
+        }
+        if (!url || typeof url !== 'string') {
+          console.warn('[Village] openPathsModal requires a valid URL string');
+          return;
+        }
+        if (v._app) {
+          return v._app.openPathsModal(url, options);
+        }
+      },
+
+      /**
+       * Checks if the user has connections at the specified company.
+       * Returns a promise with connection data.
+       * @param {string} url - The URL to check for connections
+       * @returns {Promise<{found: boolean, count: number, avatars: string[], relationship?: any}>}
+       */
+      checkPaths: function(url) {
+        if (!v._initialized) {
+          return new Promise((resolve) => {
+            v.q.push(["__deferred_checkPaths__", url, resolve]);
+          });
+        }
+        if (!url || typeof url !== 'string') {
+          console.warn('[Village] checkPaths requires a valid URL string');
+          return Promise.resolve({
+            found: false,
+            count: 0,
+            avatars: []
+          });
+        }
+        return v._app.checkPaths(url);
+      },
+
+      __deferred_checkPaths__: async function(url, resolve) {
+        const result = await v.checkPaths(url);
+        resolve?.(result);
+        return result;
+      },
+
+      /**
+       * Opens the Village authentication/onboarding modal.
+       * Allows users to sign in or sync their account.
+       * @param {Object} options - Optional configuration
+       * @param {boolean} options.returnElement - If true, returns the iframe element
+       * @returns {HTMLElement|void} - Returns iframe element if returnElement is true
+       */
+      openSyncModal: function(options = {}) {
+        if (!v._initialized) {
+          v.q.push(["openSyncModal", options]);
+          return;
+        }
+        if (v._app) {
+          return v._app.openSyncModal(options);
+        }
       }
     };
-
-    v.authorize = v.identify;
     return v;
   }
 
@@ -219,17 +400,16 @@ import Cookies from "js-cookie";
   window.Village.on = on;
   window.Village.emit = emit;
   window.Village.q = existingQueue.concat(window.Village.q);
-  
+
   // Delay processing queue and initialization until after DOM is ready
   // This prevents hydration issues in SSR environments
   function initializeVillage() {
     window.Village._processQueue();
   }
-  
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeVillage);
   } else {
-    // DOM is already ready, initialize immediately
     setTimeout(initializeVillage, 0);
   }
 
@@ -241,7 +421,7 @@ import Cookies from "js-cookie";
   });
 
   window.Village.on(VillageEvents.oauthSuccess, (payload) => {
-    console.log("✅ Village OAuth success", payload);
+    // console.log("✅ Village OAuth success", payload);
   });
   if (!window.__village_message_listener_attached__) {
     //console.log("✅ __village_message_listener_attached__");
@@ -251,7 +431,7 @@ import Cookies from "js-cookie";
       const domainB = new URL(import.meta.env.VITE_APP_FRONTEND_URL).hostname;
 
       if (domainA === domainB && data?.type === "VillageSDK") {
-        console.log("[SDK cookie] message from iframe:", data);
+        // console.log("[SDK cookie] message from iframe:", data);
         const token = data.token ?? null;
 
         if (!token && document.requestStorageAccess) {
