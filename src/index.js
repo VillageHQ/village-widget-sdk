@@ -330,17 +330,17 @@ import Cookies from "js-cookie";
        * @param {boolean} options.returnElement - If true, returns the iframe element
        * @returns {HTMLElement|void} - Returns iframe element if returnElement is true
        */
-      openPaths: function(url, options = {}) {
+      openPathsModal: function(url, options = {}) {
         if (!v._initialized) {
-          v.q.push(["openPaths", url, options]);
+          v.q.push(["openPathsModal", url, options]);
           return;
         }
         if (!url || typeof url !== 'string') {
-          console.warn('[Village] openPaths requires a valid URL string');
+          console.warn('[Village] openPathsModal requires a valid URL string');
           return;
         }
         if (v._app) {
-          return v._app.openPaths(url, options);
+          return v._app.openPathsModal(url, options);
         }
       },
 
@@ -380,13 +380,13 @@ import Cookies from "js-cookie";
        * @param {boolean} options.returnElement - If true, returns the iframe element
        * @returns {HTMLElement|void} - Returns iframe element if returnElement is true
        */
-      openSync: function(options = {}) {
+      openSyncModal: function(options = {}) {
         if (!v._initialized) {
-          v.q.push(["openSync", options]);
+          v.q.push(["openSyncModal", options]);
           return;
         }
         if (v._app) {
-          return v._app.openSync(options);
+          return v._app.openSyncModal(options);
         }
       }
     };

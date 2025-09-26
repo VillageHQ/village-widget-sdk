@@ -787,9 +787,9 @@ export class App {
     });
   }
 
-  openPaths(url, options = {}) {
+  openPathsModal(url, options = {}) {
     if (!url || typeof url !== 'string') {
-      console.warn('[Village] openPaths requires a valid URL string');
+      console.warn('[Village] openPathsModal requires a valid URL string');
       return;
     }
     this.moduleHandlers.triggerPathsOpen(url);
@@ -799,7 +799,7 @@ export class App {
     }
   }
 
-  openSync(options = {}) {
+  openSyncModal(options = {}) {
     this.moduleHandlers.triggerSyncOpen();
 
     if (options.returnElement && this.iframe) {

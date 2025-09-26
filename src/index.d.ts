@@ -75,7 +75,7 @@ export interface VillageSDK {
    * @param options - Optional configuration
    * @returns void or iframe element if returnElement option is true
    */
-  openPaths(url: string, options?: OpenOptions): void | HTMLIFrameElement;
+  openPathsModal(url: string, options?: OpenOptions): void | HTMLIFrameElement;
 
   /**
    * Checks if the user has connections at the specified company.
@@ -91,7 +91,7 @@ export interface VillageSDK {
    * @param options - Optional configuration
    * @returns void or iframe element if returnElement option is true
    */
-  openSync(options?: OpenOptions): void | HTMLIFrameElement;
+  openSyncModal(options?: OpenOptions): void | HTMLIFrameElement;
 }
 
 export const VillageEvents: {
