@@ -17,16 +17,16 @@ import { logWidgetError } from "./utils/errorLogger";
 
 export class App {
   static instance = null;
-
+  
   static getInstance(partnerKey, config) {
     if (!App.instance) {
       App.instance = new App(partnerKey, config);
     }
     return App.instance;
   }
-
+  
   constructor(partnerKey, config) {
-
+    
     this.partnerKey = partnerKey;
     this.userReference = null;
     this.token = Cookies.get("village.token");
@@ -48,10 +48,10 @@ export class App {
     this.elementRequests = new Map(); // element -> Promise
     this.elementRequestIds = new Map(); // element -> latest request ID
     this.globalRequestCounter = 0; // Only for generating unique IDs
-
+    
     // Init guard to prevent double initialization
     this.initialized = false;
-
+    
   }
 
   async init() {
@@ -60,7 +60,7 @@ export class App {
       return;
     }
     this.initialized = true;
-
+    
     this.setupMessageHandlers();
     await this.getAuthToken();
     await this.getUser();
@@ -153,6 +153,7 @@ export class App {
   }
 
   async addListenerToElement(element) {
+    // Allow elements to re-render by removing signature-based blocking
     // Clear any existing requests for this element when re-processing
     this.elementRequests.delete(element);
     this.elementRequestIds.delete(element);
@@ -213,43 +214,25 @@ export class App {
   }
 
   updateCookieToken(token) {
+      // Clear all requests before setting new token
       this._clearAllRequests();
     if (this.isTokenValid(token)) {
       this.saveExtensionToken(token);
-
-      const cookieOptions = {
-        secure: location.protocol === 'https:',
-        expires: 60,
-        path: "/"
+      
+      const cookieOptions = { 
+        secure: location.protocol === 'https:', 
+        expires: 60, 
+        path: "/" 
       };
-
+      
       Cookies.set('village.token', token, cookieOptions);
-
+      
       if (this.token != token) {
         this.token = token;
         this._refreshInlineSearchIframes();
       }
-    }
-  }
-
-  updateCookieTokenWithDomain(token, domain) {
-      this._clearAllRequests();
-    if (this.isTokenValid(token)) {
-      this.saveExtensionTokenWithDomain(token, domain);
-
-      const cookieOptions = {
-        secure: location.protocol === 'https:',
-        expires: 60,
-        path: "/"
-      };
-
-      Cookies.set('village.token', token, cookieOptions);
-
-      if (this.token != token) {
-        this.token = token;
-        this.authDomain = domain;
-        this._refreshInlineSearchIframes();
-      }
+    } else {
+      // console.log('[Village SDK] Invalid token provided to updateCookieToken:', token);
     }
   }
 
@@ -257,75 +240,43 @@ export class App {
     return typeof token === 'string' && token.length > 10 && token !== 'not_found';
   }
 
-  async getAuthToken(timeout = 1000, domain) {
-
+  async getAuthToken(timeout = 1000) {
+    
     let token = Cookies.get('village.token');
-    let tokenDomain = null;
-
+    
     if (!this.isTokenValid(token)) {
       token = this.extractTokenFromQueryParams();
     }
-
+    
     if (!this.isTokenValid(token)) {
       try {
-        const response = await this.requestExtensionToken(timeout, domain);
-        
-        if (typeof response === 'object' && response.token) {
-          token = response.token;
-          tokenDomain = response.domain;
-          
-          if (domain && tokenDomain && domain !== tokenDomain) {
-            console.warn(`[Village SDK] Domain mismatch: requested ${domain}, got ${tokenDomain}`);
-            token = null;
-          }
-        } else if (typeof response === 'string') {
-          token = response;
-        }
+        token = await this.requestExtensionToken(timeout);
       } catch (err) {
+        // console.log('[Village SDK] Extension fallback failed:', err.message);
       }
     }
 
     if (this.isTokenValid(token)) {
-      if (domain || tokenDomain) {
-        this.updateCookieTokenWithDomain(token, domain || tokenDomain);
-      } else {
-        this.updateCookieToken(token);
-      }
+      this.updateCookieToken(token);
+    } else {
+      // console.log('[Village SDK] No valid token available');
     }
     return token;
   }
 
 
-  requestExtensionToken(timeout, domain) {
-    const request = { 
-      type: 'STORAGE_GET_TOKEN', 
-      source: 'VillageSDK'
-    };
-    
-    if (domain) {
-      request.domain = domain;
-    }
+  requestExtensionToken(timeout) {
+    const request = { type: 'STORAGE_GET_TOKEN', source: 'VillageSDK' };
 
     return new Promise((resolve, reject) => {
       const listener = (event) => {
         if (event.source !== window) return;
         const { source, message } = event.data || {};
-
+        
         if ((source === 'VillageExtension' || source === 'VillageSDK') && message?.token) {
           window.removeEventListener('message', listener);
           clearTimeout(timer);
-          
-          if (message.token) {
-            resolve({
-              token: message.token,
-              domain: message.domain || null
-            });
-          } else {
-            resolve({
-              token: message,
-              domain: null
-            });
-          }
+          resolve(message.token);
         }
       };
 
@@ -340,45 +291,8 @@ export class App {
   }
 
   saveExtensionToken(token) {
-    const request = { 
-      type: 'STORAGE_SET_TOKEN', 
-      source: 'VillageSDK', 
-      token: token
-    };
+    const request = { type: 'STORAGE_SET_TOKEN', source: 'VillageSDK', token: token };
     window.postMessage(request, '*');
-  }
-
-  saveExtensionTokenWithDomain(token, domain) {
-    const request = { 
-      type: 'STORAGE_SET_TOKEN', 
-      source: 'VillageSDK', 
-      token: token,
-      domain: domain
-    };
-    window.postMessage(request, '*');
-  }
-
-  async validateToken(token) {
-    if (!this.isTokenValid(token)) {
-      return false;
-    }
-
-    try {
-      const { data: user } = await axios.get(`${this.apiUrl}/user`, {
-        headers: { "x-access-token": token, "app-public-key": this.partnerKey },
-      });
-
-      if (!user?.id) {
-        return false;
-      }
-
-      const userId = `${user?.id}`;
-      AnalyticsService.setUserId(userId);
-      return true;
-    } catch (error) {
-      console.warn('[Village] Token validation failed:', error.message);
-      return false;
-    }
   }
 
   async getUser() {
@@ -566,9 +480,6 @@ export class App {
 
       // ✅ FIXED: Only allow the exact latest request to update UI
       if (requestId === this.elementRequestIds.get(element)) {
-        // If data is null (no token or error), show not-found
-        // If data has relationship, show found
-        // Otherwise show not-found
         this._setElementState(
           element,
           data?.relationship ? "found" : "not-found",
@@ -634,11 +545,13 @@ export class App {
     }
   }
 
+  // Clear all requests (used during auth changes)
   _clearAllRequests() {
     this.elementRequests.clear();
     this.elementRequestIds.clear();
     this.globalRequestCounter += 1000; // Invalidate old requests
   }
+  
 
   addFacePilesAndCount(element, relationship) {
     const facePilesContainer = element.querySelector(
@@ -646,16 +559,13 @@ export class App {
     );
 
     if (facePilesContainer) {
-      facePilesContainer.innerHTML = '';
-      relationship.paths.avatars.slice(0, 3).forEach((avatar, index) => {
-        const img = document.createElement('img');
-        img.src = avatar;
-        img.addEventListener('error', function() {
-          this.src = 'https://randomuser.me/api/portraits/thumb/women/75.jpg';
-          this.classList.add('village-facepiler-avatar-not-found');
-        }, { once: true });
-        facePilesContainer.appendChild(img);
-      });
+      facePilesContainer.innerHTML = `${relationship.paths.avatars
+        .slice(0, 3)
+        .map(
+          (avatar) =>
+            `<img src="${avatar}" onerror="this.src='https://randomuser.me/api/portraits/thumb/women/75.jpg';this.classList.add('village-facepiler-avatar-not-found')" />`
+        )
+        .join("")}`;
     }
 
     const countContainer = element.querySelector(
@@ -770,7 +680,7 @@ export class App {
     if (App.instance === this) {
       App.instance = null;
     }
-
+    
     // Reset initialization flag
     this.initialized = false;
   }
@@ -786,27 +696,6 @@ export class App {
       this.checkPathsAndUpdateButton(element, url);
     });
   }
-
-  openPathsModal(url, options = {}) {
-    if (!url || typeof url !== 'string') {
-      console.warn('[Village] openPathsModal requires a valid URL string');
-      return;
-    }
-    this.moduleHandlers.triggerPathsOpen(url);
-
-    if (options.returnElement && this.iframe) {
-      return this.iframe.element;
-    }
-  }
-
-  openSyncModal(options = {}) {
-    this.moduleHandlers.triggerSyncOpen();
-
-    if (options.returnElement && this.iframe) {
-      return this.iframe.element;
-    }
-  }
-
 
   async logout() {
     // Clear all requests before logout

@@ -6,4 +6,3 @@ env.production
 .env.production
 .env.staging
 .idea
-dist/*
