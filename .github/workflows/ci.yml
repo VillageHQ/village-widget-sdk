@@ -24,8 +24,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate environment variables
+        env:
+          VITE_APP_API_URL: ${{ secrets.VITE_APP_API_URL }}
+          VITE_APP_FRONTEND_URL: ${{ secrets.VITE_APP_FRONTEND_URL }}
+          VITE_APP_POSTHOG_HOST: ${{ secrets.VITE_APP_POSTHOG_HOST }}
+          VITE_APP_POSTHOG_KEY: ${{ secrets.VITE_APP_POSTHOG_KEY }}
+        run: npx tsx scripts/validate-env.ts
+
       - name: Run bundle syntax check
+        env:
+          VITE_APP_API_URL: ${{ secrets.VITE_APP_API_URL }}
+          VITE_APP_FRONTEND_URL: ${{ secrets.VITE_APP_FRONTEND_URL }}
+          VITE_APP_POSTHOG_HOST: ${{ secrets.VITE_APP_POSTHOG_HOST }}
+          VITE_APP_POSTHOG_KEY: ${{ secrets.VITE_APP_POSTHOG_KEY }}
         run: npm run check:bundle
 
       - name: Run test suite
+        env:
+          VITE_APP_API_URL: ${{ secrets.VITE_APP_API_URL }}
+          VITE_APP_FRONTEND_URL: ${{ secrets.VITE_APP_FRONTEND_URL }}
+          VITE_APP_POSTHOG_HOST: ${{ secrets.VITE_APP_POSTHOG_HOST }}
+          VITE_APP_POSTHOG_KEY: ${{ secrets.VITE_APP_POSTHOG_KEY }}
         run: npm test
