@@ -1,6 +1,7 @@
 {
   "include": [
-    "src/config"
+    "src/config",
+    "src/env.ts"
   ],
   "typedocOptions": {
     "entryPoints": ["src/config"],

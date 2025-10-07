@@ -3,6 +3,7 @@ import fs from "fs";
 import { defineConfig } from "vitest/config";
 import { loadEnv } from "vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";   // npm i -D vite-plugin-css-injected-by-js
+import "./src/env.js";
 
 // ──────────────────────────────
 // Project metadata (package.json)

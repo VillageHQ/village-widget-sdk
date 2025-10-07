@@ -29,9 +29,11 @@
     "docs": "node scripts/generate-docs.js"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.13.8",
     "axios": "^1.8.4",
     "js-cookie": "^3.0.5",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/react": "^19.1.2",
