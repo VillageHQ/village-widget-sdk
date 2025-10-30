@@ -24,9 +24,19 @@ jobs:
         run: npm ci
 
       - name: 🧪 Run tests
+        env:
+          VITE_APP_API_URL: ${{ secrets.VITE_APP_API_URL }}
+          VITE_APP_FRONTEND_URL: ${{ secrets.VITE_APP_FRONTEND_URL }}
+          VITE_APP_POSTHOG_HOST: ${{ secrets.VITE_APP_POSTHOG_HOST }}
+          VITE_APP_POSTHOG_KEY: ${{ secrets.VITE_APP_POSTHOG_KEY }}
         run: npm test
 
       - name: 🏗️ Build production widget
+        env:
+          VITE_APP_API_URL: ${{ secrets.VITE_APP_API_URL }}
+          VITE_APP_FRONTEND_URL: ${{ secrets.VITE_APP_FRONTEND_URL }}
+          VITE_APP_POSTHOG_HOST: ${{ secrets.VITE_APP_POSTHOG_HOST }}
+          VITE_APP_POSTHOG_KEY: ${{ secrets.VITE_APP_POSTHOG_KEY }}
         run: npm run build
 
       - name: 🌐 Upload production to R2
