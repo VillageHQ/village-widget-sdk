@@ -29,13 +29,16 @@
     "docs": "node scripts/generate-docs.js"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.13.8",
     "axios": "^1.8.4",
     "js-cookie": "^3.0.5",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/react": "^19.1.2",
     "jsdom": "^26.1.0",
+    "tsx": "^4.20.6",
     "typedoc": "^0.28.3",
     "typedoc-plugin-markdown": "^4.6.3",
     "typescript": "^5.8.3",

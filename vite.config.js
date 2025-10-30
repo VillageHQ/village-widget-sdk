@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs";
 import { defineConfig } from "vitest/config";
-import { loadEnv } from "vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";   // npm i -D vite-plugin-css-injected-by-js
 
 // ──────────────────────────────
@@ -11,26 +10,40 @@ const pkg = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8")
 );
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   const isWatch = process.argv.includes("--watch");
 
   // ──────────────────────────────
-  // Load the correct .env file
+  // Load .env files (base + mode-specific)
   // ──────────────────────────────
-  const envFile = path.resolve(process.cwd(), `.env.${mode}`);
+  const parseEnvFile = (filePath) => {
+    if (!fs.existsSync(filePath)) return {};
+    return Object.fromEntries(
+      fs
+        .readFileSync(filePath, "utf-8")
+        .split("\n")
+        .filter((l) => l.trim() && !l.startsWith("#"))
+        .map((l) => {
+          const [k, ...v] = l.split("=");
+          return [k.trim(), v.join("=").trim()];
+        })
+    );
+  };
 
-  const parsedEnv = fs.existsSync(envFile)
-    ? Object.fromEntries(
-        fs
-          .readFileSync(envFile, "utf-8")
-          .split("\n")
-          .filter((l) => l.trim() && !l.startsWith("#"))
-          .map((l) => {
-            const [k, ...v] = l.split("=");
-            return [k.trim(), v.join("=").trim()];
-          })
-      )
-    : {};
+  // Load base .env first, then mode-specific (mode-specific overrides base)
+  const baseEnv = parseEnvFile(path.resolve(process.cwd(), `.env`));
+  const modeEnv = parseEnvFile(path.resolve(process.cwd(), `.env.${mode}`));
+  const parsedEnv = { ...baseEnv, ...modeEnv };
+
+  // ──────────────────────────────
+  // Load env vars into process.env for validation
+  // ──────────────────────────────
+  Object.assign(process.env, parsedEnv);
+
+  // ──────────────────────────────
+  // Validate environment variables
+  // ──────────────────────────────
+  await import("./src/env.js");
 
   // ──────────────────────────────
   // Resolve output paths
